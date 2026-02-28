@@ -12,7 +12,7 @@ export const client = createClient({
   },
 })
 
-export async function customSanityFetch<const QueryString extends string>({
+export async function sanityFetch<const QueryString extends string>({
   query,
   params = {},
   revalidate = 60,

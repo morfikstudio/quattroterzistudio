@@ -1,12 +1,12 @@
 import Link from "next/link"
 
-import { customSanityFetch } from "@/sanity/lib/client"
+import { sanityFetch } from "@/sanity/lib/client"
 import { PROJECTS_QUERY } from "@/sanity/lib/queries"
 
 import { ProjectCard } from "@/components/project-card"
 
 export default async function Page() {
-  const projects = await customSanityFetch({ query: PROJECTS_QUERY })
+  const projects = await sanityFetch({ query: PROJECTS_QUERY })
 
   return (
     <main className="container mx-auto grid grid-cols-1 gap-6 p-12">
