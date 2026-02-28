@@ -1,0 +1,52 @@
+{
+  "name": "quattroterzistudio",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typegen": "sanity schema extract --enforce-required-fields --path=./src/sanity/extract.json && sanity typegen generate",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky",
+    "promote:dev-to-prod": "npx sanity dataset copy development production"
+  },
+  "dependencies": {
+    "@sanity/client": "^7.15.0",
+    "@sanity/icons": "^3.7.4",
+    "@sanity/image-url": "^1.2.0",
+    "@sanity/vision": "^5.0.0",
+    "dayjs": "^1.11.19",
+    "next": "16.1.6",
+    "next-sanity": "^12.1.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "sanity": "^5.0.0",
+    "styled-components": "^6.3.11"
+  },
+  "overrides": {
+    "minimatch": ">=10.2.1",
+    "glob": ">=11.0.0",
+    "jsdom": ">=28.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/typography": "^0.5.19",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^10",
+    "eslint-config-next": "16.1.6",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,mjs,cjs,json,jsonc,css,scss,md,mdx}": "prettier --write"
+  }
+}
