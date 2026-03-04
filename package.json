@@ -18,13 +18,16 @@
     "@sanity/icons": "^3.7.4",
     "@sanity/image-url": "^1.2.0",
     "@sanity/vision": "^5.0.0",
+    "clsx": "^2.1.1",
     "dayjs": "^1.11.19",
     "next": "16.1.6",
     "next-sanity": "^12.1.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "sanity": "^5.0.0",
-    "styled-components": "^6.3.11"
+    "styled-components": "^6.3.11",
+    "tailwind-merge": "^3.5.0",
+    "zustand": "^5.0.11"
   },
   "overrides": {
     "minimatch": ">=10.2.1",
