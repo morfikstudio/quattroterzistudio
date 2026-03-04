@@ -7,10 +7,14 @@ type ProjectCardProps = {
   _id: string
   title?: string | null
   slug?: { current?: string | null } | null
-  media?: Array<{ _key?: string; asset?: { _ref?: string }; alt?: string }> | null
+  media?: Array<{
+    _key?: string
+    asset?: { _ref?: string }
+    alt?: string
+  }> | null
 }
 
-export function ProjectCard({ title, slug, media }: ProjectCardProps) {
+export default function ProjectCard({ title, slug, media }: ProjectCardProps) {
   const href = slug?.current ? `/projects/${slug.current}` : "#"
   const firstImage = media?.[0]
 

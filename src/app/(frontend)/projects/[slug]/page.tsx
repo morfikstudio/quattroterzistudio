@@ -4,7 +4,7 @@ import Link from "next/link"
 import { client, sanityFetch } from "@/sanity/lib/client"
 import { PROJECT_QUERY, PROJECT_SLUGS_QUERY } from "@/sanity/lib/queries"
 
-import { Project } from "@/components/project"
+import Project from "@/components/Project"
 
 export async function generateStaticParams() {
   try {
