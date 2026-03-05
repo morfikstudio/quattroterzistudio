@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/lib/utils"
 
+import Button from "@/components/ui/Button"
+
 const SCROLL_THRESHOLD = 50
 const DELTA_RESET_MS = 200
 const ANIMATION_DURATION_MS = 800
@@ -45,21 +47,41 @@ function useFullPageScroll(sectionCount: number) {
   const scrollToSection = useCallback(
     (index: number) => {
       if (index < 0 || index >= sectionCount || isAnimatingRef.current) return
+
       const wrapper = wrapRef.current
       if (!wrapper) return
 
       isAnimatingRef.current = true
       setCurrentSection(index)
+
       wrapper.scrollTo({
         top: index * window.innerHeight,
         behavior: "smooth",
       })
+
       setTimeout(() => {
         isAnimatingRef.current = false
       }, ANIMATION_DURATION_MS)
     },
     [sectionCount],
   )
+
+  // Sync currentSection with actual scroll position (fixes fast scroll / native scroll desync)
+  useEffect(() => {
+    const wrapper = wrapRef.current
+    if (!wrapper) return
+
+    const onScroll = () => {
+      const sectionHeight = wrapper.clientHeight
+      if (sectionHeight <= 0) return
+      const index = Math.round(wrapper.scrollTop / sectionHeight)
+      const clamped = Math.max(0, Math.min(index, sectionCount - 1))
+      setCurrentSection(clamped)
+    }
+
+    wrapper.addEventListener("scroll", onScroll, { passive: true })
+    return () => wrapper.removeEventListener("scroll", onScroll)
+  }, [sectionCount])
 
   // Wheel: accumulate delta and change section when over threshold
   useEffect(() => {
@@ -71,8 +93,11 @@ function useFullPageScroll(sectionCount: number) {
       if (isAnimatingRef.current) return
 
       const now = Date.now()
-      if (now - lastScrollTimeRef.current > DELTA_RESET_MS)
+
+      if (now - lastScrollTimeRef.current > DELTA_RESET_MS) {
         accumulatedDeltaRef.current = 0
+      }
+
       lastScrollTimeRef.current = now
       accumulatedDeltaRef.current += e.deltaY
 
@@ -142,17 +167,19 @@ function useFullPageScroll(sectionCount: number) {
 export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const { wrapRef, currentSection } = useFullPageScroll(PROJECTS.length)
 
+  console.log("currentSection", currentSection)
+
   return (
-    <div className="relative w-full h-screen overflow-hidden">
+    <div className="relative w-full h-svh overflow-hidden">
       <div
         ref={wrapRef}
-        className="relative z-10 h-screen overflow-y-scroll [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        className="relative z-10 h-svh overflow-y-scroll overscroll-y-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
         {PROJECTS.map((hero, i) => (
           <section
             key={hero.id}
             className={cn(
-              "h-screen w-full flex flex-col items-center justify-center text-white relative overflow-hidden bg-linear-to-br",
+              "h-svh w-full flex flex-col items-center justify-center text-white relative overflow-hidden bg-linear-to-br",
               hero.gradient,
             )}
           >
@@ -171,6 +198,13 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           </section>
         ))}
       </div>
+
+      <Button
+        className="absolute bottom-20 left-10 z-10"
+        onClick={() => console.log("clicked")}
+      >
+        Archive
+      </Button>
     </div>
   )
 }
