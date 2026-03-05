@@ -4,9 +4,11 @@ import { useEffect } from "react"
 import Link from "next/link"
 
 import { useCursorStore } from "@/stores/cursorStore"
+import { useIsTouch } from "@/hooks/useIsTouch"
 
 type SplashProps = {
   title: string
+  ctaText: string
 }
 
 function TextBlock({
@@ -17,14 +19,15 @@ function TextBlock({
   text?: string
 }) {
   return (
-    <span className="inline-block px-[0.25em] font-[Helvetica] uppercase text-[clamp(3rem,15vw,10rem)] font-medium tracking-tight">
+    <span className="inline-block px-[0.25em] font-[Helvetica] uppercase text-[clamp(3rem,15vw,10rem)] font-medium">
       {children || text}
     </span>
   )
 }
 
-export default function Splash({ title }: SplashProps) {
+export default function Splash({ title, ctaText }: SplashProps) {
   const setCursor = useCursorStore((s) => s.setCursor)
+  const isTouch = useIsTouch()
 
   useEffect(() => {
     setCursor(true)
@@ -37,7 +40,6 @@ export default function Splash({ title }: SplashProps) {
         dangerouslySetInnerHTML={{
           __html: `
           .splash-marquee-track {
-            margin-left: 25%;
             animation: splash-marquee 20s linear infinite;
           }
 
@@ -64,6 +66,12 @@ export default function Splash({ title }: SplashProps) {
               <TextBlock text={title} />
             </div>
           </div>
+
+          {isTouch && (
+            <span className="absolute bottom-25 left-1/2 -translate-x-1/2 font-[Helvetica] text-[12px] font-medium uppercase text-black">
+              {ctaText}
+            </span>
+          )}
         </div>
       </Link>
     </>

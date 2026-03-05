@@ -8,7 +8,7 @@ export default function FrontendLayout({
   return (
     <>
       {children}
-      <TextCursor />
+      <TextCursor text="Click anywhere to enter" />
     </>
   )
 }
