@@ -7,11 +7,15 @@ import { useIsTouch } from "@/hooks/useIsTouch"
 import { usePointer } from "@/hooks/usePointer"
 import { cn } from "@/lib/utils"
 
+type TextCursorProps = {
+  text: string
+}
+
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t
 }
 
-export default function TextCursor() {
+export default function TextCursor({ text }: TextCursorProps) {
   const cursorEnabled = useCursorStore((s) => s.cursorEnabled)
   const isTouch = useIsTouch()
   const { position: targetPosition, isActive } = usePointer()
@@ -72,7 +76,7 @@ export default function TextCursor() {
     >
       <span className="block w-[5px] h-[5px] bg-white" />
       <span className="font-[Helvetica] text-[10px] font-medium uppercase tracking-tight text-white mt-px">
-        Click anywhere to enter
+        {text}
       </span>
     </div>
   ) : null
