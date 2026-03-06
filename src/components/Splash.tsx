@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils"
 import { useCursorStore } from "@/stores/cursorStore"
 import { useIsTouch } from "@/hooks/useIsTouch"
 
+const MARQUEE_X_OFFSET = -0.25
+
 type SplashProps = {
   title: string
   ctaText: string
@@ -23,6 +25,8 @@ export default function Splash({ title, ctaText }: SplashProps) {
   const tl = useRef<GSAPTimeline>(null)
   const centerXRef = useRef(0)
 
+  const marqueeX = () => centerXRef.current * (1 + MARQUEE_X_OFFSET)
+
   const titleWords = useMemo(
     () => title.trim().split(/\s+/).filter(Boolean),
     [title],
@@ -30,24 +34,41 @@ export default function Splash({ title, ctaText }: SplashProps) {
 
   const renderTitleWords = (prefix: string) => (
     <div className="inline-block px-[0.25em] font-[Helvetica] uppercase text-[clamp(3rem,15vw,10rem)] leading-none font-medium">
-      {titleWords.map((word, i) => (
+      {titleWords.map((word, wordIndex) => (
         <span
-          key={`${prefix}-${i}`}
-          className="inline-block overflow-hidden align-bottom"
+          key={`${prefix}-word-${wordIndex}`}
+          className="inline-block align-bottom"
         >
-          <span className="inline-block" data-splash-word>
-            {word}
-            {i < titleWords.length - 1 ? "\u00A0" : ""}
-          </span>
+          {word.split("").map((letter, letterIndex) => (
+            <span
+              key={`${prefix}-${wordIndex}-${letterIndex}`}
+              className="inline-block overflow-hidden align-bottom"
+            >
+              <span className="inline-block" data-splash-letter>
+                {letter}
+              </span>
+            </span>
+          ))}
+          {wordIndex < titleWords.length - 1 ? (
+            <span className="inline-block overflow-hidden align-bottom">
+              <span className="inline-block" data-splash-letter>
+                {"\u00A0"}
+              </span>
+            </span>
+          ) : null}
         </span>
       ))}
     </div>
   )
 
+  /**
+   * Initialize marquee animation
+   */
   useLayoutEffect(() => {
-    const words = Array.from(
-      marqueeRef.current?.querySelectorAll<HTMLElement>("[data-splash-word]") ||
-        [],
+    const letters = Array.from(
+      marqueeRef.current?.querySelectorAll<HTMLElement>(
+        "[data-splash-letter]",
+      ) || [],
     ).filter(Boolean)
 
     const marqueeEl = marqueeRef.current
@@ -59,25 +80,24 @@ export default function Splash({ title, ctaText }: SplashProps) {
         onStart: () => setShow(true),
         delay: 1,
       })
-      .set(marqueeEl, { xPercent: 0, x: centerXRef.current, force3D: false }, 0)
+      .set(marqueeEl, { xPercent: 0, x: marqueeX(), force3D: false }, 0)
       .from(
         rectRef.current,
         {
-          scale: 0.5,
+          scale: 0.25,
           opacity: 0,
           duration: 1,
           ease: "expo.out",
-          clearProps: "all",
         },
         0,
       )
       .from(
-        words,
+        letters,
         {
           yPercent: 100,
-          stagger: 0.1,
-          duration: 1,
-          delay: 0.1,
+          stagger: 0.05,
+          duration: 0.9,
+          delay: 0.2,
           ease: "expo.out",
           force3D: false,
         },
@@ -95,10 +115,10 @@ export default function Splash({ title, ctaText }: SplashProps) {
       )
       .fromTo(
         marqueeEl,
-        { xPercent: -(100 / 3), x: () => centerXRef.current },
+        { xPercent: -(100 / 3), x: marqueeX },
         {
           xPercent: -(200 / 3),
-          x: () => centerXRef.current,
+          x: marqueeX,
           duration: marqueeLoopTime,
           ease: "none",
           repeat: -1,
@@ -113,17 +133,23 @@ export default function Splash({ title, ctaText }: SplashProps) {
     }
   }, [])
 
+  /**
+   * Update marquee x position when window is resized
+   */
   useEffect(() => {
     const onResize = () => {
       centerXRef.current = window.innerWidth / 2
       if (marqueeRef.current) {
-        gsap.set(marqueeRef.current, { x: centerXRef.current })
+        gsap.set(marqueeRef.current, { x: marqueeX() })
       }
     }
     window.addEventListener("resize", onResize)
     return () => window.removeEventListener("resize", onResize)
   }, [])
 
+  /**
+   * Show custom text cursor on mount
+   */
   useEffect(() => {
     setCursor(true)
     return () => setCursor(false)
