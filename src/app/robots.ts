@@ -1,0 +1,16 @@
+import type { MetadataRoute } from "next"
+
+export default function robots(): MetadataRoute.Robots {
+  const allowIndexing = process.env.NEXT_PUBLIC_ALLOW_INDEXING === "true"
+  const shouldIndex = process.env.NODE_ENV === "production" && allowIndexing
+
+  if (!shouldIndex) {
+    return {
+      rules: [{ userAgent: "*", disallow: "/" }],
+    }
+  }
+
+  return {
+    rules: [{ userAgent: "*", allow: "/" }],
+  }
+}
