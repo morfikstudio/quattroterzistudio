@@ -4,7 +4,7 @@ export default function Page() {
   return (
     <main>
       <Splash
-        title="Welcome to Quattroterzistudio"
+        title="Welcome to Quattroterzi Studio"
         ctaText="Click anywhere to enter"
       />
     </main>

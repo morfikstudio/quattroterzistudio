@@ -1,8 +1,10 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
+import gsap from "gsap"
 
+import { cn } from "@/lib/utils"
 import { useCursorStore } from "@/stores/cursorStore"
 import { useIsTouch } from "@/hooks/useIsTouch"
 
@@ -11,23 +13,116 @@ type SplashProps = {
   ctaText: string
 }
 
-function TextBlock({
-  children = null,
-  text = "",
-}: {
-  children?: React.ReactNode
-  text?: string
-}) {
-  return (
-    <span className="inline-block px-[0.25em] font-[Helvetica] uppercase text-[clamp(3rem,15vw,10rem)] font-medium">
-      {children || text}
-    </span>
-  )
-}
-
 export default function Splash({ title, ctaText }: SplashProps) {
   const setCursor = useCursorStore((s) => s.setCursor)
   const isTouch = useIsTouch()
+  const [show, setShow] = useState(false)
+
+  const rectRef = useRef<HTMLDivElement>(null)
+  const marqueeRef = useRef<HTMLDivElement>(null)
+  const tl = useRef<GSAPTimeline>(null)
+  const centerXRef = useRef(0)
+
+  const titleWords = useMemo(
+    () => title.trim().split(/\s+/).filter(Boolean),
+    [title],
+  )
+
+  const renderTitleWords = (prefix: string) => (
+    <div className="inline-block px-[0.25em] font-[Helvetica] uppercase text-[clamp(3rem,15vw,10rem)] leading-none font-medium">
+      {titleWords.map((word, i) => (
+        <span
+          key={`${prefix}-${i}`}
+          className="inline-block overflow-hidden align-bottom"
+        >
+          <span className="inline-block" data-splash-word>
+            {word}
+            {i < titleWords.length - 1 ? "\u00A0" : ""}
+          </span>
+        </span>
+      ))}
+    </div>
+  )
+
+  useLayoutEffect(() => {
+    const words = Array.from(
+      marqueeRef.current?.querySelectorAll<HTMLElement>("[data-splash-word]") ||
+        [],
+    ).filter(Boolean)
+
+    const marqueeEl = marqueeRef.current
+    centerXRef.current = window.innerWidth / 2
+    const marqueeLoopTime = title.length * 0.3
+
+    tl.current = gsap
+      .timeline({
+        onStart: () => setShow(true),
+        delay: 1,
+      })
+      .set(marqueeEl, { xPercent: 0, x: centerXRef.current, force3D: false }, 0)
+      .from(
+        rectRef.current,
+        {
+          scale: 0.5,
+          opacity: 0,
+          duration: 1,
+          ease: "expo.out",
+          clearProps: "all",
+        },
+        0,
+      )
+      .from(
+        words,
+        {
+          yPercent: 100,
+          stagger: 0.1,
+          duration: 1,
+          delay: 0.1,
+          ease: "expo.out",
+          force3D: false,
+        },
+        0,
+      )
+      .to(
+        marqueeEl,
+        {
+          xPercent: -(100 / 3),
+          duration: marqueeLoopTime,
+          ease: "none",
+          force3D: false,
+        },
+        0,
+      )
+      .fromTo(
+        marqueeEl,
+        { xPercent: -(100 / 3), x: () => centerXRef.current },
+        {
+          xPercent: -(200 / 3),
+          x: () => centerXRef.current,
+          duration: marqueeLoopTime,
+          ease: "none",
+          repeat: -1,
+          force3D: false,
+        },
+      )
+
+    return () => {
+      if (tl.current) {
+        tl.current.kill()
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const onResize = () => {
+      centerXRef.current = window.innerWidth / 2
+      if (marqueeRef.current) {
+        gsap.set(marqueeRef.current, { x: centerXRef.current })
+      }
+    }
+    window.addEventListener("resize", onResize)
+    return () => window.removeEventListener("resize", onResize)
+  }, [])
 
   useEffect(() => {
     setCursor(true)
@@ -35,45 +130,38 @@ export default function Splash({ title, ctaText }: SplashProps) {
   }, [setCursor])
 
   return (
-    <>
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-          .splash-marquee-track {
-            animation: splash-marquee 20s linear infinite;
-          }
+    <Link href="/projects" className="cursor-none">
+      <div
+        className={cn(
+          "relative w-full h-svh overflow-hidden isolation-isolate",
+          !show ? "invisible opacity-0 pointer-events-none" : "",
+        )}
+      >
+        <div
+          ref={rectRef}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[65vw] md:max-w-[75vw] lg:max-w-[35vw] aspect-4/3 bg-black"
+        />
 
-          @keyframes splash-marquee {
-            0% {
-              transform: translateX(-0.5em);
-            }
-            100% {
-              transform: translateX(calc(-50% - 0.5em));
-            }
-          }
-          `,
-        }}
-      />
-      <Link href="/projects" className="cursor-none">
-        <div className="relative w-full h-svh overflow-hidden bg-white">
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[65vw] md:max-w-[75vw] lg:max-w-[35vw] aspect-4/3 bg-black" />
+        <div
+          className="absolute inset-0 z-10 flex items-center overflow-hidden mix-blend-difference"
+          aria-hidden
+        >
           <div
-            className="absolute inset-0 z-10 flex items-center overflow-hidden mix-blend-difference pointer-events-none"
-            aria-hidden
+            ref={marqueeRef}
+            className="inline-flex whitespace-nowrap text-white"
           >
-            <div className="splash-marquee-track inline-flex whitespace-nowrap will-change-transform text-white">
-              <TextBlock text={title} />
-              <TextBlock text={title} />
-            </div>
+            {renderTitleWords("title-1")}
+            {renderTitleWords("title-2")}
+            {renderTitleWords("title-3")}
           </div>
-
-          {isTouch && (
-            <span className="absolute bottom-25 left-1/2 -translate-x-1/2 font-[Helvetica] text-[12px] font-medium uppercase text-black">
-              {ctaText}
-            </span>
-          )}
         </div>
-      </Link>
-    </>
+
+        {isTouch && (
+          <span className="absolute bottom-25 left-1/2 -translate-x-1/2 font-[Helvetica] text-[12px] font-medium uppercase text-black">
+            {ctaText}
+          </span>
+        )}
+      </div>
+    </Link>
   )
 }
