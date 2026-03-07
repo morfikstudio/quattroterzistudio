@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import { Swiper, SwiperSlide } from "swiper/react"
-import { Mousewheel, FreeMode } from "swiper/modules"
+import { FreeMode, Mousewheel } from "swiper/modules"
 import "swiper/css"
 
 const PROJECTS = [
@@ -26,12 +26,13 @@ export default function ProjectsList() {
   const [activeIndex, setActiveIndex] = useState(0)
 
   return (
-    <div className="projects-list grid grid-cols-2 h-screen">
+    <div className="projects-list relative h-screen md:grid md:grid-cols-2">
       <style>{`
         .projects-list .swiper-slide .title {
           color: #bcbcbc;
           font-weight: 300;
           font-size: 40px;
+          text-align: left;
           transition: color 0.25s ease-out;
         }
         @media (min-width: 800px) {
@@ -41,33 +42,52 @@ export default function ProjectsList() {
         }
         .projects-list .swiper-slide-active .title {
           color: #000;
-          font-weight: 300;
         }
       `}</style>
 
-      <div className="flex items-center justify-center h-screen px-30">
+      {/* Mobile: image centered behind the swiper */}
+      <div className="md:hidden absolute inset-0 flex items-center justify-center px-12">
         <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
-          {PROJECTS.map((project, i) => {
-            const isActive = activeIndex === i
-            return (
-              <div
-                key={project.id}
-                className="absolute inset-0"
-                style={{ display: isActive ? "block" : "none" }}
-              >
-                <Image
-                  src={`https://picsum.photos/seed/${project.id}/800/600`}
-                  fill
-                  alt={project.title}
-                  className="object-cover"
-                  priority={i === 0}
-                />
-              </div>
-            )
-          })}
+          {PROJECTS.map((project, i) => (
+            <div
+              key={project.id}
+              className="absolute inset-0"
+              style={{ display: activeIndex === i ? "block" : "none" }}
+            >
+              <Image
+                src={`https://picsum.photos/seed/${project.id}/800/600`}
+                fill
+                alt={project.title}
+                className="object-cover"
+                priority={i === 0}
+              />
+            </div>
+          ))}
         </div>
       </div>
 
+      {/* Desktop: left column with image */}
+      <div className="hidden md:flex items-center justify-center h-screen px-12">
+        <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
+          {PROJECTS.map((project, i) => (
+            <div
+              key={project.id}
+              className="absolute inset-0"
+              style={{ display: activeIndex === i ? "block" : "none" }}
+            >
+              <Image
+                src={`https://picsum.photos/seed/${project.id}/800/600`}
+                fill
+                alt={project.title}
+                className="object-cover"
+                priority={i === 0}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Swiper: full width on mobile, right column on desktop */}
       <div className="relative h-screen overflow-hidden">
         <Swiper
           modules={[Mousewheel, FreeMode]}
@@ -83,12 +103,12 @@ export default function ProjectsList() {
             momentumRatio: 0.8,
             momentumVelocityRatio: 1.5,
           }}
-          onActiveIndexChange={(swiper) => setActiveIndex(swiper.realIndex)}
+          onActiveIndexChange={(s) => setActiveIndex(s.realIndex)}
           className="h-full w-full"
         >
           {PROJECTS.map((project, i) => (
             <SwiperSlide key={project.id} className="flex items-center">
-              <span className="title block leading-tight font-light uppercase">
+              <span className="title block px-6 md:px-10 leading-tight">
                 case {String(i + 1).padStart(3, "0")}
               </span>
             </SwiperSlide>
