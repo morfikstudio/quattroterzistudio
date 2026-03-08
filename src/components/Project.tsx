@@ -3,17 +3,11 @@ import Image from "next/image"
 import { urlFor } from "@/sanity/lib/image"
 import type { PROJECT_QUERY_RESULT } from "@/sanity/types"
 
-import Title from "@/components/ui/Title"
-
 type ProjectProps = NonNullable<PROJECT_QUERY_RESULT>
 
 export default function Project({ title, media }: ProjectProps) {
   return (
-    <article className="flex flex-col gap-8">
-      <header>
-        <Title>{title ?? "Untitled"}</Title>
-      </header>
-
+    <div className="flex flex-col gap-8">
       {media?.length ? (
         <div className="flex flex-col gap-6">
           {media.map((item, i) =>
@@ -31,6 +25,6 @@ export default function Project({ title, media }: ProjectProps) {
           )}
         </div>
       ) : null}
-    </article>
+    </div>
   )
 }
