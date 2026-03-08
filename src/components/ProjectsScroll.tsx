@@ -1,33 +1,17 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import Image from "next/image"
 
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
-import { cn } from "@/lib/utils"
+import { cn } from "@/utils/classNames"
+import { getSanityImageUrl } from "@/lib/sanity"
 
-import Button from "@/components/ui/Button"
+import Link from "@/components/ui/Link"
 
 const SCROLL_THRESHOLD = 50
 const DELTA_RESET_MS = 200
 const ANIMATION_DURATION_MS = 800
-
-const PROJECTS = [
-  {
-    id: 1,
-    title: "Progetto 1",
-    gradient: "from-purple-600 to-blue-600",
-  },
-  {
-    id: 2,
-    title: "Progetto 2",
-    gradient: "from-blue-600 to-cyan-600",
-  },
-  {
-    id: 3,
-    title: "Progetto 3",
-    gradient: "from-cyan-600 to-teal-600",
-  },
-] as const
 
 type ProjectsScrollProps = {
   projects: PROJECTS_QUERY_RESULT
@@ -165,9 +149,7 @@ function useFullPageScroll(sectionCount: number) {
 }
 
 export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
-  const { wrapRef, currentSection } = useFullPageScroll(PROJECTS.length)
-
-  console.log("currentSection", currentSection)
+  const { wrapRef, currentSection } = useFullPageScroll(projects.length)
 
   return (
     <div className="relative w-full h-svh overflow-hidden">
@@ -175,36 +157,56 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         ref={wrapRef}
         className="relative z-10 h-svh overflow-y-scroll overscroll-y-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
       >
-        {PROJECTS.map((hero, i) => (
-          <section
-            key={hero.id}
-            className={cn(
-              "h-svh w-full flex flex-col items-center justify-center text-white relative overflow-hidden bg-linear-to-br",
-              hero.gradient,
-            )}
-          >
-            <div
-              className={cn(
-                "text-center px-8 transition-all duration-700 relative z-10",
-                currentSection === i
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-10",
-              )}
+        {projects.map((p, i) => {
+          const bgUrl = getSanityImageUrl(p.media?.[0]?.asset, 1920, 1080) || ""
+          const altText = p.media?.[0]?.alt || ""
+
+          return (
+            <section
+              key={p._id}
+              className="h-svh w-full flex flex-col items-center justify-center text-white relative overflow-hidden"
             >
-              <h1 className="text-6xl md:text-8xl font-bold mb-4 drop-shadow-2xl">
-                {hero.title}
-              </h1>
-            </div>
-          </section>
-        ))}
+              <div className="absolute inset-0 z-0 transform-[translateZ(0)]">
+                <Image
+                  src={bgUrl}
+                  alt={altText}
+                  fill
+                  className="object-cover"
+                  sizes="100vw"
+                  priority={i < 2}
+                />
+              </div>
+
+              <div
+                className={cn(
+                  "text-center px-8 transition-all duration-700 relative z-10",
+                  currentSection === i
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-10",
+                )}
+              >
+                <h1 className="text-6xl md:text-8xl font-bold mb-4 drop-shadow-2xl">
+                  {p.title}
+                </h1>
+              </div>
+
+              <div className="absolute top-1/2 -translate-y-1/2 left-[5vw] aspect-4/3 w-[35vw]">
+                <Image
+                  src={getSanityImageUrl(p.media?.[0]?.asset, 600, 400) || ""}
+                  alt={altText}
+                  fill
+                  className="object-cover"
+                  priority={i < 2}
+                />
+              </div>
+            </section>
+          )
+        })}
       </div>
 
-      <Button
-        className="absolute bottom-20 left-10 z-10"
-        onClick={() => console.log("clicked")}
-      >
-        Archive
-      </Button>
+      <div className="absolute bottom-20 left-10 z-10">
+        <Link href="/archive">Archive</Link>
+      </div>
     </div>
   )
 }

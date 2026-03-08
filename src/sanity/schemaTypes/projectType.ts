@@ -1,4 +1,5 @@
 import { FolderIcon } from "@sanity/icons"
+import { orderRankField } from "@sanity/orderable-document-list"
 import { defineArrayMember, defineField, defineType } from "sanity"
 
 export const projectType = defineType({
@@ -7,6 +8,7 @@ export const projectType = defineType({
   type: "document",
   icon: FolderIcon,
   fields: [
+    orderRankField({ type: "project" }),
     defineField({
       name: "title",
       type: "string",
@@ -32,7 +34,9 @@ export const projectType = defineType({
               title: "Alternative text",
               validation: (rule) =>
                 rule.custom((value, context) => {
-                  const parent = context?.parent as { asset?: { _ref?: string } }
+                  const parent = context?.parent as {
+                    asset?: { _ref?: string }
+                  }
                   return !value && parent?.asset?._ref
                     ? "Alt text is required when an image is present"
                     : true

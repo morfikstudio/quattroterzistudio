@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import gsap from "gsap"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/utils/classNames"
 import { useCursorStore } from "@/stores/cursorStore"
 import { useIsTouch } from "@/hooks/useIsTouch"
 

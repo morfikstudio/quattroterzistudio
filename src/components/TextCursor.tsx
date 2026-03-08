@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, useMemo } from "react"
 import { useCursorStore } from "@/stores/cursorStore"
 import { useIsTouch } from "@/hooks/useIsTouch"
 import { usePointer } from "@/hooks/usePointer"
-import { cn } from "@/lib/utils"
+import { cn } from "@/utils/classNames"
 
 type TextCursorProps = {
   text: string
@@ -31,8 +31,8 @@ export default function TextCursor({ text }: TextCursorProps) {
 
   function tick() {
     setPosition((prev) => ({
-      x: lerp(prev.x, targetRef.current.x, 0.075),
-      y: lerp(prev.y, targetRef.current.y, 0.075),
+      x: lerp(prev.x, targetRef.current.x, 0.09),
+      y: lerp(prev.y, targetRef.current.y, 0.09),
     }))
 
     rafRef.current = requestAnimationFrame(tick)

@@ -1,6 +1,7 @@
-import { ButtonHTMLAttributes, PropsWithChildren } from "react"
+import Link from "next/link"
+import { LinkHTMLAttributes, PropsWithChildren } from "react"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/utils/classNames"
 
 const variants = {
   primary:
@@ -12,25 +13,26 @@ const variants = {
 const base =
   "cursor-pointer px-4 py-2 rounded-md text-sm font-medium border transition-colors"
 
-type ButtonProps = PropsWithChildren<
-  ButtonHTMLAttributes<HTMLButtonElement> & {
+type LinkProps = PropsWithChildren<
+  LinkHTMLAttributes<HTMLAnchorElement> & {
     variant?: keyof typeof variants
   }
 >
 
-export default function Button({
+export default function LinkComponent({
   variant = "primary",
   className = "",
+  href = "",
   children,
   ...props
-}: ButtonProps) {
+}: LinkProps) {
   return (
-    <button
-      type="button"
+    <Link
+      href={href}
       className={cn(base, variants[variant], className)}
       {...props}
     >
       {children}
-    </button>
+    </Link>
   )
 }

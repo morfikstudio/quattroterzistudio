@@ -26,6 +26,7 @@ export type Project = {
   _createdAt: string
   _updatedAt: string
   _rev: string
+  orderRank?: string
   title?: string
   slug?: Slug
   media?: Array<{
@@ -110,14 +111,14 @@ export type SanityFileAsset = {
   title?: string
   description?: string
   altText?: string
-  sha1hash?: string
-  extension?: string
-  mimeType?: string
-  size?: number
-  assetId?: string
+  sha1hash: string
+  extension: string
+  mimeType: string
+  size: number
+  assetId: string
   uploadId?: string
-  path?: string
-  url?: string
+  path: string
+  url: string
   source?: SanityAssetSourceData
 }
 
@@ -139,14 +140,14 @@ export type SanityImageAsset = {
   title?: string
   description?: string
   altText?: string
-  sha1hash?: string
-  extension?: string
-  mimeType?: string
-  size?: number
-  assetId?: string
+  sha1hash: string
+  extension: string
+  mimeType: string
+  size: number
+  assetId: string
   uploadId?: string
-  path?: string
-  url?: string
+  path: string
+  url: string
   metadata?: SanityImageMetadata
   source?: SanityAssetSourceData
 }
@@ -177,9 +178,10 @@ export declare const internalGroqTypeReferenceTo: unique symbol
 
 // Source: src/sanity/lib/queries.ts
 // Variable: PROJECTS_QUERY
-// Query: *[_type == "project" && defined(slug.current)]|order(_createdAt desc)[0...50]{_id,title,slug,media}
+// Query: *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{_id,orderRank,title,slug,media}
 export type PROJECTS_QUERY_RESULT = Array<{
   _id: string
+  orderRank: string | null
   title: string | null
   slug: Slug
   media: Array<{
@@ -222,7 +224,7 @@ export type PROJECT_QUERY_RESULT = {
 import "@sanity/client"
 declare module "@sanity/client" {
   interface SanityQueries {
-    '*[_type == "project" && defined(slug.current)]|order(_createdAt desc)[0...50]{_id,title,slug,media}': PROJECTS_QUERY_RESULT
+    '*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{_id,orderRank,title,slug,media}': PROJECTS_QUERY_RESULT
     '*[_type == "project" && defined(slug.current)]{ "slug": slug.current }': PROJECT_SLUGS_QUERY_RESULT
     '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    title,\n    slug,\n    media[]\n  }': PROJECT_QUERY_RESULT
   }

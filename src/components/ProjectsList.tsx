@@ -4,6 +4,9 @@ import { useState } from "react"
 import Image from "next/image"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { FreeMode, Mousewheel } from "swiper/modules"
+
+import Link from "@/components/ui/Link"
+
 import "swiper/css"
 
 const PROJECTS = [
@@ -114,6 +117,10 @@ export default function ProjectsList() {
             </SwiperSlide>
           ))}
         </Swiper>
+      </div>
+
+      <div className="absolute bottom-20 left-10 z-10">
+        <Link href="/projects">Selected</Link>
       </div>
     </div>
   )
