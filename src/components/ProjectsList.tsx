@@ -28,8 +28,12 @@ type ImageRect = { top: number; left: number; width: number; height: number }
 
 export default function ProjectsList() {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null)
   const [imageRect, setImageRect] = useState<ImageRect | null>(null)
   const [itemHeight, setItemHeight] = useState(0)
+
+  // Se c'è un hover, mostra quell'immagine; altrimenti quella attiva da scroll
+  const displayIndex = hoverIndex !== null ? hoverIndex : activeIndex
 
   const containerRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
@@ -193,22 +197,43 @@ export default function ProjectsList() {
     LOOP_ITEMS.map((project, i) => {
       const realIndex = i % N
       const isActive = realIndex === activeIndex
+      const isHovered = hoverIndex === realIndex
       return (
         <li
           key={i}
           style={{ height: itemHeight || `${100 / SLIDES_PER_VIEW}vh` }}
-          className="flex items-center"
+          className="flex items-center cursor-pointer"
+          onMouseEnter={() => setHoverIndex(realIndex)}
+          onMouseLeave={() => setHoverIndex(null)}
         >
-          <span
-            className="block px-6 md:px-10 leading-tight uppercase"
-            style={{
-              fontSize: "clamp(40px, 5.5vw, 70px)",
-              fontWeight: 300,
-              color: white ? "white" : isActive ? "#000" : "#bcbcbc",
-              transition: "color 0.2s ease-out",
-            }}
-          >
-            case {String(realIndex + 1).padStart(3, "0")}
+          {/* padding wrapper */}
+          <span className="px-6 md:px-10">
+            {/* inline-block così l'underline è largo quanto il testo */}
+            <span
+              className="relative inline-block leading-tight"
+              style={{
+                fontSize: "clamp(40px, 5.5vw, 70px)",
+                fontWeight: 300,
+                color: white
+                  ? "white"
+                  : isHovered || isActive
+                    ? "#000"
+                    : "#bcbcbc",
+                transition: "color 0.35s ease-out",
+              }}
+            >
+              case {String(realIndex + 1).padStart(3, "0")}
+              {/* Underline: clip-path per animare L→R su enter, R→L su exit */}
+              <span
+                className="absolute left-0 bottom-0 w-full"
+                style={{
+                  height: "2px",
+                  backgroundColor: "currentColor",
+                  clipPath: isHovered ? "inset(0 0% 0 0)" : "inset(0 100% 0 0)",
+                  transition: "clip-path 0.4s ease-out",
+                }}
+              />
+            </span>
           </span>
         </li>
       )
@@ -227,7 +252,7 @@ export default function ProjectsList() {
             <div
               key={project.id}
               className="absolute inset-0"
-              style={{ display: activeIndex === i ? "block" : "none" }}
+              style={{ display: displayIndex === i ? "block" : "none" }}
             >
               <Image
                 src={`https://picsum.photos/seed/${project.id}/800/600`}
@@ -248,7 +273,7 @@ export default function ProjectsList() {
             <div
               key={project.id}
               className="absolute inset-0"
-              style={{ display: activeIndex === i ? "block" : "none" }}
+              style={{ display: displayIndex === i ? "block" : "none" }}
             >
               <Image
                 src={`https://picsum.photos/seed/${project.id}/800/600`}
