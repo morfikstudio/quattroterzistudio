@@ -1,13 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import { Swiper, SwiperSlide } from "swiper/react"
-import { FreeMode, Mousewheel } from "swiper/modules"
-
-import Link from "@/components/ui/Link"
-
-import "swiper/css"
 
 const PROJECTS = [
   { id: "10", title: "Casa sul Lago" },
@@ -23,34 +17,212 @@ const PROJECTS = [
   { id: "110", title: "Showroom Design" },
 ]
 
+const N = PROJECTS.length
 const SLIDES_PER_VIEW = 7
+const FRICTION = 0.92
+const WHEEL_MULT = 0.6
+// 3 copies: pre | real | post — garantisce loop fluido in entrambe le direzioni
+const LOOP_ITEMS = [...PROJECTS, ...PROJECTS, ...PROJECTS]
+
+type ImageRect = { top: number; left: number; width: number; height: number }
 
 export default function ProjectsList() {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [imageRect, setImageRect] = useState<ImageRect | null>(null)
+  const [itemHeight, setItemHeight] = useState(0)
+
+  const containerRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
+  const mirrorRef = useRef<HTMLUListElement>(null)
+  const imageRef = useRef<HTMLDivElement>(null)
+
+  const translateRef = useRef(0)
+  const velocityRef = useRef(0)
+  const rafRef = useRef<number>(0)
+
+  // Calcola il translate iniziale: primo item del blocco centrale centrato
+  const getInitialTranslate = useCallback((h: number) => {
+    const ih = h / SLIDES_PER_VIEW
+    return h / 2 - N * ih - ih / 2
+  }, [])
+
+  // Applica transform a lista e mirror (stesso valore = allineamento garantito)
+  const applyTransform = useCallback((translate: number) => {
+    const t = `translate3d(0, ${translate}px, 0)`
+    if (listRef.current) listRef.current.style.transform = t
+    if (mirrorRef.current) mirrorRef.current.style.transform = t
+    translateRef.current = translate
+  }, [])
+
+  // Loop fix: mantiene il translate nel range del blocco centrale
+  const loopFix = useCallback(
+    (translate: number, ih: number) => {
+      const span = N * ih
+      if (
+        translate >
+        getInitialTranslate(containerRef.current?.clientHeight ?? 0) + span / 2
+      )
+        return translate - span
+      if (
+        translate <
+        getInitialTranslate(containerRef.current?.clientHeight ?? 0) - span / 2
+      )
+        return translate + span
+      return translate
+    },
+    [getInitialTranslate],
+  )
+
+  // Aggiorna l'indice attivo dal translate corrente
+  const updateActiveIndex = useCallback(
+    (translate: number, ih: number, containerH: number) => {
+      if (ih === 0) return
+      const rawIndex = (containerH / 2 - translate) / ih - 0.5
+      const fullIndex = Math.round(rawIndex)
+      const realIndex = ((fullIndex % N) + N) % N
+      setActiveIndex(realIndex)
+    },
+    [],
+  )
+
+  // Init/resize
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const init = () => {
+      const h = el.clientHeight
+      const ih = h / SLIDES_PER_VIEW
+      setItemHeight(ih)
+      const initial = getInitialTranslate(h)
+      applyTransform(initial)
+      updateActiveIndex(initial, ih, h)
+    }
+    init()
+    window.addEventListener("resize", init)
+    return () => window.removeEventListener("resize", init)
+  }, [getInitialTranslate, applyTransform, updateActiveIndex])
+
+  // Image bounds per il mirror clip
+  useEffect(() => {
+    const el = imageRef.current
+    if (!el) return
+    const update = () => {
+      const r = el.getBoundingClientRect()
+      setImageRect({
+        top: r.top,
+        left: r.left,
+        width: r.width,
+        height: r.height,
+      })
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    window.addEventListener("resize", update)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener("resize", update)
+    }
+  }, [])
+
+  // Animazione momentum
+  const animate = useCallback(() => {
+    const el = containerRef.current
+    if (!el) return
+    velocityRef.current *= FRICTION
+    if (Math.abs(velocityRef.current) < 0.1) {
+      velocityRef.current = 0
+      return
+    }
+    const ih = el.clientHeight / SLIDES_PER_VIEW
+    const next = loopFix(translateRef.current + velocityRef.current, ih)
+    applyTransform(next)
+    updateActiveIndex(next, ih, el.clientHeight)
+    rafRef.current = requestAnimationFrame(animate)
+  }, [loopFix, applyTransform, updateActiveIndex])
+
+  // Wheel
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      velocityRef.current -= e.deltaY * WHEEL_MULT
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = requestAnimationFrame(animate)
+    }
+    el.addEventListener("wheel", onWheel, { passive: false })
+    return () => el.removeEventListener("wheel", onWheel)
+  }, [animate])
+
+  // Touch
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    let lastY = 0
+    const onTouchStart = (e: TouchEvent) => {
+      lastY = e.touches[0].clientY
+      velocityRef.current = 0
+      cancelAnimationFrame(rafRef.current)
+    }
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault()
+      const y = e.touches[0].clientY
+      const delta = y - lastY
+      lastY = y
+      velocityRef.current = delta
+      const ih = el.clientHeight / SLIDES_PER_VIEW
+      const next = loopFix(translateRef.current + delta, ih)
+      applyTransform(next)
+      updateActiveIndex(next, ih, el.clientHeight)
+    }
+    const onTouchEnd = () => {
+      rafRef.current = requestAnimationFrame(animate)
+    }
+    el.addEventListener("touchstart", onTouchStart, { passive: true })
+    el.addEventListener("touchmove", onTouchMove, { passive: false })
+    el.addEventListener("touchend", onTouchEnd, { passive: true })
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart)
+      el.removeEventListener("touchmove", onTouchMove)
+      el.removeEventListener("touchend", onTouchEnd)
+    }
+  }, [animate, loopFix, applyTransform, updateActiveIndex])
+
+  const renderItems = (white = false) =>
+    LOOP_ITEMS.map((project, i) => {
+      const realIndex = i % N
+      const isActive = realIndex === activeIndex
+      return (
+        <li
+          key={i}
+          style={{ height: itemHeight || `${100 / SLIDES_PER_VIEW}vh` }}
+          className="flex items-center"
+        >
+          <span
+            className="block px-6 md:px-10 leading-tight uppercase"
+            style={{
+              fontSize: "clamp(40px, 5.5vw, 70px)",
+              fontWeight: 300,
+              color: white ? "white" : isActive ? "#000" : "#bcbcbc",
+              transition: "color 0.2s ease-out",
+            }}
+          >
+            case {String(realIndex + 1).padStart(3, "0")}
+          </span>
+        </li>
+      )
+    })
 
   return (
     <div className="projects-list relative h-screen md:grid md:grid-cols-2">
-      <style>{`
-        .projects-list .swiper-slide .title {
-          color: #bcbcbc;
-          font-weight: 300;
-          font-size: 40px;
-          text-align: left;
-          transition: color 0.25s ease-out;
-        }
-        @media (min-width: 800px) {
-          .projects-list .swiper-slide .title {
-            font-size: 70px;
-          }
-        }
-        .projects-list .swiper-slide-active .title {
-          color: #000;
-        }
-      `}</style>
-
-      {/* Mobile: image centered behind the swiper */}
-      <div className="md:hidden absolute inset-0 flex items-center justify-center px-12">
-        <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
+      {/* Mobile: immagine centrata dietro */}
+      <div className="md:hidden absolute inset-0 flex items-center justify-center px-13">
+        <div
+          ref={imageRef}
+          className="relative w-full"
+          style={{ aspectRatio: "4/3" }}
+        >
           {PROJECTS.map((project, i) => (
             <div
               key={project.id}
@@ -69,7 +241,7 @@ export default function ProjectsList() {
         </div>
       </div>
 
-      {/* Desktop: left column with image */}
+      {/* Desktop: colonna sinistra immagine */}
       <div className="hidden md:flex items-center justify-center h-screen px-12">
         <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
           {PROJECTS.map((project, i) => (
@@ -90,37 +262,48 @@ export default function ProjectsList() {
         </div>
       </div>
 
-      {/* Swiper: full width on mobile, right column on desktop */}
-      <div className="relative h-screen overflow-hidden">
-        <Swiper
-          modules={[Mousewheel, FreeMode]}
-          direction="vertical"
-          loop
-          centeredSlides
-          slidesPerView={SLIDES_PER_VIEW}
-          speed={400}
-          mousewheel={{ sensitivity: 1, thresholdDelta: 2 }}
-          freeMode={{
-            enabled: true,
-            momentum: true,
-            momentumRatio: 0.8,
-            momentumVelocityRatio: 1.5,
-          }}
-          onActiveIndexChange={(s) => setActiveIndex(s.realIndex)}
-          className="h-full w-full"
+      {/* Lista principale */}
+      <div ref={containerRef} className="relative h-screen overflow-hidden">
+        {/* Master list */}
+        <ul
+          ref={listRef}
+          className="absolute inset-x-0 top-0 list-none m-0 p-0"
+          style={{ willChange: "transform" }}
         >
-          {PROJECTS.map((project, i) => (
-            <SwiperSlide key={project.id} className="flex items-center">
-              <span className="title block px-6 md:px-10 leading-tight">
-                case {String(i + 1).padStart(3, "0")}
-              </span>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </div>
+          {renderItems(false)}
+        </ul>
 
-      <div className="absolute bottom-20 left-10 z-10">
-        <Link href="/projects">Selected</Link>
+        {/* Mirror overlay: solo mobile, clippato ai bounds dell'immagine */}
+        {imageRect && imageRect.width > 0 && itemHeight > 0 && (
+          <div
+            className="md:hidden absolute overflow-hidden pointer-events-none"
+            style={{
+              top: imageRect.top,
+              left: imageRect.left,
+              width: imageRect.width,
+              height: imageRect.height,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: -imageRect.top,
+                left: -imageRect.left,
+                width: "100vw",
+                height: "100vh",
+                overflow: "hidden",
+              }}
+            >
+              <ul
+                ref={mirrorRef}
+                className="absolute inset-x-0 top-0 list-none m-0 p-0"
+                style={{ willChange: "transform" }}
+              >
+                {renderItems(true)}
+              </ul>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
