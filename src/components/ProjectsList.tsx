@@ -39,6 +39,8 @@ export default function ProjectsList() {
   const listRef = useRef<HTMLUListElement>(null)
   const mirrorRef = useRef<HTMLUListElement>(null)
   const imageRef = useRef<HTMLDivElement>(null)
+  // Ref array per gli <a> del blocco centrale — usati per spostare il focus da tastiera
+  const itemRefs = useRef<(HTMLAnchorElement | null)[]>(Array(N).fill(null))
 
   const translateRef = useRef(0)
   const velocityRef = useRef(0)
@@ -244,22 +246,64 @@ export default function ProjectsList() {
     }
   }, [animate, loopFix, applyTransform, updateActiveIndex])
 
+  // Navigazione da tastiera: ArrowDown/Up spostano di un item e muovono il focus
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return
+      e.preventDefault()
+      const ih = el.clientHeight / SLIDES_PER_VIEW
+      // Legge l'indice corrente direttamente dal translate (nessuna closure stale)
+      const rawIndex = (el.clientHeight / 2 - translateRef.current) / ih - 0.5
+      const currentRealIndex = ((Math.round(rawIndex) % N) + N) % N
+      const direction = e.key === "ArrowDown" ? 1 : -1
+      const nextRealIndex = (((currentRealIndex + direction) % N) + N) % N
+      // scrollToItem usa il blocco centrale (indice N + realIndex)
+      scrollToItem(N + nextRealIndex)
+      // Sposta il focus sull'<a> del prossimo item (preventScroll: la lista lo porta lei)
+      itemRefs.current[nextRealIndex]?.focus({ preventScroll: true })
+    }
+    el.addEventListener("keydown", onKeyDown)
+    return () => el.removeEventListener("keydown", onKeyDown)
+  }, [scrollToItem])
+
   const renderItems = (white = false) =>
     LOOP_ITEMS.map((project, i) => {
       const realIndex = i % N
       const isActive = realIndex === activeIndex
       const isHovered = hoverIndex === realIndex
+      // Solo il blocco centrale (copia N..2N-1) è tabbabile e visibile agli screen reader
+      const isMiddleCopy = i >= N && i < 2 * N
       return (
         <li
           key={i}
           style={{ height: itemHeight || `${100 / SLIDES_PER_VIEW}vh` }}
           className="flex items-center px-6 md:px-10"
+          aria-hidden={!isMiddleCopy || undefined}
         >
           <a
             href="#"
-            className="relative inline-block leading-tight cursor-pointer"
+            // Solo il blocco centrale è nel tab order; i duplicati sono aria-hidden e non tabbabili
+            tabIndex={isMiddleCopy ? 0 : -1}
+            ref={
+              isMiddleCopy
+                ? (el) => {
+                    itemRefs.current[realIndex] = el
+                  }
+                : undefined
+            }
+            aria-current={isActive && isMiddleCopy ? "true" : undefined}
+            // aria-label espone il titolo reale del progetto agli screen reader
+            aria-label={`${PROJECTS[realIndex].title}, case ${String(realIndex + 1).padStart(3, "0")}`}
+            className="relative inline-block leading-tight cursor-pointer focus-visible:outline-none"
             onMouseEnter={() => setHoverIndex(realIndex)}
             onMouseLeave={() => setHoverIndex(null)}
+            onFocus={() => {
+              setHoverIndex(realIndex)
+              if (isMiddleCopy) scrollToItem(i)
+            }}
+            onBlur={() => setHoverIndex(null)}
             onClick={(e) => {
               e.preventDefault()
               scrollToItem(i)
@@ -341,19 +385,27 @@ export default function ProjectsList() {
       </div>
 
       {/* Lista principale */}
-      <div ref={containerRef} className="relative h-screen overflow-hidden">
+      <div
+        ref={containerRef}
+        className="relative h-screen overflow-hidden"
+        aria-label="Lista progetti"
+        role="region"
+      >
         {/* Master list */}
         <ul
           ref={listRef}
+          role="list"
+          aria-label="Progetti"
           className="absolute inset-x-0 top-0 list-none m-0 p-0"
           style={{ willChange: "transform" }}
         >
           {renderItems(false)}
         </ul>
 
-        {/* Mirror overlay: solo mobile, clippato ai bounds dell'immagine */}
+        {/* Mirror overlay: solo mobile, clippato ai bounds dell'immagine — nascosto agli screen reader */}
         {imageRect && imageRect.width > 0 && itemHeight > 0 && (
           <div
+            aria-hidden="true"
             className="md:hidden absolute overflow-hidden pointer-events-none"
             style={{
               top: imageRect.top,
