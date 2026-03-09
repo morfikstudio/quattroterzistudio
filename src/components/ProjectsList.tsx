@@ -129,6 +129,33 @@ export default function ProjectsList() {
     }
   }, [])
 
+  // Anima verso un item specifico (click) — durata fissa con easeOutQuart
+  const scrollToItem = useCallback(
+    (itemIndex: number) => {
+      const el = containerRef.current
+      if (!el) return
+      velocityRef.current = 0
+      cancelAnimationFrame(rafRef.current)
+      const ih = el.clientHeight / SLIDES_PER_VIEW
+      const rawTarget = el.clientHeight / 2 - (itemIndex + 0.5) * ih
+      const target = loopFix(rawTarget, ih)
+      const startTranslate = translateRef.current
+      const startTime = performance.now()
+      const DURATION = 700 // ms
+      const step = (now: number) => {
+        const t = Math.min((now - startTime) / DURATION, 1)
+        // easeOutQuart: parte veloce, rallenta molto verso la fine
+        const eased = 1 - Math.pow(1 - t, 4)
+        const next = startTranslate + (target - startTranslate) * eased
+        applyTransform(next)
+        updateActiveIndex(next, ih, el.clientHeight)
+        if (t < 1) rafRef.current = requestAnimationFrame(step)
+      }
+      rafRef.current = requestAnimationFrame(step)
+    },
+    [loopFix, applyTransform, updateActiveIndex],
+  )
+
   // Animazione momentum
   const animate = useCallback(() => {
     const el = containerRef.current
@@ -205,6 +232,7 @@ export default function ProjectsList() {
           className="flex items-center cursor-pointer"
           onMouseEnter={() => setHoverIndex(realIndex)}
           onMouseLeave={() => setHoverIndex(null)}
+          onClick={() => scrollToItem(i)}
         >
           {/* padding wrapper */}
           <span className="px-6 md:px-10">
