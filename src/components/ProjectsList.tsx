@@ -44,7 +44,7 @@ export default function ProjectsList() {
   const velocityRef = useRef(0)
   const rafRef = useRef<number>(0)
 
-  // Calcola il translate iniziale: primo item del blocco centrale centrato
+  //primo item del blocco centrale centrato
   const getInitialTranslate = useCallback((h: number) => {
     const ih = h / SLIDES_PER_VIEW
     return h / 2 - N * ih - ih / 2
@@ -58,7 +58,6 @@ export default function ProjectsList() {
     translateRef.current = translate
   }, [])
 
-  // Loop fix: mantiene il translate nel range del blocco centrale
   const loopFix = useCallback(
     (translate: number, ih: number) => {
       const span = N * ih
@@ -129,7 +128,7 @@ export default function ProjectsList() {
     }
   }, [])
 
-  // Anima verso un item specifico (click) — durata fissa con easeOutQuart
+  // item specifico (click)
   const scrollToItem = useCallback(
     (itemIndex: number) => {
       const el = containerRef.current
@@ -156,13 +155,38 @@ export default function ProjectsList() {
     [loopFix, applyTransform, updateActiveIndex],
   )
 
+  // Snap magnetico
+  const snapToNearest = useCallback(() => {
+    const el = containerRef.current
+    if (!el) return
+    const ih = el.clientHeight / SLIDES_PER_VIEW
+    // Trova il fullIndex intero più vicino alla posizione corrente
+    const rawIndex = (el.clientHeight / 2 - translateRef.current) / ih - 0.5
+    const fullIndex = Math.round(rawIndex)
+    const rawTarget = el.clientHeight / 2 - (fullIndex + 0.5) * ih
+    const target = loopFix(rawTarget, ih)
+    const startTranslate = translateRef.current
+    const startTime = performance.now()
+    const DURATION = 500
+    const step = (now: number) => {
+      const t = Math.min((now - startTime) / DURATION, 1)
+      const eased = 1 - Math.pow(1 - t, 4)
+      const next = startTranslate + (target - startTranslate) * eased
+      applyTransform(next)
+      updateActiveIndex(next, ih, el.clientHeight)
+      if (t < 1) rafRef.current = requestAnimationFrame(step)
+    }
+    rafRef.current = requestAnimationFrame(step)
+  }, [loopFix, applyTransform, updateActiveIndex])
+
   // Animazione momentum
   const animate = useCallback(() => {
     const el = containerRef.current
     if (!el) return
     velocityRef.current *= FRICTION
-    if (Math.abs(velocityRef.current) < 0.1) {
+    if (Math.abs(velocityRef.current) < 1.5) {
       velocityRef.current = 0
+      snapToNearest()
       return
     }
     const ih = el.clientHeight / SLIDES_PER_VIEW
@@ -170,7 +194,7 @@ export default function ProjectsList() {
     applyTransform(next)
     updateActiveIndex(next, ih, el.clientHeight)
     rafRef.current = requestAnimationFrame(animate)
-  }, [loopFix, applyTransform, updateActiveIndex])
+  }, [loopFix, applyTransform, updateActiveIndex, snapToNearest])
 
   // Wheel
   useEffect(() => {
@@ -229,40 +253,41 @@ export default function ProjectsList() {
         <li
           key={i}
           style={{ height: itemHeight || `${100 / SLIDES_PER_VIEW}vh` }}
-          className="flex items-center cursor-pointer"
-          onMouseEnter={() => setHoverIndex(realIndex)}
-          onMouseLeave={() => setHoverIndex(null)}
-          onClick={() => scrollToItem(i)}
+          className="flex items-center px-6 md:px-10"
         >
-          {/* padding wrapper */}
-          <span className="px-6 md:px-10">
-            {/* inline-block così l'underline è largo quanto il testo */}
+          <a
+            href="#"
+            className="relative inline-block leading-tight cursor-pointer"
+            onMouseEnter={() => setHoverIndex(realIndex)}
+            onMouseLeave={() => setHoverIndex(null)}
+            onClick={(e) => {
+              e.preventDefault()
+              scrollToItem(i)
+            }}
+            style={{
+              fontSize: "clamp(40px, 5.5vw, 70px)",
+              fontWeight: 300,
+              color: white
+                ? "white"
+                : isHovered || isActive
+                  ? "#000"
+                  : "#bcbcbc",
+              transition: "color 0.35s ease-out",
+              textDecoration: "none",
+            }}
+          >
+            case {String(realIndex + 1).padStart(3, "0")}
+            {/* Underline: clip-path per animare L→R su enter, R→L su exit */}
             <span
-              className="relative inline-block leading-tight"
+              className="absolute left-0 bottom-0 w-full"
               style={{
-                fontSize: "clamp(40px, 5.5vw, 70px)",
-                fontWeight: 300,
-                color: white
-                  ? "white"
-                  : isHovered || isActive
-                    ? "#000"
-                    : "#bcbcbc",
-                transition: "color 0.35s ease-out",
+                height: "2px",
+                backgroundColor: "currentColor",
+                clipPath: isHovered ? "inset(0 0% 0 0)" : "inset(0 100% 0 0)",
+                transition: "clip-path 0.4s ease-out",
               }}
-            >
-              case {String(realIndex + 1).padStart(3, "0")}
-              {/* Underline: clip-path per animare L→R su enter, R→L su exit */}
-              <span
-                className="absolute left-0 bottom-0 w-full"
-                style={{
-                  height: "2px",
-                  backgroundColor: "currentColor",
-                  clipPath: isHovered ? "inset(0 0% 0 0)" : "inset(0 100% 0 0)",
-                  transition: "clip-path 0.4s ease-out",
-                }}
-              />
-            </span>
-          </span>
+            />
+          </a>
         </li>
       )
     })
