@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 
 const PROJECTS = [
@@ -39,12 +39,17 @@ export default function ProjectsList() {
   const listRef = useRef<HTMLUListElement>(null)
   const mirrorRef = useRef<HTMLUListElement>(null)
   const imageRef = useRef<HTMLDivElement>(null)
-  // Ref array per gli <a> del blocco centrale — usati per spostare il focus da tastiera
+  // Ref focus da tastiera
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>(Array(N).fill(null))
+  // Refs per lo scale dell'immagine (mobile + desktop)
+  const mobileImgRef = useRef<HTMLDivElement>(null)
+  const desktopImgRef = useRef<HTMLDivElement>(null)
 
   const translateRef = useRef(0)
   const velocityRef = useRef(0)
   const rafRef = useRef<number>(0)
+  const imageScaleRef = useRef(1)
+  const scaleRafRef = useRef<number>(0)
 
   //primo item del blocco centrale centrato
   const getInitialTranslate = useCallback((h: number) => {
@@ -52,7 +57,7 @@ export default function ProjectsList() {
     return h / 2 - N * ih - ih / 2
   }, [])
 
-  // Applica transform a lista e mirror (stesso valore = allineamento garantito)
+  // Applica transform a lista e mirror
   const applyTransform = useCallback((translate: number) => {
     const t = `translate3d(0, ${translate}px, 0)`
     if (listRef.current) listRef.current.style.transform = t
@@ -89,6 +94,36 @@ export default function ProjectsList() {
     },
     [],
   )
+
+  // Applica scale ai wrapper immagine via DOM
+  const applyImageScale = useCallback((scale: number) => {
+    const t = `scale(${scale})`
+    if (mobileImgRef.current) mobileImgRef.current.style.transform = t
+    if (desktopImgRef.current) desktopImgRef.current.style.transform = t
+    imageScaleRef.current = scale
+  }, [])
+
+  // RAF loop indipendente: lerpa lo scale verso il target calcolato dalla velocity
+  const startScaleLoop = useCallback(() => {
+    cancelAnimationFrame(scaleRafRef.current)
+    const MAX_VEL = 35 // px/frame oltre cui si raggiunge il minimo
+    const MIN_SCALE = 0.92 // massimo scale-down di 0.4
+    const LERP = 0.12
+    const tick = () => {
+      const vel = Math.abs(velocityRef.current)
+      const target = Math.max(MIN_SCALE, 1 - (vel / MAX_VEL) * (1 - MIN_SCALE))
+      const next =
+        imageScaleRef.current + (target - imageScaleRef.current) * LERP
+      applyImageScale(next)
+      // Continua finché non è tornato a 1 e la velocity è ferma
+      if (Math.abs(next - 1) > 0.001 || vel > 0.5) {
+        scaleRafRef.current = requestAnimationFrame(tick)
+      } else {
+        applyImageScale(1)
+      }
+    }
+    scaleRafRef.current = requestAnimationFrame(tick)
+  }, [applyImageScale])
 
   // Init/resize
   useEffect(() => {
@@ -207,10 +242,11 @@ export default function ProjectsList() {
       velocityRef.current -= e.deltaY * WHEEL_MULT
       cancelAnimationFrame(rafRef.current)
       rafRef.current = requestAnimationFrame(animate)
+      startScaleLoop()
     }
     el.addEventListener("wheel", onWheel, { passive: false })
     return () => el.removeEventListener("wheel", onWheel)
-  }, [animate])
+  }, [animate, startScaleLoop])
 
   // Touch
   useEffect(() => {
@@ -221,6 +257,7 @@ export default function ProjectsList() {
       lastY = e.touches[0].clientY
       velocityRef.current = 0
       cancelAnimationFrame(rafRef.current)
+      startScaleLoop()
     }
     const onTouchMove = (e: TouchEvent) => {
       e.preventDefault()
@@ -244,7 +281,7 @@ export default function ProjectsList() {
       el.removeEventListener("touchmove", onTouchMove)
       el.removeEventListener("touchend", onTouchEnd)
     }
-  }, [animate, loopFix, applyTransform, updateActiveIndex])
+  }, [animate, loopFix, applyTransform, updateActiveIndex, startScaleLoop])
 
   // Navigazione da tastiera: ArrowDown/Up spostano di un item e muovono il focus
   useEffect(() => {
@@ -328,7 +365,7 @@ export default function ProjectsList() {
                 height: "2px",
                 backgroundColor: "currentColor",
                 clipPath: isHovered ? "inset(0 0% 0 0)" : "inset(0 100% 0 0)",
-                transition: "clip-path 0.4s ease-out",
+                transition: "clip-path 0.65s ease-in-out",
               }}
             />
           </a>
@@ -341,9 +378,15 @@ export default function ProjectsList() {
       {/* Mobile: immagine centrata dietro */}
       <div className="md:hidden absolute inset-0 flex items-center justify-center px-13">
         <div
-          ref={imageRef}
+          ref={(el) => {
+            // imageRef serve al mirror, mobileImgRef riceve lo scale
+            ;(
+              imageRef as React.MutableRefObject<HTMLDivElement | null>
+            ).current = el
+            mobileImgRef.current = el
+          }}
           className="relative w-full"
-          style={{ aspectRatio: "4/3" }}
+          style={{ aspectRatio: "4/3", transformOrigin: "center" }}
         >
           {PROJECTS.map((project, i) => (
             <div
@@ -365,7 +408,11 @@ export default function ProjectsList() {
 
       {/* Desktop: colonna sinistra immagine */}
       <div className="hidden md:flex items-center justify-center h-screen px-12">
-        <div className="relative w-full" style={{ aspectRatio: "4/3" }}>
+        <div
+          ref={desktopImgRef}
+          className="relative w-full"
+          style={{ aspectRatio: "4/3", transformOrigin: "center" }}
+        >
           {PROJECTS.map((project, i) => (
             <div
               key={project.id}
