@@ -1,9 +1,15 @@
 "use client"
 
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import React, { useRef, useState } from "react"
 import Image from "next/image"
 
-const PROJECTS = [
+import { useScrollList, SLIDES_PER_VIEW } from "@/hooks/useScrollList"
+import { useImageScale } from "@/hooks/useImageScale"
+import { useMirrorRect } from "@/hooks/useMirrorRect"
+
+type Project = { id: string; title: string }
+
+const PROJECTS: Project[] = [
   { id: "10", title: "Casa sul Lago" },
   { id: "20", title: "Residenza Borghese" },
   { id: "30", title: "Loft Industriale" },
@@ -18,300 +24,46 @@ const PROJECTS = [
 ]
 
 const N = PROJECTS.length
-const SLIDES_PER_VIEW = 7
-const FRICTION = 0.92
-const WHEEL_MULT = 0.6
-// 3 copies: pre | real | post — garantisce loop fluido in entrambe le direzioni
-const LOOP_ITEMS = [...PROJECTS, ...PROJECTS, ...PROJECTS]
 
-type ImageRect = { top: number; left: number; width: number; height: number }
+/** Array triplo usato per il loop infinito: [pre | reale | post] */
+const LOOP_ITEMS: Project[] = [...PROJECTS, ...PROJECTS, ...PROJECTS]
 
 export default function ProjectsList() {
-  const [activeIndex, setActiveIndex] = useState(0)
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
-  const [imageRect, setImageRect] = useState<ImageRect | null>(null)
-  const [itemHeight, setItemHeight] = useState(0)
 
-  // Se c'è un hover, mostra quell'immagine; altrimenti quella attiva da scroll
+  // velocityRef è condiviso tra i due hook:
+  // useScrollList lo scrive, useImageScale lo legge
+  const velocityRef = useRef(0)
+
+  const { mobileImgRef, desktopImgRef, startScaleLoop } = useImageScale({
+    velocityRef,
+  })
+
+  const {
+    activeIndex,
+    itemHeight,
+    scrollToItem,
+    containerRef,
+    listRef,
+    mirrorRef,
+    itemRefs,
+  } = useScrollList({ n: N, velocityRef, onScrollStart: startScaleLoop })
+
+  const { imageRef, imageRect } = useMirrorRect()
+
+  // L'immagine mostrata segue l'hover; in assenza di hover segue lo scroll
   const displayIndex = hoverIndex !== null ? hoverIndex : activeIndex
 
-  const containerRef = useRef<HTMLDivElement>(null)
-  const listRef = useRef<HTMLUListElement>(null)
-  const mirrorRef = useRef<HTMLUListElement>(null)
-  const imageRef = useRef<HTMLDivElement>(null)
-  // Ref focus da tastiera
-  const itemRefs = useRef<(HTMLAnchorElement | null)[]>(Array(N).fill(null))
-  // Refs per lo scale dell'immagine (mobile + desktop)
-  const mobileImgRef = useRef<HTMLDivElement>(null)
-  const desktopImgRef = useRef<HTMLDivElement>(null)
-
-  const translateRef = useRef(0)
-  const velocityRef = useRef(0)
-  const rafRef = useRef<number>(0)
-  const imageScaleRef = useRef(1)
-  const scaleRafRef = useRef<number>(0)
-
-  //primo item del blocco centrale centrato
-  const getInitialTranslate = useCallback((h: number) => {
-    const ih = h / SLIDES_PER_VIEW
-    return h / 2 - N * ih - ih / 2
-  }, [])
-
-  // Applica transform a lista e mirror
-  const applyTransform = useCallback((translate: number) => {
-    const t = `translate3d(0, ${translate}px, 0)`
-    if (listRef.current) listRef.current.style.transform = t
-    if (mirrorRef.current) mirrorRef.current.style.transform = t
-    translateRef.current = translate
-  }, [])
-
-  const loopFix = useCallback(
-    (translate: number, ih: number) => {
-      const span = N * ih
-      if (
-        translate >
-        getInitialTranslate(containerRef.current?.clientHeight ?? 0) + span / 2
-      )
-        return translate - span
-      if (
-        translate <
-        getInitialTranslate(containerRef.current?.clientHeight ?? 0) - span / 2
-      )
-        return translate + span
-      return translate
-    },
-    [getInitialTranslate],
-  )
-
-  // Aggiorna l'indice attivo dal translate corrente
-  const updateActiveIndex = useCallback(
-    (translate: number, ih: number, containerH: number) => {
-      if (ih === 0) return
-      const rawIndex = (containerH / 2 - translate) / ih - 0.5
-      const fullIndex = Math.round(rawIndex)
-      const realIndex = ((fullIndex % N) + N) % N
-      setActiveIndex(realIndex)
-    },
-    [],
-  )
-
-  // Applica scale ai wrapper immagine via DOM
-  const applyImageScale = useCallback((scale: number) => {
-    const t = `scale(${scale})`
-    if (mobileImgRef.current) mobileImgRef.current.style.transform = t
-    if (desktopImgRef.current) desktopImgRef.current.style.transform = t
-    imageScaleRef.current = scale
-  }, [])
-
-  // RAF loop indipendente: lerpa lo scale verso il target calcolato dalla velocity
-  const startScaleLoop = useCallback(() => {
-    cancelAnimationFrame(scaleRafRef.current)
-    const MAX_VEL = 35 // px/frame oltre cui si raggiunge il minimo
-    const MIN_SCALE = 0.92 // massimo scale-down di 0.4
-    const LERP = 0.12
-    const tick = () => {
-      const vel = Math.abs(velocityRef.current)
-      const target = Math.max(MIN_SCALE, 1 - (vel / MAX_VEL) * (1 - MIN_SCALE))
-      const next =
-        imageScaleRef.current + (target - imageScaleRef.current) * LERP
-      applyImageScale(next)
-      // Continua finché non è tornato a 1 e la velocity è ferma
-      if (Math.abs(next - 1) > 0.001 || vel > 0.5) {
-        scaleRafRef.current = requestAnimationFrame(tick)
-      } else {
-        applyImageScale(1)
-      }
-    }
-    scaleRafRef.current = requestAnimationFrame(tick)
-  }, [applyImageScale])
-
-  // Init/resize
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const init = () => {
-      const h = el.clientHeight
-      const ih = h / SLIDES_PER_VIEW
-      setItemHeight(ih)
-      const initial = getInitialTranslate(h)
-      applyTransform(initial)
-      updateActiveIndex(initial, ih, h)
-    }
-    init()
-    window.addEventListener("resize", init)
-    return () => window.removeEventListener("resize", init)
-  }, [getInitialTranslate, applyTransform, updateActiveIndex])
-
-  // Image bounds per il mirror clip
-  useEffect(() => {
-    const el = imageRef.current
-    if (!el) return
-    const update = () => {
-      const r = el.getBoundingClientRect()
-      setImageRect({
-        top: r.top,
-        left: r.left,
-        width: r.width,
-        height: r.height,
-      })
-    }
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    window.addEventListener("resize", update)
-    return () => {
-      ro.disconnect()
-      window.removeEventListener("resize", update)
-    }
-  }, [])
-
-  // item specifico (click)
-  const scrollToItem = useCallback(
-    (itemIndex: number) => {
-      const el = containerRef.current
-      if (!el) return
-      velocityRef.current = 0
-      cancelAnimationFrame(rafRef.current)
-      const ih = el.clientHeight / SLIDES_PER_VIEW
-      const rawTarget = el.clientHeight / 2 - (itemIndex + 0.5) * ih
-      const target = loopFix(rawTarget, ih)
-      const startTranslate = translateRef.current
-      const startTime = performance.now()
-      const DURATION = 700 // ms
-      const step = (now: number) => {
-        const t = Math.min((now - startTime) / DURATION, 1)
-        // easeOutQuart: parte veloce, rallenta molto verso la fine
-        const eased = 1 - Math.pow(1 - t, 4)
-        const next = startTranslate + (target - startTranslate) * eased
-        applyTransform(next)
-        updateActiveIndex(next, ih, el.clientHeight)
-        if (t < 1) rafRef.current = requestAnimationFrame(step)
-      }
-      rafRef.current = requestAnimationFrame(step)
-    },
-    [loopFix, applyTransform, updateActiveIndex],
-  )
-
-  // Snap magnetico
-  const snapToNearest = useCallback(() => {
-    const el = containerRef.current
-    if (!el) return
-    const ih = el.clientHeight / SLIDES_PER_VIEW
-    // Trova il fullIndex intero più vicino alla posizione corrente
-    const rawIndex = (el.clientHeight / 2 - translateRef.current) / ih - 0.5
-    const fullIndex = Math.round(rawIndex)
-    const rawTarget = el.clientHeight / 2 - (fullIndex + 0.5) * ih
-    const target = loopFix(rawTarget, ih)
-    const startTranslate = translateRef.current
-    const startTime = performance.now()
-    const DURATION = 500
-    const step = (now: number) => {
-      const t = Math.min((now - startTime) / DURATION, 1)
-      const eased = 1 - Math.pow(1 - t, 4)
-      const next = startTranslate + (target - startTranslate) * eased
-      applyTransform(next)
-      updateActiveIndex(next, ih, el.clientHeight)
-      if (t < 1) rafRef.current = requestAnimationFrame(step)
-    }
-    rafRef.current = requestAnimationFrame(step)
-  }, [loopFix, applyTransform, updateActiveIndex])
-
-  // Animazione momentum
-  const animate = useCallback(() => {
-    const el = containerRef.current
-    if (!el) return
-    velocityRef.current *= FRICTION
-    if (Math.abs(velocityRef.current) < 1.5) {
-      velocityRef.current = 0
-      snapToNearest()
-      return
-    }
-    const ih = el.clientHeight / SLIDES_PER_VIEW
-    const next = loopFix(translateRef.current + velocityRef.current, ih)
-    applyTransform(next)
-    updateActiveIndex(next, ih, el.clientHeight)
-    rafRef.current = requestAnimationFrame(animate)
-  }, [loopFix, applyTransform, updateActiveIndex, snapToNearest])
-
-  // Wheel
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault()
-      velocityRef.current -= e.deltaY * WHEEL_MULT
-      cancelAnimationFrame(rafRef.current)
-      rafRef.current = requestAnimationFrame(animate)
-      startScaleLoop()
-    }
-    el.addEventListener("wheel", onWheel, { passive: false })
-    return () => el.removeEventListener("wheel", onWheel)
-  }, [animate, startScaleLoop])
-
-  // Touch
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    let lastY = 0
-    const onTouchStart = (e: TouchEvent) => {
-      lastY = e.touches[0].clientY
-      velocityRef.current = 0
-      cancelAnimationFrame(rafRef.current)
-      startScaleLoop()
-    }
-    const onTouchMove = (e: TouchEvent) => {
-      e.preventDefault()
-      const y = e.touches[0].clientY
-      const delta = y - lastY
-      lastY = y
-      velocityRef.current = delta
-      const ih = el.clientHeight / SLIDES_PER_VIEW
-      const next = loopFix(translateRef.current + delta, ih)
-      applyTransform(next)
-      updateActiveIndex(next, ih, el.clientHeight)
-    }
-    const onTouchEnd = () => {
-      rafRef.current = requestAnimationFrame(animate)
-    }
-    el.addEventListener("touchstart", onTouchStart, { passive: true })
-    el.addEventListener("touchmove", onTouchMove, { passive: false })
-    el.addEventListener("touchend", onTouchEnd, { passive: true })
-    return () => {
-      el.removeEventListener("touchstart", onTouchStart)
-      el.removeEventListener("touchmove", onTouchMove)
-      el.removeEventListener("touchend", onTouchEnd)
-    }
-  }, [animate, loopFix, applyTransform, updateActiveIndex, startScaleLoop])
-
-  // Navigazione da tastiera: ArrowDown/Up spostano di un item e muovono il focus
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return
-      e.preventDefault()
-      const ih = el.clientHeight / SLIDES_PER_VIEW
-      // Legge l'indice corrente direttamente dal translate (nessuna closure stale)
-      const rawIndex = (el.clientHeight / 2 - translateRef.current) / ih - 0.5
-      const currentRealIndex = ((Math.round(rawIndex) % N) + N) % N
-      const direction = e.key === "ArrowDown" ? 1 : -1
-      const nextRealIndex = (((currentRealIndex + direction) % N) + N) % N
-      // scrollToItem usa il blocco centrale (indice N + realIndex)
-      scrollToItem(N + nextRealIndex)
-      // Sposta il focus sull'<a> del prossimo item (preventScroll: la lista lo porta lei)
-      itemRefs.current[nextRealIndex]?.focus({ preventScroll: true })
-    }
-    el.addEventListener("keydown", onKeyDown)
-    return () => el.removeEventListener("keydown", onKeyDown)
-  }, [scrollToItem])
+  // ─── Render items ─────────────────────────────────────────────────────────
 
   const renderItems = (white = false) =>
     LOOP_ITEMS.map((project, i) => {
       const realIndex = i % N
       const isActive = realIndex === activeIndex
       const isHovered = hoverIndex === realIndex
-      // Solo il blocco centrale (copia N..2N-1) è tabbabile e visibile agli screen reader
+      // Solo il blocco centrale è nel tab order e visibile agli screen reader
       const isMiddleCopy = i >= N && i < 2 * N
+
       return (
         <li
           key={i}
@@ -321,7 +73,6 @@ export default function ProjectsList() {
         >
           <a
             href="#"
-            // Solo il blocco centrale è nel tab order; i duplicati sono aria-hidden e non tabbabili
             tabIndex={isMiddleCopy ? 0 : -1}
             ref={
               isMiddleCopy
@@ -331,7 +82,6 @@ export default function ProjectsList() {
                 : undefined
             }
             aria-current={isActive && isMiddleCopy ? "true" : undefined}
-            // aria-label espone il titolo reale del progetto agli screen reader
             aria-label={`${PROJECTS[realIndex].title}, case ${String(realIndex + 1).padStart(3, "0")}`}
             className="relative inline-block leading-tight cursor-pointer focus-visible:outline-none"
             onMouseEnter={() => setHoverIndex(realIndex)}
@@ -358,7 +108,6 @@ export default function ProjectsList() {
             }}
           >
             case {String(realIndex + 1).padStart(3, "0")}
-            {/* Underline: clip-path per animare L→R su enter, R→L su exit */}
             <span
               className="absolute left-0 bottom-0 w-full"
               style={{
@@ -373,18 +122,21 @@ export default function ProjectsList() {
       )
     })
 
+  // ─── Callback ref mobile: stesso nodo per mirror + scale ─────────────────
+
+  const mobileImageCallbackRef = (el: HTMLDivElement | null) => {
+    imageRef.current = el
+    mobileImgRef.current = el
+  }
+
+  // ─── JSX ──────────────────────────────────────────────────────────────────
+
   return (
     <div className="projects-list relative h-screen md:grid md:grid-cols-2">
-      {/* Mobile: immagine centrata dietro */}
+      {/* Mobile*/}
       <div className="md:hidden absolute inset-0 flex items-center justify-center px-13">
         <div
-          ref={(el) => {
-            // imageRef serve al mirror, mobileImgRef riceve lo scale
-            ;(
-              imageRef as React.MutableRefObject<HTMLDivElement | null>
-            ).current = el
-            mobileImgRef.current = el
-          }}
+          ref={mobileImageCallbackRef}
           className="relative w-full"
           style={{ aspectRatio: "4/3", transformOrigin: "center" }}
         >
@@ -406,7 +158,7 @@ export default function ProjectsList() {
         </div>
       </div>
 
-      {/* Desktop: colonna sinistra immagine */}
+      {/* Desktop */}
       <div className="hidden md:flex items-center justify-center h-screen px-12">
         <div
           ref={desktopImgRef}
@@ -431,14 +183,13 @@ export default function ProjectsList() {
         </div>
       </div>
 
-      {/* Lista principale */}
+      {/* Lista desktop */}
       <div
         ref={containerRef}
-        className="relative h-screen overflow-hidden"
-        aria-label="Lista progetti"
         role="region"
+        aria-label="Lista progetti"
+        className="relative h-screen overflow-hidden"
       >
-        {/* Master list */}
         <ul
           ref={listRef}
           role="list"
@@ -449,7 +200,7 @@ export default function ProjectsList() {
           {renderItems(false)}
         </ul>
 
-        {/* Mirror overlay: solo mobile, clippato ai bounds dell'immagine — nascosto agli screen reader */}
+        {/* Mirror lista mobile */}
         {imageRect && imageRect.width > 0 && itemHeight > 0 && (
           <div
             aria-hidden="true"
