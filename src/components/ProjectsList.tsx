@@ -158,12 +158,12 @@ export default function ProjectsList() {
           font-size: clamp(40px, 5.5vw, 70px);
           font-weight: 300;
           text-decoration: none;
-          transition: color 0.35s ease-out;
+          transition: color 0.45s cubic-bezier(0.6, 0, 0.2, 1);
         }
         .pl-underline {
           height: 2px;
           background-color: currentColor;
-          transition: clip-path 0.65s ease-in-out;
+          transition: clip-path 0.45s cubic-bezier(0.6, 0, 0.2, 1);
         }
         .pl-scroll-list {
           will-change: transform;

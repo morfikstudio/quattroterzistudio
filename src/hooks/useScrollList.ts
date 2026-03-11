@@ -175,6 +175,17 @@ export function useScrollList({
     return () => window.removeEventListener("resize", init)
   }, [getInitialTranslate, applyTransform, updateActiveIndex])
 
+  // Il mirror è renderizzato condizionalmente (solo mobile, solo dopo che
+  // itemHeight e imageRect sono disponibili). Quando monta, mirrorRef.current
+  // diventa non-null DOPO che init() ha già chiamato applyTransform, quindi
+  // il mirror parte con transform:none. Questo effect lo riallinea ogni volta
+  // che si attacca al DOM, senza influire sullo scroll in corso.
+  useEffect(() => {
+    if (mirrorRef.current) {
+      mirrorRef.current.style.transform = `translate3d(0, ${translateRef.current}px, 0)`
+    }
+  })
+
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
