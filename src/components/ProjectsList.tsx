@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useRef, useState } from "react"
+import React, { useCallback, useRef, useState } from "react"
 import Image from "next/image"
 
 import { useScrollList, SLIDES_PER_VIEW } from "@/hooks/useScrollList"
@@ -30,6 +30,8 @@ const LOOP_ITEMS: Project[] = [...PROJECTS, ...PROJECTS, ...PROJECTS]
 
 export default function ProjectsList() {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
+  const [isScrolling, setIsScrolling] = useState(false)
+  const scrollCheckRef = useRef<number>(0)
 
   // velocityRef è condiviso tra i due hook:
   // useScrollList lo scrive, useImageScale lo legge
@@ -39,6 +41,22 @@ export default function ProjectsList() {
     velocityRef,
   })
 
+  // Quando lo scroll inizia: avvia scale loop + traccia velocità via RAF.
+  // Quando velocityRef scende sotto soglia → isScrolling = false → torna l'hover.
+  const handleScrollStart = useCallback(() => {
+    startScaleLoop()
+    setIsScrolling(true)
+    cancelAnimationFrame(scrollCheckRef.current)
+    const check = () => {
+      if (Math.abs(velocityRef.current) > 0.5) {
+        scrollCheckRef.current = requestAnimationFrame(check)
+      } else {
+        setIsScrolling(false)
+      }
+    }
+    scrollCheckRef.current = requestAnimationFrame(check)
+  }, [startScaleLoop, velocityRef])
+
   const {
     activeIndex,
     itemHeight,
@@ -47,12 +65,17 @@ export default function ProjectsList() {
     listRef,
     mirrorRef,
     itemRefs,
-  } = useScrollList({ n: N, velocityRef, onScrollStart: startScaleLoop })
+  } = useScrollList({ n: N, velocityRef, onScrollStart: handleScrollStart })
 
   const { imageRef, imageRect } = useMirrorRect()
 
-  // L'immagine mostrata segue l'hover; in assenza di hover segue lo scroll
-  const displayIndex = hoverIndex !== null ? hoverIndex : activeIndex
+  // Durante lo scroll l'immagine segue l'elemento attivo;
+  // solo a riposo (mouse fermo) segue l'hover.
+  const displayIndex = isScrolling
+    ? activeIndex
+    : hoverIndex !== null
+      ? hoverIndex
+      : activeIndex
 
   // ─── Render items ─────────────────────────────────────────────────────────
 
@@ -180,7 +203,7 @@ export default function ProjectsList() {
 
         {/* Desktop */}
         <div className="hidden md:flex items-center justify-center h-screen px-12">
-          <div ref={desktopImgRef} className="pl-img-wrapper relative w-full">
+          <div ref={desktopImgRef} className="pl-img-wrapper relative w-3/4">
             {PROJECTS.map((project, i) => (
               <div
                 key={project.id}
