@@ -83,7 +83,7 @@ export default function ProjectsList() {
             }
             aria-current={isActive && isMiddleCopy ? "true" : undefined}
             aria-label={`${PROJECTS[realIndex].title}, case ${String(realIndex + 1).padStart(3, "0")}`}
-            className="relative inline-block leading-tight cursor-pointer focus-visible:outline-none"
+            className="pl-item-link relative inline-block leading-tight cursor-pointer focus-visible:outline-none"
             onMouseEnter={() => setHoverIndex(realIndex)}
             onMouseLeave={() => setHoverIndex(null)}
             onFocus={() => {
@@ -96,25 +96,18 @@ export default function ProjectsList() {
               scrollToItem(i)
             }}
             style={{
-              fontSize: "clamp(40px, 5.5vw, 70px)",
-              fontWeight: 300,
               color: white
                 ? "white"
                 : isHovered || isActive
                   ? "#000"
                   : "#bcbcbc",
-              transition: "color 0.35s ease-out",
-              textDecoration: "none",
             }}
           >
             case {String(realIndex + 1).padStart(3, "0")}
             <span
-              className="absolute left-0 bottom-0 w-full"
+              className="pl-underline absolute left-0 bottom-0 w-full"
               style={{
-                height: "2px",
-                backgroundColor: "currentColor",
                 clipPath: isHovered ? "inset(0 0% 0 0)" : "inset(0 100% 0 0)",
-                transition: "clip-path 0.65s ease-in-out",
               }}
             />
           </a>
@@ -132,107 +125,123 @@ export default function ProjectsList() {
   // ─── JSX ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="projects-list relative h-screen md:grid md:grid-cols-2">
-      {/* Mobile*/}
-      <div className="md:hidden absolute inset-0 flex items-center justify-center px-13">
-        <div
-          ref={mobileImageCallbackRef}
-          className="relative w-full"
-          style={{ aspectRatio: "4/3", transformOrigin: "center" }}
-        >
-          {PROJECTS.map((project, i) => (
-            <div
-              key={project.id}
-              className="absolute inset-0"
-              style={{ display: displayIndex === i ? "block" : "none" }}
-            >
-              <Image
-                src={`https://picsum.photos/seed/${project.id}/800/600`}
-                fill
-                alt={project.title}
-                className="object-cover"
-                priority={i === 0}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
+    <>
+      <style>{`
+        .pl-img-wrapper {
+          aspect-ratio: 4 / 3;
+          transform-origin: center;
+        }
+        .pl-item-link {
+          font-size: clamp(40px, 5.5vw, 70px);
+          font-weight: 300;
+          text-decoration: none;
+          transition: color 0.35s ease-out;
+        }
+        .pl-underline {
+          height: 2px;
+          background-color: currentColor;
+          transition: clip-path 0.65s ease-in-out;
+        }
+        .pl-scroll-list {
+          will-change: transform;
+        }
+        .pl-mirror-inner {
+          position: absolute;
+          width: 100vw;
+          height: 100vh;
+          overflow: hidden;
+        }
+      `}</style>
 
-      {/* Desktop */}
-      <div className="hidden md:flex items-center justify-center h-screen px-12">
-        <div
-          ref={desktopImgRef}
-          className="relative w-full"
-          style={{ aspectRatio: "4/3", transformOrigin: "center" }}
-        >
-          {PROJECTS.map((project, i) => (
-            <div
-              key={project.id}
-              className="absolute inset-0"
-              style={{ display: displayIndex === i ? "block" : "none" }}
-            >
-              <Image
-                src={`https://picsum.photos/seed/${project.id}/800/600`}
-                fill
-                alt={project.title}
-                className="object-cover"
-                priority={i === 0}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Lista desktop */}
-      <div
-        ref={containerRef}
-        role="region"
-        aria-label="Lista progetti"
-        className="relative h-screen overflow-hidden"
-      >
-        <ul
-          ref={listRef}
-          role="list"
-          aria-label="Progetti"
-          className="absolute inset-x-0 top-0 list-none m-0 p-0"
-          style={{ willChange: "transform" }}
-        >
-          {renderItems(false)}
-        </ul>
-
-        {/* Mirror lista mobile */}
-        {imageRect && imageRect.width > 0 && itemHeight > 0 && (
+      <div className="projects-list relative h-screen md:grid md:grid-cols-2">
+        {/* Mobile */}
+        <div className="md:hidden absolute inset-0 flex items-center justify-center px-13">
           <div
-            aria-hidden="true"
-            className="md:hidden absolute overflow-hidden pointer-events-none"
-            style={{
-              top: imageRect.top,
-              left: imageRect.left,
-              width: imageRect.width,
-              height: imageRect.height,
-            }}
+            ref={mobileImageCallbackRef}
+            className="pl-img-wrapper relative w-full"
           >
+            {PROJECTS.map((project, i) => (
+              <div
+                key={project.id}
+                className="absolute inset-0"
+                style={{ display: displayIndex === i ? "block" : "none" }}
+              >
+                <Image
+                  src={`https://picsum.photos/seed/${project.id}/800/600`}
+                  fill
+                  alt={project.title}
+                  className="object-cover"
+                  priority={i === 0}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop */}
+        <div className="hidden md:flex items-center justify-center h-screen px-12">
+          <div ref={desktopImgRef} className="pl-img-wrapper relative w-full">
+            {PROJECTS.map((project, i) => (
+              <div
+                key={project.id}
+                className="absolute inset-0"
+                style={{ display: displayIndex === i ? "block" : "none" }}
+              >
+                <Image
+                  src={`https://picsum.photos/seed/${project.id}/800/600`}
+                  fill
+                  alt={project.title}
+                  className="object-cover"
+                  priority={i === 0}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Lista */}
+        <div
+          ref={containerRef}
+          role="region"
+          aria-label="Lista progetti"
+          className="relative h-screen overflow-hidden"
+        >
+          <ul
+            ref={listRef}
+            role="list"
+            aria-label="Progetti"
+            className="pl-scroll-list absolute inset-x-0 top-0 list-none m-0 p-0"
+          >
+            {renderItems(false)}
+          </ul>
+
+          {/* Mirror lista mobile */}
+          {imageRect && imageRect.width > 0 && itemHeight > 0 && (
             <div
+              aria-hidden="true"
+              className="md:hidden absolute overflow-hidden pointer-events-none"
               style={{
-                position: "absolute",
-                top: -imageRect.top,
-                left: -imageRect.left,
-                width: "100vw",
-                height: "100vh",
-                overflow: "hidden",
+                top: imageRect.top,
+                left: imageRect.left,
+                width: imageRect.width,
+                height: imageRect.height,
               }}
             >
-              <ul
-                ref={mirrorRef}
-                className="absolute inset-x-0 top-0 list-none m-0 p-0"
-                style={{ willChange: "transform" }}
+              <div
+                className="pl-mirror-inner"
+                style={{ top: -imageRect.top, left: -imageRect.left }}
               >
-                {renderItems(true)}
-              </ul>
+                <ul
+                  ref={mirrorRef}
+                  className="pl-scroll-list absolute inset-x-0 top-0 list-none m-0 p-0"
+                >
+                  {renderItems(true)}
+                </ul>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
