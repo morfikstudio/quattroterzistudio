@@ -174,6 +174,23 @@ export default function ProjectsList() {
           height: 100vh;
           overflow: hidden;
         }
+        .pl-fade-top,
+        .pl-fade-bottom {
+          position: absolute;
+          left: 0;
+          right: 0;
+          height: 30%;
+          pointer-events: none;
+          z-index: 2;
+        }
+        .pl-fade-top {
+          top: 0;
+          background: linear-gradient(to bottom, #fff 20%, transparent 100%);
+        }
+        .pl-fade-bottom {
+          bottom: 0;
+          background: linear-gradient(to top, #fff 20%, transparent 100%);
+        }
       `}</style>
 
       <div className="projects-list relative h-screen md:grid md:grid-cols-2">
@@ -237,6 +254,10 @@ export default function ProjectsList() {
           >
             {renderItems(false)}
           </ul>
+
+          {/* Fade top/bottom — solo mobile */}
+          <div aria-hidden="true" className="pl-fade-top md:hidden" />
+          <div aria-hidden="true" className="pl-fade-bottom md:hidden" />
 
           {/* Mirror lista mobile */}
           {imageRect && imageRect.width > 0 && itemHeight > 0 && (
