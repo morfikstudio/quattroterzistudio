@@ -1,2 +1,21 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+@keyframes icon-slide {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  30% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  31% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

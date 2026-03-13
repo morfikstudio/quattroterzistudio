@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import "./globals.css"
+import Header from "@/components/Header"
 
 const allowIndexing = process.env.NEXT_PUBLIC_ALLOW_INDEXING === "true"
 const shouldIndex = process.env.NODE_ENV === "production" && allowIndexing
@@ -26,7 +27,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="relative bg-white">{children}</body>
+      <body className="relative bg-white">
+        <Header />
+        {children}
+      </body>
     </html>
   )
 }
