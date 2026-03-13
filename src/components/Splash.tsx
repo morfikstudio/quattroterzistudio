@@ -129,6 +129,10 @@ export default function Splash({ title, ctaText }: SplashProps) {
     return () => {
       if (tl.current) {
         tl.current.kill()
+        // clear styles
+        gsap.set([marqueeEl, rectRef.current, ...letters].filter(Boolean), {
+          clearProps: "all",
+        })
       }
     }
   }, [])

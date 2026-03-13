@@ -62,11 +62,10 @@ function useGsapScroll({
       // initial clip path based on direction
       const fromClip =
         direction > 0 ? "inset(100% 0 0% 0)" : "inset(0% 0 100% 0)"
-
-      const fromYPos = direction > 0 ? "+=16px" : "-=16px"
+      const fromY = direction > 0 ? 16 : -16
 
       gsap.set(incomingSection, { zIndex: 10, clipPath: fromClip })
-      gsap.set(incomingThumb, { clipPath: fromClip })
+      gsap.set(incomingThumb, { clipPath: fromClip, y: fromY })
       gsap.set(incomingLetters, { y: "110%" })
 
       gsap
@@ -100,10 +99,11 @@ function useGsapScroll({
           incomingThumb,
           {
             clipPath: "inset(0% 0 0% 0)",
-            duration: 1,
-            ease: "expo.out",
+            y: 0,
+            duration: 0.75,
+            ease: "power4.out",
           },
-          0.5,
+          0.6,
         )
         .to(
           incomingLetters,
@@ -128,7 +128,7 @@ function useGsapScroll({
       zIndex: 1,
       clipPath: "inset(0% 0 0% 0)",
     })
-    gsap.set(thumbs[0], { clipPath: "inset(0% 0 0% 0)" })
+    gsap.set(thumbs[0], { clipPath: "inset(0% 0 0% 0)", y: 0 })
     gsap.set(words[0]?.filter(Boolean) ?? [], { y: "0%" })
 
     // hide all other sections
@@ -137,7 +137,7 @@ function useGsapScroll({
         zIndex: 0,
         clipPath: "inset(100% 0 0% 0)",
       })
-      gsap.set(thumbs[i], { clipPath: "inset(100% 0 0% 0)" })
+      gsap.set(thumbs[i], { clipPath: "inset(100% 0 0% 0)", y: 0 })
       gsap.set(words[i]?.filter(Boolean) ?? [], { y: "110%" })
     }
 
@@ -217,7 +217,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   function handleScrollIndicator() {
     setShowScrollIndicator(false)
     if (tmRef.current) clearTimeout(tmRef.current)
-    tmRef.current = setTimeout(() => setShowScrollIndicator(true), 5000)
+    tmRef.current = setTimeout(() => setShowScrollIndicator(true), 4000)
   }
 
   useGsapScroll({
@@ -250,7 +250,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             <Image
               src={getImageUrl({
                 image: p.coverImage,
-                type: "coverImage",
+                type: "cover-image",
                 breakpoint,
               })}
               fill
@@ -262,26 +262,29 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           </div>
 
           <div
-            ref={(el) => {
-              thumbsRefs.current[i] = el
-            }}
             className={cn(
               "absolute top-1/2 left-1/2 md:left-[7vw] -translate-y-1/2 -translate-x-1/2 md:translate-x-0",
-              "aspect-4/3 overflow-hidden",
               "w-[70vw] md:w-[50vw] lg:w-[35vw]",
             )}
           >
-            <Image
-              src={getImageUrl({
-                image: p.coverThumb,
-                type: "coverThumb",
-                breakpoint,
-              })}
-              alt={p.coverThumb?.alt ?? ""}
-              fill
-              className="object-cover"
-              priority={i < 2}
-            />
+            <div
+              ref={(el) => {
+                thumbsRefs.current[i] = el
+              }}
+              className="relative aspect-4/3 overflow-hidden w-full"
+            >
+              <Image
+                src={getImageUrl({
+                  image: p.coverThumb,
+                  type: "cover-thumb",
+                  breakpoint,
+                })}
+                alt={p.coverThumb?.alt ?? ""}
+                className="object-cover"
+                fill
+                priority={i < 2}
+              />
+            </div>
           </div>
 
           <div
