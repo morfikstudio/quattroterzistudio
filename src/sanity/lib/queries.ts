@@ -1,11 +1,21 @@
 import { defineQuery } from "next-sanity"
 
 export const PROJECTS_QUERY = defineQuery(
-  `*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{_id,orderRank,title,slug,media}`,
+  `*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{
+    _id,
+    orderRank,
+    title,
+    slug,
+    year,
+    coverImage,
+    coverThumb
+  }`,
 )
 
 export const PROJECT_SLUGS_QUERY = defineQuery(
-  `*[_type == "project" && defined(slug.current)]{ "slug": slug.current }`,
+  `*[_type == "project" && defined(slug.current)]{
+    "slug": slug.current
+  }`,
 )
 
 export const PROJECT_QUERY = defineQuery(
@@ -13,6 +23,16 @@ export const PROJECT_QUERY = defineQuery(
     _id,
     title,
     slug,
-    media[]
+    year,
+    coverImage,
+    media[] {
+      _type,
+      _key,
+      asset,
+      alt,
+      file,
+      url,
+      "fileUrl": file.asset->url
+    }
   }`,
 )

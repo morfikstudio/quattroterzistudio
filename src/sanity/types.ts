@@ -20,6 +20,13 @@ export type SanityImageAssetReference = {
   [internalGroqTypeReferenceTo]?: "sanity.imageAsset"
 }
 
+export type SanityFileAssetReference = {
+  _ref: string
+  _type: "reference"
+  _weak?: boolean
+  [internalGroqTypeReferenceTo]?: "sanity.fileAsset"
+}
+
 export type Project = {
   _id: string
   _type: "project"
@@ -29,15 +36,54 @@ export type Project = {
   orderRank?: string
   title?: string
   slug?: Slug
-  media?: Array<{
+  year: number
+  coverImage?: {
+    portrait?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    landscape?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    alt?: string
+  }
+  coverThumb?: {
     asset?: SanityImageAssetReference
     media?: unknown
     hotspot?: SanityImageHotspot
     crop?: SanityImageCrop
     alt?: string
     _type: "image"
-    _key: string
-  }>
+  }
+  media?: Array<
+    | {
+        asset?: SanityImageAssetReference
+        media?: unknown
+        hotspot?: SanityImageHotspot
+        crop?: SanityImageCrop
+        alt?: string
+        _type: "image"
+        _key: string
+      }
+    | {
+        file?: {
+          asset?: SanityFileAssetReference
+          media?: unknown
+          _type: "file"
+        }
+        url?: string
+        alt?: string
+        _type: "video"
+        _key: string
+      }
+  >
 }
 
 export type SanityImageCrop = {
@@ -161,6 +207,7 @@ export type Geopoint = {
 
 export type AllSanitySchemaTypes =
   | SanityImageAssetReference
+  | SanityFileAssetReference
   | Project
   | SanityImageCrop
   | SanityImageHotspot
@@ -178,54 +225,104 @@ export declare const internalGroqTypeReferenceTo: unique symbol
 
 // Source: src/sanity/lib/queries.ts
 // Variable: PROJECTS_QUERY
-// Query: *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{_id,orderRank,title,slug,media}
+// Query: *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{    _id,    orderRank,    title,    slug,    year,    coverImage,    coverThumb  }
 export type PROJECTS_QUERY_RESULT = Array<{
   _id: string
   orderRank: string | null
   title: string | null
   slug: Slug
-  media: Array<{
+  year: number
+  coverImage: {
+    portrait?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    landscape?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    alt?: string
+  } | null
+  coverThumb: {
     asset?: SanityImageAssetReference
     media?: unknown
     hotspot?: SanityImageHotspot
     crop?: SanityImageCrop
     alt?: string
     _type: "image"
-    _key: string
-  }> | null
+  } | null
 }>
 
 // Source: src/sanity/lib/queries.ts
 // Variable: PROJECT_SLUGS_QUERY
-// Query: *[_type == "project" && defined(slug.current)]{ "slug": slug.current }
+// Query: *[_type == "project" && defined(slug.current)]{    "slug": slug.current  }
 export type PROJECT_SLUGS_QUERY_RESULT = Array<{
   slug: string
 }>
 
 // Source: src/sanity/lib/queries.ts
 // Variable: PROJECT_QUERY
-// Query: *[_type == "project" && slug.current == $slug][0]{    _id,    title,    slug,    media[]  }
+// Query: *[_type == "project" && slug.current == $slug][0]{    _id,    title,    slug,    year,    coverImage,    media[] {      _type,      _key,      asset,      alt,      file,      url,      "fileUrl": file.asset->url    }  }
 export type PROJECT_QUERY_RESULT = {
   _id: string
   title: string | null
   slug: Slug | null
-  media: Array<{
-    asset?: SanityImageAssetReference
-    media?: unknown
-    hotspot?: SanityImageHotspot
-    crop?: SanityImageCrop
+  year: number
+  coverImage: {
+    portrait?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    landscape?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
     alt?: string
-    _type: "image"
-    _key: string
-  }> | null
+  } | null
+  media: Array<
+    | {
+        _type: "image"
+        _key: string
+        asset: SanityImageAssetReference | null
+        alt: string | null
+        file: null
+        url: null
+        fileUrl: null
+      }
+    | {
+        _type: "video"
+        _key: string
+        asset: null
+        alt: string | null
+        file: {
+          asset?: SanityFileAssetReference
+          media?: unknown
+          _type: "file"
+        } | null
+        url: string | null
+        fileUrl: string | null
+      }
+  > | null
 } | null
 
 // Query TypeMap
 import "@sanity/client"
 declare module "@sanity/client" {
   interface SanityQueries {
-    '*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{_id,orderRank,title,slug,media}': PROJECTS_QUERY_RESULT
-    '*[_type == "project" && defined(slug.current)]{ "slug": slug.current }': PROJECT_SLUGS_QUERY_RESULT
-    '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    title,\n    slug,\n    media[]\n  }': PROJECT_QUERY_RESULT
+    '*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverImage,\n    coverThumb\n  }': PROJECTS_QUERY_RESULT
+    '*[_type == "project" && defined(slug.current)]{\n    "slug": slug.current\n  }': PROJECT_SLUGS_QUERY_RESULT
+    '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    title,\n    slug,\n    year,\n    coverImage,\n    media[] {\n      _type,\n      _key,\n      asset,\n      alt,\n      file,\n      url,\n      "fileUrl": file.asset->url\n    }\n  }': PROJECT_QUERY_RESULT
   }
 }

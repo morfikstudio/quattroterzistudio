@@ -16,7 +16,8 @@ export default function ScrollIndicator({ show }: { show: boolean }) {
       `}</style>
       <div
         className={cn(
-          "relative w-[3px] h-[38px] overflow-hidden bg-white/20 transition-opacity duration-500 ease-out",
+          "relative w-[3px] h-[38px] overflow-hidden bg-white/20",
+          "transition-opacity duration-500 ease-out",
           show ? "opacity-100" : "opacity-0",
         )}
       >

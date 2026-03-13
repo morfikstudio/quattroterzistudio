@@ -5,7 +5,9 @@ import Image from "next/image"
 import gsap from "gsap"
 
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
-import { getSanityImageUrl } from "@/lib/sanity"
+import { cn } from "@/utils/classNames"
+import { getImageUrl } from "@/utils/media"
+import { useBreakpoint } from "@/stores/breakpointStore"
 
 import Link from "@/components/ui/Link"
 import ScrollIndicator from "@/components/ScrollIndicator"
@@ -14,13 +16,19 @@ type ProjectsScrollProps = {
   projects: PROJECTS_QUERY_RESULT
 }
 
-function useGsapScroll(
-  sectionCount: number,
-  sectionsRefs: React.MutableRefObject<(HTMLElement | null)[]>,
-  thumbsRefs: React.MutableRefObject<(HTMLDivElement | null)[]>,
-  lettersRefs: React.MutableRefObject<(HTMLSpanElement | null)[][]>,
-  onScroll: () => void,
-) {
+function useGsapScroll({
+  sectionCount,
+  sections,
+  thumbs,
+  words,
+  onStart,
+}: {
+  sectionCount: number
+  sections: (HTMLElement | null)[]
+  thumbs: (HTMLDivElement | null)[]
+  words: (HTMLSpanElement | null)[][]
+  onStart: () => void
+}) {
   const currentRef = useRef(0)
   const isAnimatingRef = useRef(false)
   const touchStartYRef = useRef(0)
@@ -38,14 +46,13 @@ function useGsapScroll(
       const prevIndex = currentRef.current
       const direction = nextIndex > prevIndex ? 1 : -1
 
-      const incomingSection = sectionsRefs.current[nextIndex]
-      const incomingThumb = thumbsRefs.current[nextIndex]
-      const incomingLetters =
-        lettersRefs.current[nextIndex]?.filter(Boolean) ?? []
+      const incomingSection = sections[nextIndex]
 
-      const outgoingSection = sectionsRefs.current[prevIndex]
-      const outgoingLetters =
-        lettersRefs.current[prevIndex]?.filter(Boolean) ?? []
+      const incomingThumb = thumbs[nextIndex]
+      const incomingLetters = words[nextIndex]?.filter(Boolean) ?? []
+
+      const outgoingSection = sections[prevIndex]
+      const outgoingLetters = words[prevIndex]?.filter(Boolean) ?? []
 
       if (!incomingSection || !incomingThumb) return
 
@@ -56,13 +63,15 @@ function useGsapScroll(
       const fromClip =
         direction > 0 ? "inset(100% 0 0% 0)" : "inset(0% 0 100% 0)"
 
+      const fromYPos = direction > 0 ? "+=16px" : "-=16px"
+
       gsap.set(incomingSection, { zIndex: 10, clipPath: fromClip })
       gsap.set(incomingThumb, { clipPath: fromClip })
       gsap.set(incomingLetters, { y: "110%" })
 
       gsap
         .timeline({
-          onStart: onScroll,
+          onStart,
           onComplete: () => {
             if (outgoingSection) {
               gsap.set(outgoingSection, { zIndex: 0 })
@@ -92,22 +101,22 @@ function useGsapScroll(
           {
             clipPath: "inset(0% 0 0% 0)",
             duration: 1,
-            ease: "expo.inOut",
+            ease: "expo.out",
           },
-          0.2,
+          0.5,
         )
         .to(
           incomingLetters,
           {
             y: "0%",
-            duration: 0.6,
+            duration: 0.5,
             ease: "expo.out",
-            stagger: 0.025,
+            stagger: 0.02,
           },
-          0.55,
+          0.5,
         )
     },
-    [sectionCount, sectionsRefs, thumbsRefs, lettersRefs],
+    [sectionCount, sections, thumbs, words],
   )
 
   // initial renderstate
@@ -115,37 +124,37 @@ function useGsapScroll(
     if (sectionCount === 0) return
 
     // show section 0
-    gsap.set(sectionsRefs.current[0], {
+    gsap.set(sections[0], {
       zIndex: 1,
       clipPath: "inset(0% 0 0% 0)",
     })
-    gsap.set(thumbsRefs.current[0], { clipPath: "inset(0% 0 0% 0)" })
-    gsap.set(lettersRefs.current[0]?.filter(Boolean) ?? [], { y: "0%" })
+    gsap.set(thumbs[0], { clipPath: "inset(0% 0 0% 0)" })
+    gsap.set(words[0]?.filter(Boolean) ?? [], { y: "0%" })
 
     // hide all other sections
     for (let i = 1; i < sectionCount; i++) {
-      gsap.set(sectionsRefs.current[i], {
+      gsap.set(sections[i], {
         zIndex: 0,
         clipPath: "inset(100% 0 0% 0)",
       })
-      gsap.set(thumbsRefs.current[i], { clipPath: "inset(100% 0 0% 0)" })
-      gsap.set(lettersRefs.current[i]?.filter(Boolean) ?? [], { y: "110%" })
+      gsap.set(thumbs[i], { clipPath: "inset(100% 0 0% 0)" })
+      gsap.set(words[i]?.filter(Boolean) ?? [], { y: "110%" })
     }
 
     return () => {
-      sectionsRefs.current.forEach((el) => {
+      sections.forEach((el) => {
         if (el) gsap.killTweensOf(el)
       })
-      thumbsRefs.current.forEach((el) => {
+      thumbs.forEach((el) => {
         if (el) gsap.killTweensOf(el)
       })
-      lettersRefs.current.forEach((letters) =>
+      words.forEach((letters) =>
         letters?.forEach((el) => {
           if (el) gsap.killTweensOf(el)
         }),
       )
     }
-  }, [sectionCount, sectionsRefs, thumbsRefs, lettersRefs])
+  }, [sectionCount, sections, thumbs, words])
 
   // wheel listener
   useEffect(() => {
@@ -196,18 +205,27 @@ function useGsapScroll(
 }
 
 export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
+  const { current: breakpoint } = useBreakpoint()
   const [showScrollIndicator, setShowScrollIndicator] = useState(true)
 
   const sectionsRefs = useRef<(HTMLElement | null)[]>([])
   const thumbsRefs = useRef<(HTMLDivElement | null)[]>([])
-  const lettersRefs = useRef<(HTMLSpanElement | null)[][]>([])
+  const wordsRefs = useRef<(HTMLSpanElement | null)[][]>([])
 
   const tmRef = useRef<NodeJS.Timeout | null>(null)
 
-  useGsapScroll(projects.length, sectionsRefs, thumbsRefs, lettersRefs, () => {
+  function handleScrollIndicator() {
     setShowScrollIndicator(false)
     if (tmRef.current) clearTimeout(tmRef.current)
     tmRef.current = setTimeout(() => setShowScrollIndicator(true), 5000)
+  }
+
+  useGsapScroll({
+    sectionCount: projects.length,
+    sections: sectionsRefs.current,
+    thumbs: thumbsRefs.current,
+    words: wordsRefs.current,
+    onStart: handleScrollIndicator,
   })
 
   useEffect(() => {
@@ -220,63 +238,79 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
   return (
     <div className="relative w-full h-svh overflow-hidden">
-      {projects.map((p, i) => {
-        const bgUrl = getSanityImageUrl(p.media?.[0]?.asset, 1920, 1080) || ""
-        const altText = p.media?.[0]?.alt || ""
+      {projects.map((p, i) => (
+        <section
+          key={p._id}
+          ref={(el) => {
+            sectionsRefs.current[i] = el
+          }}
+          className="absolute inset-0 overflow-hidden text-white"
+        >
+          <div className="absolute inset-0">
+            <Image
+              src={getImageUrl({
+                image: p.coverImage,
+                type: "coverImage",
+                breakpoint,
+              })}
+              fill
+              sizes="100vw"
+              priority={i < 2}
+              alt={p.coverImage?.alt ?? ""}
+              className="object-cover"
+            />
+          </div>
 
-        return (
-          <section
-            key={p._id}
+          <div
             ref={(el) => {
-              sectionsRefs.current[i] = el
+              thumbsRefs.current[i] = el
             }}
-            className="absolute inset-0 overflow-hidden text-white"
+            className={cn(
+              "absolute top-1/2 left-1/2 md:left-[7vw] -translate-y-1/2 -translate-x-1/2 md:translate-x-0",
+              "aspect-4/3 overflow-hidden",
+              "w-[70vw] md:w-[50vw] lg:w-[35vw]",
+            )}
           >
-            <div className="absolute inset-0">
-              <Image
-                src={bgUrl}
-                alt={altText}
-                fill
-                className="object-cover"
-                sizes="100vw"
-                priority={i < 2}
-              />
-            </div>
+            <Image
+              src={getImageUrl({
+                image: p.coverThumb,
+                type: "coverThumb",
+                breakpoint,
+              })}
+              alt={p.coverThumb?.alt ?? ""}
+              fill
+              className="object-cover"
+              priority={i < 2}
+            />
+          </div>
 
-            <div
-              ref={(el) => {
-                thumbsRefs.current[i] = el
-              }}
-              className="absolute top-1/2 -translate-y-1/2 left-[7vw] aspect-4/3 w-[35vw] overflow-hidden"
-            >
-              <Image
-                src={getSanityImageUrl(p.media?.[0]?.asset, 600, 400) || ""}
-                alt={altText}
-                fill
-                className="object-cover"
-                priority={i < 2}
-              />
-            </div>
+          <div
+            className={cn(
+              "absolute overflow-hidden",
+              "top-1/2 -translate-y-1/2 left-[14px] md:left-[calc(50%)]",
+            )}
+          >
+            <h1 className="leading-[1.2] text-5xl md:text-7xl">
+              {(p.title ?? "").split("").map((char, j) => (
+                <span
+                  key={j}
+                  ref={(el) => {
+                    if (!wordsRefs.current[i]) wordsRefs.current[i] = []
+                    wordsRefs.current[i][j] = el
+                  }}
+                  className="inline-block"
+                >
+                  {char === " " ? "\u00A0" : char}
+                </span>
+              ))}
+            </h1>
+          </div>
 
-            <div className="absolute top-1/2 left-[calc(50%)] -translate-y-1/2 overflow-hidden">
-              <h1 className="text-7xl leading-[1.2]">
-                {(p.title ?? "").split("").map((char, j) => (
-                  <span
-                    key={j}
-                    ref={(el) => {
-                      if (!lettersRefs.current[i]) lettersRefs.current[i] = []
-                      lettersRefs.current[i][j] = el
-                    }}
-                    style={{ display: "inline-block" }}
-                  >
-                    {char === " " ? "\u00A0" : char}
-                  </span>
-                ))}
-              </h1>
-            </div>
-          </section>
-        )
-      })}
+          <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px]">
+            <span className="leading-[1.2] text-sm">{p.year}</span>
+          </div>
+        </section>
+      ))}
 
       <div className="absolute bottom-20 left-10 z-10">
         <Link href="/archive">Archive</Link>
