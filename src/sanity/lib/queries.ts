@@ -31,7 +31,11 @@ export const WORK_QUERY = defineQuery(
     _id,
     title,
     slug,
+    description,
     year,
+    client,
+    sector,
+    credits,
     coverImage,
     media[] {
       _type,

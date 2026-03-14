@@ -38,7 +38,28 @@ export type Project = {
   orderRank?: string
   title?: string
   slug?: Slug
+  description?: Array<{
+    children?: Array<{
+      marks?: Array<string>
+      text?: string
+      _type: "span"
+      _key: string
+    }>
+    style?: "normal" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "blockquote"
+    listItem?: "bullet" | "number"
+    markDefs?: Array<{
+      href?: string
+      _type: "link"
+      _key: string
+    }>
+    level?: number
+    _type: "block"
+    _key: string
+  }>
   year: number
+  client?: string
+  sector?: string
+  credits?: Array<string>
   coverImage?: {
     portrait?: {
       asset?: SanityImageAssetReference
@@ -268,12 +289,33 @@ export type WORK_SLUGS_QUERY_RESULT = Array<{
 
 // Source: src/sanity/lib/queries.ts
 // Variable: WORK_QUERY
-// Query: *[_type == "project" && slug.current == $slug][0]{    _id,    title,    slug,    year,    coverImage,    media[] {      _type,      _key,      asset,      alt,      file,      url,      "fileUrl": file.asset->url    }  }
+// Query: *[_type == "project" && slug.current == $slug][0]{    _id,    title,    slug,    description,    year,    client,    sector,    credits,    coverImage,    media[] {      _type,      _key,      asset,      alt,      file,      url,      "fileUrl": file.asset->url    }  }
 export type WORK_QUERY_RESULT = {
   _id: string
   title: string | null
   slug: Slug | null
+  description: Array<{
+    children?: Array<{
+      marks?: Array<string>
+      text?: string
+      _type: "span"
+      _key: string
+    }>
+    style?: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal"
+    listItem?: "bullet" | "number"
+    markDefs?: Array<{
+      href?: string
+      _type: "link"
+      _key: string
+    }>
+    level?: number
+    _type: "block"
+    _key: string
+  }> | null
   year: number
+  client: string | null
+  sector: string | null
+  credits: Array<string> | null
   coverImage: {
     portrait?: {
       asset?: SanityImageAssetReference
@@ -323,6 +365,6 @@ declare module "@sanity/client" {
   interface SanityQueries {
     '*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverImage,\n    coverThumb\n  }': PROJECTS_QUERY_RESULT
     '*[_type == "project" && defined(slug.current)]{\n    "slug": slug.current\n  }': WORK_SLUGS_QUERY_RESULT
-    '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    title,\n    slug,\n    year,\n    coverImage,\n    media[] {\n      _type,\n      _key,\n      asset,\n      alt,\n      file,\n      url,\n      "fileUrl": file.asset->url\n    }\n  }': WORK_QUERY_RESULT
+    '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    title,\n    slug,\n    description,\n    year,\n    client,\n    sector,\n    credits,\n    coverImage,\n    media[] {\n      _type,\n      _key,\n      asset,\n      alt,\n      file,\n      url,\n      "fileUrl": file.asset->url\n    }\n  }': WORK_QUERY_RESULT
   }
 }

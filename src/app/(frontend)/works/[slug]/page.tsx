@@ -33,7 +33,15 @@ export default async function Page({
 
   return (
     <main className="container mx-auto grid grid-cols-1 gap-6 p-12">
-      <Project title={project.title ?? ""} media={project.media ?? []} />
+      <Project
+        title={project.title ?? ""}
+        description={project.description ?? []}
+        media={project.media ?? []}
+        year={project.year ?? 0}
+        client={project.client ?? ""}
+        sector={project.sector ?? ""}
+        credits={project.credits ?? []}
+      />
       <hr />
       <Link href="/projects" className="text-pink-600 hover:underline">
         &larr; Return to projects

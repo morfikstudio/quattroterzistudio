@@ -11,9 +11,10 @@ export const resolve: PresentationPluginOptions["resolve"] = {
         locations: [
           {
             title: doc?.title || "Untitled",
-            href: `/projects/${doc?.slug}`,
+            href: `/works/${doc?.slug}`,
           },
           { title: "Projects index", href: `/projects` },
+          { title: "Archive", href: `/archive` },
         ],
       }),
     }),
