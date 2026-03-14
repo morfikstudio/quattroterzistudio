@@ -1,15 +1,21 @@
 "use client"
 
-import React, { useCallback, useRef, useState } from "react"
-import Image from "next/image"
+import React, { useCallback, useEffect, useRef, useState } from "react"
+import { Swiper, SwiperSlide } from "swiper/react"
+import { FreeMode, Mousewheel } from "swiper/modules"
+import type { Swiper as SwiperType } from "swiper"
+import "swiper/css"
 
-import { useScrollList, SLIDES_PER_VIEW } from "@/hooks/useScrollList"
+import NextImage from "next/image"
+import Image from "@/components/ui/Image"
 import { useImageScale } from "@/hooks/useImageScale"
-import { useMirrorRect } from "@/hooks/useMirrorRect"
+import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
 
-type Project = { id: string; title: string }
+const SLIDES_PER_VIEW = 7
 
-const PROJECTS: Project[] = [
+// Placeholder — sostituire con dati reali Sanity quando disponibili
+type PlaceholderProject = { id: string; title: string }
+const PLACEHOLDER_PROJECTS: PlaceholderProject[] = [
   { id: "10", title: "Casa sul Lago" },
   { id: "20", title: "Residenza Borghese" },
   { id: "30", title: "Loft Industriale" },
@@ -20,132 +26,67 @@ const PROJECTS: Project[] = [
   { id: "80", title: "Cascina Ristrutturata" },
   { id: "90", title: "Atelier Fotografico" },
   { id: "100", title: "Showroom Design" },
-  { id: "110", title: "Showroom Design" },
+  { id: "110", title: "Penthouse Roma" },
 ]
 
-const N = PROJECTS.length
+type Props = { projects?: PROJECTS_QUERY_RESULT }
 
-/** Array triplo usato per il loop infinito: [pre | reale | post] */
-const LOOP_ITEMS: Project[] = [...PROJECTS, ...PROJECTS, ...PROJECTS]
-
-export default function ProjectsList() {
+export default function ProjectsList({ projects }: Props) {
+  const usePlaceholder = !projects || projects.length === 0
+  const [activeIndex, setActiveIndex] = useState(0)
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
   const [isScrolling, setIsScrolling] = useState(false)
-  const scrollCheckRef = useRef<number>(0)
 
-  // velocityRef è condiviso tra i due hook:
-  // useScrollList lo scrive, useImageScale lo legge
   const velocityRef = useRef(0)
+  const prevTranslateRef = useRef<number | null>(null)
+  const isScrollingRef = useRef(false)
+  const scrollCheckRef = useRef<number>(0)
 
   const { mobileImgRef, desktopImgRef, startScaleLoop } = useImageScale({
     velocityRef,
   })
 
-  // Quando lo scroll inizia: avvia scale loop + traccia velocità via RAF.
-  // Quando velocityRef scende sotto soglia → isScrolling = false → torna l'hover.
-  const handleScrollStart = useCallback(() => {
-    startScaleLoop()
-    setIsScrolling(true)
-    cancelAnimationFrame(scrollCheckRef.current)
-    const check = () => {
-      if (Math.abs(velocityRef.current) > 0.5) {
+  // Cleanup RAF on unmount
+  useEffect(() => {
+    return () => cancelAnimationFrame(scrollCheckRef.current)
+  }, [])
+
+  // Traccia la velocità dal delta tra frame successivi di onSetTranslate,
+  // avvia lo scale loop e gestisce il flag isScrolling.
+  const handleSetTranslate = useCallback(
+    (_swiper: SwiperType, translate: number) => {
+      if (prevTranslateRef.current !== null) {
+        velocityRef.current = translate - prevTranslateRef.current
+        startScaleLoop()
+
+        if (!isScrollingRef.current) {
+          isScrollingRef.current = true
+          setIsScrolling(true)
+        }
+
+        cancelAnimationFrame(scrollCheckRef.current)
+        const check = () => {
+          if (Math.abs(velocityRef.current) > 0.5) {
+            scrollCheckRef.current = requestAnimationFrame(check)
+          } else {
+            isScrollingRef.current = false
+            setIsScrolling(false)
+          }
+        }
         scrollCheckRef.current = requestAnimationFrame(check)
-      } else {
-        setIsScrolling(false)
       }
-    }
-    scrollCheckRef.current = requestAnimationFrame(check)
-  }, [startScaleLoop, velocityRef])
-
-  const {
-    activeIndex,
-    itemHeight,
-    scrollToItem,
-    containerRef,
-    listRef,
-    mirrorRef,
-    itemRefs,
-  } = useScrollList({ n: N, velocityRef, onScrollStart: handleScrollStart })
-
-  const { imageRef, imageRect } = useMirrorRect()
+      prevTranslateRef.current = translate
+    },
+    [startScaleLoop],
+  )
 
   // Durante lo scroll l'immagine segue l'elemento attivo;
-  // solo a riposo (mouse fermo) segue l'hover.
+  // solo a riposo segue l'hover.
   const displayIndex = isScrolling
     ? activeIndex
     : hoverIndex !== null
       ? hoverIndex
       : activeIndex
-
-  // ─── Render items ─────────────────────────────────────────────────────────
-
-  const renderItems = (white = false) =>
-    LOOP_ITEMS.map((project, i) => {
-      const realIndex = i % N
-      const isActive = realIndex === activeIndex
-      const isHovered = hoverIndex === realIndex
-      // Solo il blocco centrale è nel tab order e visibile agli screen reader
-      const isMiddleCopy = i >= N && i < 2 * N
-
-      return (
-        <li
-          key={i}
-          style={{ height: itemHeight || `${100 / SLIDES_PER_VIEW}vh` }}
-          className="flex items-center px-6 md:px-10"
-          aria-hidden={!isMiddleCopy || undefined}
-        >
-          <a
-            href="#"
-            tabIndex={isMiddleCopy ? 0 : -1}
-            ref={
-              isMiddleCopy
-                ? (el) => {
-                    itemRefs.current[realIndex] = el
-                  }
-                : undefined
-            }
-            aria-current={isActive && isMiddleCopy ? "true" : undefined}
-            aria-label={`${PROJECTS[realIndex].title}, case ${String(realIndex + 1).padStart(3, "0")}`}
-            className="pl-item-link relative inline-block leading-tight cursor-pointer focus-visible:outline-none"
-            onMouseEnter={() => setHoverIndex(realIndex)}
-            onMouseLeave={() => setHoverIndex(null)}
-            onFocus={() => {
-              setHoverIndex(realIndex)
-              if (isMiddleCopy) scrollToItem(i)
-            }}
-            onBlur={() => setHoverIndex(null)}
-            onClick={(e) => {
-              e.preventDefault()
-              scrollToItem(i)
-            }}
-            style={{
-              color: white
-                ? "white"
-                : isHovered || isActive
-                  ? "#000"
-                  : "#bcbcbc",
-            }}
-          >
-            case {String(realIndex + 1).padStart(3, "0")}
-            <span
-              className="pl-underline absolute left-0 bottom-0 w-full"
-              style={{
-                clipPath: isHovered ? "inset(0 0% 0 0)" : "inset(0 100% 0 0)",
-              }}
-            />
-          </a>
-        </li>
-      )
-    })
-
-  // ─── Callback ref mobile: stesso nodo per mirror + scale ─────────────────
-
-  const mobileImageCallbackRef = (el: HTMLDivElement | null) => {
-    imageRef.current = el
-    mobileImgRef.current = el
-  }
-
-  // ─── JSX ──────────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -164,15 +105,6 @@ export default function ProjectsList() {
           height: 2px;
           background-color: currentColor;
           transition: clip-path 0.45s cubic-bezier(0.6, 0, 0.2, 1);
-        }
-        .pl-scroll-list {
-          will-change: transform;
-        }
-        .pl-mirror-inner {
-          position: absolute;
-          width: 100vw;
-          height: 100vh;
-          overflow: hidden;
         }
         .pl-fade-top,
         .pl-fade-bottom {
@@ -193,97 +125,152 @@ export default function ProjectsList() {
         }
       `}</style>
 
-      <div className="projects-list relative h-screen md:grid md:grid-cols-2">
-        {/* Mobile */}
-        <div className="md:hidden absolute inset-0 flex items-center justify-center px-13">
-          <div
-            ref={mobileImageCallbackRef}
-            className="pl-img-wrapper relative w-full"
-          >
-            {PROJECTS.map((project, i) => (
-              <div
-                key={project.id}
-                className="absolute inset-0"
-                style={{ display: displayIndex === i ? "block" : "none" }}
-              >
-                <Image
-                  src={`https://picsum.photos/seed/${project.id}/800/600`}
-                  fill
-                  alt={project.title}
-                  className="object-cover"
-                  priority={i === 0}
-                />
-              </div>
-            ))}
+      <div className="relative h-screen md:grid md:grid-cols-2">
+        {/* Immagine — solo mobile, assoluta dietro la lista */}
+        <div className="md:hidden absolute inset-0">
+          <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw]">
+            <div
+              ref={mobileImgRef}
+              className="relative aspect-4/3 overflow-hidden w-full"
+            >
+              {usePlaceholder
+                ? PLACEHOLDER_PROJECTS.map((p, i) => (
+                    <div
+                      key={p.id}
+                      className="absolute inset-0"
+                      style={{ display: displayIndex === i ? "block" : "none" }}
+                    >
+                      <NextImage
+                        src={`https://picsum.photos/seed/${p.id}/800/600`}
+                        fill
+                        alt={p.title}
+                        className="object-cover"
+                        priority={i === 0}
+                      />
+                    </div>
+                  ))
+                : projects!.map((p, i) => (
+                    <div
+                      key={p._id}
+                      className="absolute inset-0"
+                      style={{ display: displayIndex === i ? "block" : "none" }}
+                    >
+                      <Image
+                        image={p.coverThumb}
+                        resizeId="cover-thumb"
+                        fill
+                        fit="cover"
+                        priority={i === 0}
+                      />
+                    </div>
+                  ))}
+            </div>
           </div>
         </div>
 
-        {/* Desktop */}
-        <div className="hidden md:flex items-center justify-center h-screen px-12">
-          <div ref={desktopImgRef} className="pl-img-wrapper relative w-3/4">
-            {PROJECTS.map((project, i) => (
-              <div
-                key={project.id}
-                className="absolute inset-0"
-                style={{ display: displayIndex === i ? "block" : "none" }}
-              >
-                <Image
-                  src={`https://picsum.photos/seed/${project.id}/800/600`}
-                  fill
-                  alt={project.title}
-                  className="object-cover"
-                  priority={i === 0}
-                />
-              </div>
-            ))}
+        {/* Immagine — solo desktop */}
+        <div className="hidden md:block relative h-screen">
+          <div className="absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] lg:w-[35vw]">
+            <div
+              ref={desktopImgRef}
+              className="relative aspect-4/3 overflow-hidden w-full"
+            >
+              {usePlaceholder
+                ? PLACEHOLDER_PROJECTS.map((p, i) => (
+                    <div
+                      key={p.id}
+                      className="absolute inset-0"
+                      style={{ display: displayIndex === i ? "block" : "none" }}
+                    >
+                      <NextImage
+                        src={`https://picsum.photos/seed/${p.id}/800/600`}
+                        fill
+                        alt={p.title}
+                        className="object-cover"
+                        priority={i === 0}
+                      />
+                    </div>
+                  ))
+                : projects!.map((p, i) => (
+                    <div
+                      key={p._id}
+                      className="absolute inset-0"
+                      style={{ display: displayIndex === i ? "block" : "none" }}
+                    >
+                      <Image
+                        image={p.coverThumb}
+                        resizeId="cover-thumb"
+                        fill
+                        fit="cover"
+                        priority={i === 0}
+                      />
+                    </div>
+                  ))}
+            </div>
           </div>
         </div>
 
         {/* Lista */}
         <div
-          ref={containerRef}
+          className="relative h-screen md:absolute md:inset-0 md:z-10"
           role="region"
           aria-label="Lista progetti"
-          className="relative h-screen overflow-hidden"
         >
-          <ul
-            ref={listRef}
-            role="list"
-            aria-label="Progetti"
-            className="pl-scroll-list absolute inset-x-0 top-0 list-none m-0 p-0"
+          <Swiper
+            direction="vertical"
+            loop
+            centeredSlides
+            slidesPerView={SLIDES_PER_VIEW}
+            freeMode={{
+              enabled: true,
+              momentum: true,
+              momentumRatio: 1.5,
+              momentumVelocityRatio: 1.2,
+            }}
+            mousewheel={{ sensitivity: 1 }}
+            modules={[FreeMode, Mousewheel]}
+            onRealIndexChange={(swiper) => setActiveIndex(swiper.realIndex)}
+            onSetTranslate={handleSetTranslate}
+            className="h-full"
           >
-            {renderItems(false)}
-          </ul>
+            {(usePlaceholder ? PLACEHOLDER_PROJECTS : projects!).map((p, i) => (
+              <SwiperSlide key={"id" in p ? p.id : p._id} role="listitem">
+                <div className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10">
+                  <a
+                    href="#"
+                    className="pl-item-link relative inline-block leading-tight cursor-pointer focus-visible:outline-none"
+                    style={{
+                      color:
+                        hoverIndex === i || activeIndex === i
+                          ? "#000"
+                          : "#bcbcbc",
+                    }}
+                    onMouseEnter={() => setHoverIndex(i)}
+                    onMouseLeave={() => setHoverIndex(null)}
+                    onFocus={() => setHoverIndex(i)}
+                    onBlur={() => setHoverIndex(null)}
+                    onClick={(e) => e.preventDefault()}
+                    aria-label={`${p.title}, case ${String(i + 1).padStart(3, "0")}`}
+                  >
+                    case {String(i + 1).padStart(3, "0")}
+                    <span
+                      className="pl-underline absolute left-0 bottom-0 w-full"
+                      style={{
+                        clipPath:
+                          hoverIndex === i
+                            ? "inset(0 0% 0 0)"
+                            : "inset(0 100% 0 0)",
+                      }}
+                    />
+                  </a>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
 
           {/* Fade top/bottom — solo mobile */}
           <div aria-hidden="true" className="pl-fade-top md:hidden" />
           <div aria-hidden="true" className="pl-fade-bottom md:hidden" />
-
-          {/* Mirror lista mobile */}
-          {imageRect && imageRect.width > 0 && itemHeight > 0 && (
-            <div
-              aria-hidden="true"
-              className="md:hidden absolute overflow-hidden pointer-events-none"
-              style={{
-                top: imageRect.top,
-                left: imageRect.left,
-                width: imageRect.width,
-                height: imageRect.height,
-              }}
-            >
-              <div
-                className="pl-mirror-inner"
-                style={{ top: -imageRect.top, left: -imageRect.left }}
-              >
-                <ul
-                  ref={mirrorRef}
-                  className="pl-scroll-list absolute inset-x-0 top-0 list-none m-0 p-0"
-                >
-                  {renderItems(true)}
-                </ul>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </>

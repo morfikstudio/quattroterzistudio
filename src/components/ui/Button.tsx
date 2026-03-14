@@ -36,17 +36,37 @@ export default function Button({
     </>
   )
 
-  if (href) {
-    return (
-      <Link href={href} className={sharedClassName}>
-        {content}
-      </Link>
-    )
-  }
-
   return (
-    <button type="button" onClick={onClick} className={sharedClassName}>
-      {content}
-    </button>
+    <>
+      <style>{`
+        @keyframes icon-slide {
+          0% {
+            transform: translateX(0);
+            opacity: 1;
+          }
+          30% {
+            transform: translateX(120%);
+            opacity: 0;
+          }
+          31% {
+            transform: translateX(-120%);
+            opacity: 0;
+          }
+          100% {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
+      {href ? (
+        <Link href={href} className={sharedClassName}>
+          {content}
+        </Link>
+      ) : (
+        <button type="button" onClick={onClick} className={sharedClassName}>
+          {content}
+        </button>
+      )}
+    </>
   )
 }

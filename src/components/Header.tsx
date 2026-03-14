@@ -34,12 +34,12 @@ export default function Header() {
             <Image src="/logo.svg" alt="Logo" width={50} height={50} />
           </div>
           <div className="flex gap-2 text-[16px]">
-            <Link href="/about" className={navLinkClass}>
-              About,
-              <span className={navUnderlineClass} />
-            </Link>
             <Link href="/projects" className={navLinkClass}>
               Works,
+              <span className={navUnderlineClass} />
+            </Link>
+            <Link href="/about" className={navLinkClass}>
+              About,
               <span className={navUnderlineClass} />
             </Link>
             <button

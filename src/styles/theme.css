@@ -1,0 +1,129 @@
+/* ─── Colors ───────────────────────────────────────────────────────────────── */
+
+@theme {
+  --color-primary: #0a0a0a;
+  --color-secondary: #f5f5f5;
+  --color-accent: #bcbcbc;
+
+  /* Breakpoints */
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1024px;
+}
+
+/* ─── Typography ───────────────────────────────────────────────────────────── */
+
+@utility type-xxs {
+  font-size: 10px;
+}
+
+@utility type-xs {
+  font-size: 12px;
+}
+
+@utility type-sm {
+  font-size: 14px;
+}
+
+@utility type-base {
+  font-size: 16px;
+}
+
+@utility type-md {
+  font-size: 18px;
+  line-height: 1.2;
+
+  @media (width >= 768px) {
+    font-size: 22px;
+  }
+
+  @media (width >= 1024px) {
+    font-size: 24px;
+  }
+}
+
+@utility type-ml {
+  font-size: 34px;
+  line-height: 1.02;
+}
+
+@utility type-lg-2 {
+  font-size: 40px;
+  line-height: 0.96;
+
+  @media (width >= 1024px) {
+    font-size: 60px;
+    line-height: 0.88;
+  }
+}
+
+@utility type-lg {
+  font-size: 32px;
+
+  @media (width >= 768px) {
+    font-size: 50px;
+  }
+
+  @media (width >= 1024px) {
+    font-size: 64px;
+  }
+}
+
+@utility type-xl {
+  font-size: 40px;
+  letter-spacing: -0.02em;
+
+  @media (width >= 768px) {
+    font-size: 60px;
+  }
+
+  @media (width >= 1024px) {
+    font-size: 70px;
+  }
+}
+
+@utility type-2xl {
+  font-size: 34px;
+
+  @media (width >= 768px) {
+    font-size: 52px;
+  }
+
+  @media (width >= 1024px) {
+    font-size: 80px;
+  }
+}
+
+@utility type-3xl {
+  font-size: 46px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+
+  @media (width >= 768px) {
+    font-size: 82px;
+    line-height: 0.9;
+  }
+
+  @media (width >= 1024px) {
+    font-size: 108;
+    line-height: 0.9;
+  }
+}
+
+@utility type-display {
+  /* Mobile */
+  font-size: 60px;
+  letter-spacing: -0.02em;
+  line-height: 1;
+
+  /* Tablet */
+  @media (width >= 768px) {
+    font-size: 140px;
+    letter-spacing: -0.04em;
+  }
+
+  /* Desktop */
+  @media (width >= 1024px) {
+    font-size: 170px;
+    letter-spacing: -0.04em;
+  }
+}

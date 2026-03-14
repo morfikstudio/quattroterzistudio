@@ -26,13 +26,13 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
       gsap.set(el, { pointerEvents: "auto" })
       tweenRef.current = gsap.to(el, {
         clipPath: "inset(0% 0% 0% 0%)",
-        duration: 0.8,
+        duration: 1,
         ease: "power3.inOut",
       })
     } else {
       tweenRef.current = gsap.to(el, {
         clipPath: "inset(0% 0% 100% 0%)",
-        duration: 0.8,
+        duration: 1,
         ease: "power3.inOut",
         onComplete: () => {
           gsap.set(el, { pointerEvents: "none" })
@@ -64,8 +64,22 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
       </div>
 
       {/* Contenuto */}
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-neutral-400">contact content</p>
+      <div className="flex-1 flex items-start justify-start flex-col px-3 md:flex-row md:px-7">
+        <div className={cn("title", "md:flex-1 md:min-w-0")}>
+          <h2 className="w-[100%] md:w-[80%] type-lg-2 font-light uppercase ">
+            Images creLor fsvho iufsovhs fsvsc.
+          </h2>
+        </div>
+        <div className="grid grid-cols-2 gap-4 md:flex-1 md:min-w-0">
+          <div className="flex flex-col">
+            <span className="type-xs font-mono uppercase">Email</span>
+            <a href="mailto:info@quattroterzi.com">info@quattroterzi.com</a>
+          </div>
+          <div className="flex flex-col">
+            <span className="type-xs font-mono uppercase">Phone</span>
+            <a href="tel:+393333333333">+39 333 333 33 33</a>
+          </div>
+        </div>
       </div>
     </div>
   )

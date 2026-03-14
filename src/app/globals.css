@@ -1,21 +1,8 @@
 @import "tailwindcss";
+@import "../styles/theme.css";
 @plugin "@tailwindcss/typography";
 
-@keyframes icon-slide {
-  0% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  30% {
-    transform: translateX(120%);
-    opacity: 0;
-  }
-  31% {
-    transform: translateX(-120%);
-    opacity: 0;
-  }
-  100% {
-    transform: translateX(0);
-    opacity: 1;
-  }
+@theme {
+  --font-sans: var(--font-helvetica), Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), "Courier New", monospace;
 }
