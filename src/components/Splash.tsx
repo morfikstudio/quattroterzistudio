@@ -78,7 +78,7 @@ export default function Splash({ title, ctaText }: SplashProps) {
     tl.current = gsap
       .timeline({
         onStart: () => setShow(true),
-        delay: 1,
+        delay: 0.5,
       })
       .set(marqueeEl, { xPercent: 0, x: marqueeX(), force3D: false }, 0)
       .from(

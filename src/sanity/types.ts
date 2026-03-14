@@ -12,7 +12,9 @@
  * ---------------------------------------------------------------------------------
  */
 
-// Source: src/sanity/extract.json
+export declare const internalGroqTypeReferenceTo: unique symbol
+
+// Source: src/sanity/schema.json
 export type SanityImageAssetReference = {
   _ref: string
   _type: "reference"
@@ -221,8 +223,6 @@ export type AllSanitySchemaTypes =
   | SanityImageAsset
   | Geopoint
 
-export declare const internalGroqTypeReferenceTo: unique symbol
-
 // Source: src/sanity/lib/queries.ts
 // Variable: PROJECTS_QUERY
 // Query: *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{    _id,    orderRank,    title,    slug,    year,    coverImage,    coverThumb  }
@@ -260,16 +260,16 @@ export type PROJECTS_QUERY_RESULT = Array<{
 }>
 
 // Source: src/sanity/lib/queries.ts
-// Variable: PROJECT_SLUGS_QUERY
+// Variable: WORK_SLUGS_QUERY
 // Query: *[_type == "project" && defined(slug.current)]{    "slug": slug.current  }
-export type PROJECT_SLUGS_QUERY_RESULT = Array<{
+export type WORK_SLUGS_QUERY_RESULT = Array<{
   slug: string
 }>
 
 // Source: src/sanity/lib/queries.ts
-// Variable: PROJECT_QUERY
+// Variable: WORK_QUERY
 // Query: *[_type == "project" && slug.current == $slug][0]{    _id,    title,    slug,    year,    coverImage,    media[] {      _type,      _key,      asset,      alt,      file,      url,      "fileUrl": file.asset->url    }  }
-export type PROJECT_QUERY_RESULT = {
+export type WORK_QUERY_RESULT = {
   _id: string
   title: string | null
   slug: Slug | null
@@ -322,7 +322,7 @@ import "@sanity/client"
 declare module "@sanity/client" {
   interface SanityQueries {
     '*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverImage,\n    coverThumb\n  }': PROJECTS_QUERY_RESULT
-    '*[_type == "project" && defined(slug.current)]{\n    "slug": slug.current\n  }': PROJECT_SLUGS_QUERY_RESULT
-    '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    title,\n    slug,\n    year,\n    coverImage,\n    media[] {\n      _type,\n      _key,\n      asset,\n      alt,\n      file,\n      url,\n      "fileUrl": file.asset->url\n    }\n  }': PROJECT_QUERY_RESULT
+    '*[_type == "project" && defined(slug.current)]{\n    "slug": slug.current\n  }': WORK_SLUGS_QUERY_RESULT
+    '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    title,\n    slug,\n    year,\n    coverImage,\n    media[] {\n      _type,\n      _key,\n      asset,\n      alt,\n      file,\n      url,\n      "fileUrl": file.asset->url\n    }\n  }': WORK_QUERY_RESULT
   }
 }

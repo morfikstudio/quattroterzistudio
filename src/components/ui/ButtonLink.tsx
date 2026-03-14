@@ -19,7 +19,7 @@ type LinkProps = PropsWithChildren<
   }
 >
 
-export default function LinkComponent({
+export default function ButtonLink({
   variant = "primary",
   className = "",
   href = "",

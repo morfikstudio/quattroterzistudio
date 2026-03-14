@@ -1,5 +1,9 @@
 import { defineQuery } from "next-sanity"
 
+/**
+ * /projects
+ */
+
 export const PROJECTS_QUERY = defineQuery(
   `*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{
     _id,
@@ -12,13 +16,17 @@ export const PROJECTS_QUERY = defineQuery(
   }`,
 )
 
-export const PROJECT_SLUGS_QUERY = defineQuery(
+/**
+ * /works/[slug]
+ */
+
+export const WORK_SLUGS_QUERY = defineQuery(
   `*[_type == "project" && defined(slug.current)]{
     "slug": slug.current
   }`,
 )
 
-export const PROJECT_QUERY = defineQuery(
+export const WORK_QUERY = defineQuery(
   `*[_type == "project" && slug.current == $slug][0]{
     _id,
     title,

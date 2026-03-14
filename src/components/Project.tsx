@@ -1,12 +1,12 @@
 "use client"
 
-import type { PROJECT_QUERY_RESULT } from "@/sanity/types"
+import type { WORK_QUERY_RESULT } from "@/sanity/types"
 
 import Image from "@/components/ui/Image"
 
 type ProjectProps = {
   title: string
-  media: NonNullable<PROJECT_QUERY_RESULT>["media"]
+  media: NonNullable<WORK_QUERY_RESULT>["media"]
 }
 
 const aspectClass = "relative w-full aspect-video"

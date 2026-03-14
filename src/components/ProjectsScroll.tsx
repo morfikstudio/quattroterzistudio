@@ -1,13 +1,14 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import Link from "next/link"
 import gsap from "gsap"
 
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
 
 import Image from "@/components/ui/Image"
-import Link from "@/components/ui/Link"
+import ButtonLink from "@/components/ui/ButtonLink"
 import ScrollIndicator from "@/components/ScrollIndicator"
 
 type ProjectsScrollProps = {
@@ -254,6 +255,8 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     }
   }, [])
 
+  console.log(projects)
+
   return (
     <div className="relative w-full h-svh overflow-hidden">
       {projects.map((p, i) => (
@@ -264,77 +267,79 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           }}
           className="absolute inset-0 overflow-hidden text-white"
         >
-          <div className="absolute inset-0">
-            <Image
-              image={p.coverImage}
-              resizeId="cover-image"
-              fill
-              fit="cover"
-              sizes="100vw"
-              priority={i < 2}
-            />
-          </div>
-
-          <div
-            className={cn(
-              "absolute top-1/2 left-1/2 md:left-[7vw] -translate-y-1/2 -translate-x-1/2 md:translate-x-0",
-              "w-[70vw] md:w-[50vw] lg:w-[35vw]",
-            )}
-          >
-            <div
-              ref={(el) => {
-                thumbsRefs.current[i] = el
-              }}
-              className="relative aspect-4/3 overflow-hidden w-full"
-            >
+          <Link href={`/works/${p.slug?.current ?? ""}`}>
+            <div className="absolute inset-0">
               <Image
-                image={p.coverThumb}
-                resizeId="cover-thumb"
+                image={p.coverImage}
+                resizeId="cover-image"
                 fill
                 fit="cover"
+                sizes="100vw"
                 priority={i < 2}
               />
             </div>
-          </div>
 
-          <div
-            className={cn(
-              "absolute overflow-hidden",
-              "top-1/2 -translate-y-1/2 left-[14px] md:left-[calc(50%)]",
-            )}
-          >
-            <h1 className="leading-[1.2] text-5xl md:text-7xl">
-              {(p.title ?? "").split("").map((char, j) => (
-                <span
-                  key={j}
-                  ref={(el) => {
-                    if (!wordsRefs.current[i]) wordsRefs.current[i] = []
-                    wordsRefs.current[i][j] = el
-                  }}
-                  className="inline-block"
-                >
-                  {char === " " ? "\u00A0" : char}
-                </span>
-              ))}
-            </h1>
-          </div>
-
-          <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px]">
-            <span className="flex leading-[1.2] text-sm overflow-hidden">
-              <span
-                ref={(r) => {
-                  yearsRefs.current[i] = r
+            <div
+              className={cn(
+                "absolute top-1/2 left-1/2 md:left-[7vw] -translate-y-1/2 -translate-x-1/2 md:translate-x-0",
+                "w-[70vw] md:w-[50vw] lg:w-[35vw]",
+              )}
+            >
+              <div
+                ref={(el) => {
+                  thumbsRefs.current[i] = el
                 }}
+                className="relative aspect-4/3 overflow-hidden w-full"
               >
-                {p.year}
+                <Image
+                  image={p.coverThumb}
+                  resizeId="cover-thumb"
+                  fill
+                  fit="cover"
+                  priority={i < 2}
+                />
+              </div>
+            </div>
+
+            <div
+              className={cn(
+                "absolute overflow-hidden",
+                "top-1/2 -translate-y-1/2 left-[14px] md:left-[calc(50%)]",
+              )}
+            >
+              <h1 className="leading-[1.2] text-5xl md:text-7xl">
+                {(p.title ?? "").split("").map((char, j) => (
+                  <span
+                    key={j}
+                    ref={(el) => {
+                      if (!wordsRefs.current[i]) wordsRefs.current[i] = []
+                      wordsRefs.current[i][j] = el
+                    }}
+                    className="inline-block"
+                  >
+                    {char === " " ? "\u00A0" : char}
+                  </span>
+                ))}
+              </h1>
+            </div>
+
+            <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px]">
+              <span className="flex leading-[1.2] text-sm overflow-hidden">
+                <span
+                  ref={(r) => {
+                    yearsRefs.current[i] = r
+                  }}
+                >
+                  {p.year}
+                </span>
               </span>
-            </span>
-          </div>
+            </div>
+          </Link>
         </section>
       ))}
 
       <div className="absolute bottom-20 left-10 z-10">
-        <Link href="/archive">Archive</Link>
+        <ButtonLink href="/archive">Archive</ButtonLink>
       </div>
 
       <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10">

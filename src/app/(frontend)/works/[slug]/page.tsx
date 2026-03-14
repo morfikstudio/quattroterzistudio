@@ -2,13 +2,13 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 
 import { client, sanityFetch } from "@/sanity/lib/client"
-import { PROJECT_QUERY, PROJECT_SLUGS_QUERY } from "@/sanity/lib/queries"
+import { WORK_QUERY, WORK_SLUGS_QUERY } from "@/sanity/lib/queries"
 
 import Project from "@/components/Project"
 
 export async function generateStaticParams() {
   try {
-    const slugs = await client.fetch(PROJECT_SLUGS_QUERY)
+    const slugs = await client.fetch(WORK_SLUGS_QUERY)
     return Array.isArray(slugs) ? slugs : []
   } catch {
     return []
@@ -23,7 +23,7 @@ export default async function Page({
   const { slug } = await params
 
   const project = await sanityFetch({
-    query: PROJECT_QUERY,
+    query: WORK_QUERY,
     params: { slug },
   })
 
