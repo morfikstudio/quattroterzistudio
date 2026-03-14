@@ -2,7 +2,7 @@ import { useCallback, useRef, type MutableRefObject } from "react"
 
 const MAX_VEL = 35
 const MIN_SCALE = 0.92
-const LERP = 0.12
+const LERP = 0.2
 
 interface Options {
   velocityRef: MutableRefObject<number>
@@ -30,6 +30,9 @@ export function useImageScale({ velocityRef }: Options): UseImageScaleReturn {
   const startScaleLoop = useCallback(() => {
     cancelAnimationFrame(scaleRafRef.current)
     const tick = () => {
+      // Decadimento naturale: se handleSetTranslate non aggiorna più la velocity
+      // (scroll fermo), decade verso 0 così il loop può terminare
+      velocityRef.current *= 0.7
       const vel = Math.abs(velocityRef.current)
       const target = Math.max(MIN_SCALE, 1 - (vel / MAX_VEL) * (1 - MIN_SCALE))
       const next =

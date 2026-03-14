@@ -1,9 +1,9 @@
 /* ─── Colors ───────────────────────────────────────────────────────────────── */
 
 @theme {
-  --color-primary: #0a0a0a;
-  --color-secondary: #f5f5f5;
-  --color-accent: #bcbcbc;
+  --color-primary: #ffffff;
+  --color-secondary: #afafaf;
+  --color-accent: #000000;
 
   /* Breakpoints */
   --breakpoint-tablet: 768px;

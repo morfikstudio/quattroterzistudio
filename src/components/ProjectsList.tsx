@@ -221,13 +221,16 @@ export default function ProjectsList({ projects }: Props) {
             loop
             centeredSlides
             slidesPerView={SLIDES_PER_VIEW}
+            speed={600}
             freeMode={{
               enabled: true,
               momentum: true,
-              momentumRatio: 1.5,
-              momentumVelocityRatio: 1.2,
+              momentumRatio: 2,
+              momentumVelocityRatio: 1.5,
+              minimumVelocity: 0.02,
+              sticky: true,
             }}
-            mousewheel={{ sensitivity: 1 }}
+            mousewheel={{ sensitivity: 1, thresholdDelta: 10 }}
             modules={[FreeMode, Mousewheel]}
             onRealIndexChange={(swiper) => setActiveIndex(swiper.realIndex)}
             onSetTranslate={handleSetTranslate}
