@@ -19,12 +19,14 @@ function useGsapScroll({
   sections,
   thumbs,
   words,
+  years,
   onStart,
 }: {
   sectionCount: number
   sections: (HTMLElement | null)[]
   thumbs: (HTMLDivElement | null)[]
   words: (HTMLSpanElement | null)[][]
+  years: (HTMLSpanElement | null)[]
   onStart: () => void
 }) {
   const currentRef = useRef(0)
@@ -48,6 +50,7 @@ function useGsapScroll({
 
       const incomingThumb = thumbs[nextIndex]
       const incomingLetters = words[nextIndex]?.filter(Boolean) ?? []
+      const incomingYear = years[nextIndex]
 
       const outgoingSection = sections[prevIndex]
       const outgoingLetters = words[prevIndex]?.filter(Boolean) ?? []
@@ -65,6 +68,7 @@ function useGsapScroll({
       gsap.set(incomingSection, { zIndex: 10, clipPath: fromClip })
       gsap.set(incomingThumb, { clipPath: fromClip, y: fromY })
       gsap.set(incomingLetters, { y: "110%" })
+      gsap.set(incomingYear, { y: "110%" })
 
       gsap
         .timeline({
@@ -94,6 +98,16 @@ function useGsapScroll({
           0,
         )
         .to(
+          incomingLetters,
+          {
+            y: "0%",
+            duration: 0.5,
+            ease: "expo.out",
+            stagger: 0.02,
+          },
+          0.5,
+        )
+        .to(
           incomingThumb,
           {
             clipPath: "inset(0% 0 0% 0)",
@@ -103,15 +117,15 @@ function useGsapScroll({
           },
           0.6,
         )
+
         .to(
-          incomingLetters,
+          incomingYear,
           {
             y: "0%",
-            duration: 0.5,
+            duration: 1,
             ease: "expo.out",
-            stagger: 0.02,
           },
-          0.5,
+          0.6,
         )
     },
     [sectionCount, sections, thumbs, words],
@@ -128,6 +142,7 @@ function useGsapScroll({
     })
     gsap.set(thumbs[0], { clipPath: "inset(0% 0 0% 0)", y: 0 })
     gsap.set(words[0]?.filter(Boolean) ?? [], { y: "0%" })
+    gsap.set(years[0], { y: "0%" })
 
     // hide all other sections
     for (let i = 1; i < sectionCount; i++) {
@@ -137,6 +152,7 @@ function useGsapScroll({
       })
       gsap.set(thumbs[i], { clipPath: "inset(100% 0 0% 0)", y: 0 })
       gsap.set(words[i]?.filter(Boolean) ?? [], { y: "110%" })
+      gsap.set(years[i], { y: "110%" })
     }
 
     return () => {
@@ -151,8 +167,11 @@ function useGsapScroll({
           if (el) gsap.killTweensOf(el)
         }),
       )
+      years.forEach((el) => {
+        if (el) gsap.killTweensOf(el)
+      })
     }
-  }, [sectionCount, sections, thumbs, words])
+  }, [sectionCount, sections, thumbs, words, years])
 
   // wheel listener
   useEffect(() => {
@@ -208,6 +227,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const sectionsRefs = useRef<(HTMLElement | null)[]>([])
   const thumbsRefs = useRef<(HTMLDivElement | null)[]>([])
   const wordsRefs = useRef<(HTMLSpanElement | null)[][]>([])
+  const yearsRefs = useRef<(HTMLSpanElement | null)[]>([])
 
   const tmRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -222,6 +242,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     sections: sectionsRefs.current,
     thumbs: thumbsRefs.current,
     words: wordsRefs.current,
+    years: yearsRefs.current,
     onStart: handleScrollIndicator,
   })
 
@@ -299,7 +320,15 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           </div>
 
           <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px]">
-            <span className="leading-[1.2] text-sm">{p.year}</span>
+            <span className="flex leading-[1.2] text-sm overflow-hidden">
+              <span
+                ref={(r) => {
+                  yearsRefs.current[i] = r
+                }}
+              >
+                {p.year}
+              </span>
+            </span>
           </div>
         </section>
       ))}
