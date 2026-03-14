@@ -1,0 +1,60 @@
+"use client"
+
+import { useMemo } from "react"
+import * as NextImage from "next/image"
+
+import { getImageDimensions, getImageUrl } from "@/utils/media"
+import type { ImageResizeId } from "@/utils/media"
+
+import { useBreakpoint } from "@/stores/breakpointStore"
+
+interface ImageProps {
+  image: any
+  resizeId?: ImageResizeId
+  fill?: boolean
+  fit?: "cover" | "contain" | "fill" | "none" | "scale-down"
+  position?: string
+  sizes?: string
+  className?: string
+  priority?: boolean
+}
+
+export default function Image({
+  image,
+  resizeId = "default",
+  fill = false,
+  fit = "contain",
+  position = "center center",
+  sizes = "",
+  className = "",
+  priority = false,
+}: ImageProps) {
+  const { current: breakpoint } = useBreakpoint()
+  const dimensions = !fill ? getImageDimensions({ resizeId, breakpoint }) : null
+
+  const url = useMemo(
+    () =>
+      getImageUrl({
+        image,
+        resizeId,
+        breakpoint,
+      }),
+    [image, resizeId, breakpoint],
+  )
+
+  return url ? (
+    <NextImage.default
+      src={url}
+      alt={image.alt ?? ""}
+      fill={fill}
+      {...(dimensions && {
+        width: dimensions.width,
+        height: dimensions.height,
+      })}
+      style={{ objectFit: fit, objectPosition: position }}
+      sizes={sizes}
+      className={className}
+      priority={priority}
+    />
+  ) : null
+}

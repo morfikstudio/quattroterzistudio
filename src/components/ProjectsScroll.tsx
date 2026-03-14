@@ -1,14 +1,12 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import Image from "next/image"
 import gsap from "gsap"
 
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
-import { getImageUrl } from "@/utils/media"
-import { useBreakpoint } from "@/stores/breakpointStore"
 
+import Image from "@/components/ui/Image"
 import Link from "@/components/ui/Link"
 import ScrollIndicator from "@/components/ScrollIndicator"
 
@@ -205,7 +203,6 @@ function useGsapScroll({
 }
 
 export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
-  const { current: breakpoint } = useBreakpoint()
   const [showScrollIndicator, setShowScrollIndicator] = useState(true)
 
   const sectionsRefs = useRef<(HTMLElement | null)[]>([])
@@ -248,16 +245,12 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         >
           <div className="absolute inset-0">
             <Image
-              src={getImageUrl({
-                image: p.coverImage,
-                type: "cover-image",
-                breakpoint,
-              })}
+              image={p.coverImage}
+              resizeId="cover-image"
               fill
+              fit="cover"
               sizes="100vw"
               priority={i < 2}
-              alt={p.coverImage?.alt ?? ""}
-              className="object-cover"
             />
           </div>
 
@@ -274,14 +267,10 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
               className="relative aspect-4/3 overflow-hidden w-full"
             >
               <Image
-                src={getImageUrl({
-                  image: p.coverThumb,
-                  type: "cover-thumb",
-                  breakpoint,
-                })}
-                alt={p.coverThumb?.alt ?? ""}
-                className="object-cover"
+                image={p.coverThumb}
+                resizeId="cover-thumb"
                 fill
+                fit="cover"
                 priority={i < 2}
               />
             </div>
