@@ -36,7 +36,9 @@
   "overrides": {
     "minimatch": ">=10.2.1",
     "glob": ">=11.0.0",
-    "jsdom": ">=28.0.0"
+    "jsdom": ">=28.0.0",
+    "prismjs": ">=1.30.0",
+    "js-yaml": ">=3.14.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
