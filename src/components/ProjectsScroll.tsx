@@ -200,10 +200,14 @@ function useGsapScroll({
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [goToSection])
 
-  // touch listener
+  // touch listener (touchmove + preventDefault blocks native scroll and pull-to-refresh on iOS)
   useEffect(() => {
     const onTouchStart = (e: TouchEvent) => {
       touchStartYRef.current = e.touches[0].clientY
+    }
+
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault()
     }
 
     const onTouchEnd = (e: TouchEvent) => {
@@ -214,9 +218,11 @@ function useGsapScroll({
     }
 
     window.addEventListener("touchstart", onTouchStart, { passive: true })
+    window.addEventListener("touchmove", onTouchMove, { passive: false })
     window.addEventListener("touchend", onTouchEnd, { passive: true })
     return () => {
       window.removeEventListener("touchstart", onTouchStart)
+      window.removeEventListener("touchmove", onTouchMove)
       window.removeEventListener("touchend", onTouchEnd)
     }
   }, [goToSection])
@@ -254,8 +260,6 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       }
     }
   }, [])
-
-  console.log(projects)
 
   return (
     <div className="relative w-full h-svh overflow-hidden">
