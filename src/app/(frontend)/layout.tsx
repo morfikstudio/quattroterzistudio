@@ -10,7 +10,7 @@ export default function FrontendLayout({
 }>) {
   return (
     <LenisProvider>
-      {/* <Header /> */}
+      <Header />
       {children}
       <TextCursor text="Click anywhere to enter" />
       <BreakpointProvider />
