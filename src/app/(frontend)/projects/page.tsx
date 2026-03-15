@@ -7,7 +7,7 @@ export default async function Page() {
   const projects = await sanityFetch({ query: PROJECTS_QUERY })
 
   return (
-    <main className="relative">
+    <main>
       <ProjectsScroll projects={projects} />
     </main>
   )

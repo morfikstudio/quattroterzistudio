@@ -10,7 +10,7 @@ export const projectType = defineType({
   groups: [
     { name: "content", title: "Content", default: true },
     { name: "details", title: "Details" },
-    { name: "cover", title: "Cover" },
+    { name: "covers", title: "Covers" },
     { name: "media", title: "Media" },
   ],
   fields: [
@@ -71,7 +71,7 @@ export const projectType = defineType({
       name: "coverImage",
       title: "Cover Image",
       type: "object",
-      group: "cover",
+      group: "covers",
       fields: [
         defineField({
           name: "portrait",
@@ -99,9 +99,36 @@ export const projectType = defineType({
     defineField({
       name: "coverThumb",
       type: "image",
-      group: "cover",
+      group: "covers",
       options: { hotspot: true },
       fields: [
+        defineField({
+          name: "alt",
+          type: "string",
+          title: "Alternative text",
+        }),
+      ],
+    }),
+    defineField({
+      name: "coverDetail",
+      title: "Cover Detail",
+      type: "object",
+      group: "covers",
+      fields: [
+        defineField({
+          name: "portrait",
+          title: "Portrait",
+          type: "image",
+          description: "Load a portrait image",
+          options: { hotspot: true },
+        }),
+        defineField({
+          name: "landscape",
+          title: "Landscape",
+          type: "image",
+          description: "Load a landscape image",
+          options: { hotspot: true },
+        }),
         defineField({
           name: "alt",
           type: "string",

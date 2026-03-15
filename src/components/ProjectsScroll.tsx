@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import Link from "next/link"
 import gsap from "gsap"
 
@@ -8,8 +8,7 @@ import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
 
 import Image from "@/components/ui/Image"
-import ButtonLink from "@/components/ui/ButtonLink"
-import ScrollIndicator from "@/components/ScrollIndicator"
+import ScrollIndicator from "@/components/ui/ScrollIndicator"
 
 type ProjectsScrollProps = {
   projects: PROJECTS_QUERY_RESULT
@@ -21,31 +20,30 @@ function useGsapScroll({
   thumbs,
   words,
   years,
-  onStart,
 }: {
   sectionCount: number
   sections: (HTMLElement | null)[]
   thumbs: (HTMLDivElement | null)[]
   words: (HTMLSpanElement | null)[][]
   years: (HTMLSpanElement | null)[]
-  onStart: () => void
 }) {
   const currentRef = useRef(0)
   const isAnimatingRef = useRef(false)
   const touchStartYRef = useRef(0)
 
   const goToSection = useCallback(
-    (nextIndex: number) => {
-      if (
-        isAnimatingRef.current ||
-        nextIndex < 0 ||
-        nextIndex >= sectionCount ||
-        nextIndex === currentRef.current
-      )
-        return
+    (nextIndex: number, scrollDirection?: 1 | -1) => {
+      if (isAnimatingRef.current) return
+
+      // if user scrolls down from last section, go to first section
+      if (nextIndex >= sectionCount) nextIndex = 0
+      // if user scrolls up from first section, go to last section
+      else if (nextIndex < 0) nextIndex = sectionCount - 1
+
+      if (nextIndex === currentRef.current) return
 
       const prevIndex = currentRef.current
-      const direction = nextIndex > prevIndex ? 1 : -1
+      const direction = scrollDirection ?? (nextIndex > prevIndex ? 1 : -1)
 
       const incomingSection = sections[nextIndex]
 
@@ -73,7 +71,6 @@ function useGsapScroll({
 
       gsap
         .timeline({
-          onStart,
           onComplete: () => {
             if (outgoingSection) {
               gsap.set(outgoingSection, { zIndex: 0 })
@@ -179,7 +176,8 @@ function useGsapScroll({
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
       if (isAnimatingRef.current || e.deltaY === 0) return
-      goToSection(currentRef.current + (e.deltaY > 0 ? 1 : -1))
+      const dir = e.deltaY > 0 ? 1 : -1
+      goToSection(currentRef.current + dir, dir)
     }
     window.addEventListener("wheel", onWheel, { passive: false })
     return () => window.removeEventListener("wheel", onWheel)
@@ -190,10 +188,10 @@ function useGsapScroll({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowDown" || e.key === "PageDown") {
         e.preventDefault()
-        goToSection(currentRef.current + 1)
+        goToSection(currentRef.current + 1, 1)
       } else if (e.key === "ArrowUp" || e.key === "PageUp") {
         e.preventDefault()
-        goToSection(currentRef.current - 1)
+        goToSection(currentRef.current - 1, -1)
       }
     }
     window.addEventListener("keydown", onKeyDown)
@@ -214,7 +212,8 @@ function useGsapScroll({
       if (isAnimatingRef.current) return
       const delta = touchStartYRef.current - e.changedTouches[0].clientY
       if (Math.abs(delta) < 50) return
-      goToSection(currentRef.current + (delta > 0 ? 1 : -1))
+      const dir = delta > 0 ? 1 : -1
+      goToSection(currentRef.current + dir, dir)
     }
 
     window.addEventListener("touchstart", onTouchStart, { passive: true })
@@ -229,20 +228,10 @@ function useGsapScroll({
 }
 
 export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
-  const [showScrollIndicator, setShowScrollIndicator] = useState(true)
-
   const sectionsRefs = useRef<(HTMLElement | null)[]>([])
   const thumbsRefs = useRef<(HTMLDivElement | null)[]>([])
   const wordsRefs = useRef<(HTMLSpanElement | null)[][]>([])
   const yearsRefs = useRef<(HTMLSpanElement | null)[]>([])
-
-  const tmRef = useRef<NodeJS.Timeout | null>(null)
-
-  function handleScrollIndicator() {
-    setShowScrollIndicator(false)
-    if (tmRef.current) clearTimeout(tmRef.current)
-    tmRef.current = setTimeout(() => setShowScrollIndicator(true), 4000)
-  }
 
   useGsapScroll({
     sectionCount: projects.length,
@@ -250,16 +239,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     thumbs: thumbsRefs.current,
     words: wordsRefs.current,
     years: yearsRefs.current,
-    onStart: handleScrollIndicator,
   })
-
-  useEffect(() => {
-    return () => {
-      if (tmRef.current) {
-        clearTimeout(tmRef.current)
-      }
-    }
-  }, [])
 
   return (
     <div className="relative w-full h-svh overflow-hidden">
@@ -271,7 +251,8 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           }}
           className="absolute inset-0 overflow-hidden text-white"
         >
-          <Link href={`/works/${p.slug?.current ?? ""}`}>
+          <Link href={`/projects/${p.slug?.current ?? ""}`}>
+            {/* COVER */}
             <div className="absolute inset-0">
               <Image
                 image={p.coverImage}
@@ -283,6 +264,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
               />
             </div>
 
+            {/* THUMB */}
             <div
               className={cn(
                 "absolute top-1/2 left-1/2 md:left-[7vw] -translate-y-1/2 -translate-x-1/2 md:translate-x-0",
@@ -305,6 +287,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
               </div>
             </div>
 
+            {/* TITLE */}
             <div
               className={cn(
                 "absolute overflow-hidden",
@@ -327,6 +310,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
               </h1>
             </div>
 
+            {/* YEAR */}
             <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px]">
               <span className="flex leading-[1.2] text-sm overflow-hidden">
                 <span
@@ -339,16 +323,12 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
               </span>
             </div>
           </Link>
+
+          <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-10">
+            <ScrollIndicator />
+          </div>
         </section>
       ))}
-
-      <div className="absolute bottom-20 left-10 z-10">
-        <ButtonLink href="/archive">Archive</ButtonLink>
-      </div>
-
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10">
-        <ScrollIndicator show={showScrollIndicator} />
-      </div>
     </div>
   )
 }
