@@ -5,6 +5,10 @@
   --color-secondary: #afafaf;
   --color-accent: #000000;
 
+  /* Fonts (CSS vars from layout.tsx) */
+  --font-sans: var(--font-helvetica), Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), "Courier New", monospace;
+
   /* Breakpoints */
   --breakpoint-tablet: 768px;
   --breakpoint-desktop: 1024px;
