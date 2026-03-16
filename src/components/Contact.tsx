@@ -66,17 +66,17 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
       {/* Contenuto */}
       <div className="flex-1 flex items-start justify-start flex-col px-3 md:flex-row md:px-7">
         <div className={cn("title", "md:flex-1 md:min-w-0")}>
-          <h2 className="w-[100%] md:w-[80%] type-lg-2 font-light uppercase ">
+          <h2 className="w-[100%] md:w-[80%] type-h3 uppercase ">
             Images creLor fsvho iufsovhs fsvsc.
           </h2>
         </div>
         <div className="grid grid-cols-2 gap-4 md:flex-1 md:min-w-0">
           <div className="flex flex-col">
-            <span className="type-xs font-mono uppercase">Email</span>
+            <span className="type-caption uppercase">Email</span>
             <a href="mailto:info@quattroterzi.com">info@quattroterzi.com</a>
           </div>
           <div className="flex flex-col">
-            <span className="type-xs font-mono uppercase">Phone</span>
+            <span className="type-caption uppercase">Phone</span>
             <a href="tel:+393333333333">+39 333 333 33 33</a>
           </div>
         </div>

@@ -7,27 +7,14 @@ import Image from "next/image"
 import { cn } from "@/utils/classNames"
 import Contact from "@/components/Contact"
 
-const navLinkClass = cn("h-nav-link", "relative inline-block")
-const navUnderlineClass = cn(
-  "h-nav-link-underline",
-  "absolute left-0 -bottom-0.5 w-full h-px bg-current",
-)
+const navLinkClass = cn("link-underline")
+const navUnderlineClass = cn("link-underline-bar")
 
 export default function Header() {
   const [isContactOpen, setIsContactOpen] = useState(false)
 
   return (
     <>
-      <style>{`
-        .h-nav-link-underline {
-          clip-path: inset(0 100% 0 0);
-          transition: clip-path 0.45s cubic-bezier(0.6, 0, 0.2, 1);
-        }
-        .h-nav-link:hover .h-nav-link-underline {
-          clip-path: inset(0 0% 0 0);
-        }
-      `}</style>
-
       <header className="fixed top-0 left-0 w-full z-50">
         <div className="flex justify-between items-center mx-auto p-3 md:p-4">
           <div className="logo">

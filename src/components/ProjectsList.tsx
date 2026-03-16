@@ -14,19 +14,19 @@ import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
 const SLIDES_PER_VIEW = 7
 
 // Placeholder — sostituire con dati reali Sanity quando disponibili
-type PlaceholderProject = { id: string; title: string }
+type PlaceholderProject = { id: string; title: string; code: string }
 const PLACEHOLDER_PROJECTS: PlaceholderProject[] = [
-  { id: "10", title: "Casa sul Lago" },
-  { id: "20", title: "Residenza Borghese" },
-  { id: "30", title: "Loft Industriale" },
-  { id: "40", title: "Villa Moderna" },
-  { id: "50", title: "Appartamento Minimal" },
-  { id: "60", title: "Studio Creativo" },
-  { id: "70", title: "Penthouse Milano" },
-  { id: "80", title: "Cascina Ristrutturata" },
-  { id: "90", title: "Atelier Fotografico" },
-  { id: "100", title: "Showroom Design" },
-  { id: "110", title: "Penthouse Roma" },
+  { id: "10", title: "Casa sul Lago", code: "M288NV4" },
+  { id: "20", title: "Residenza Borghese", code: "K471RP9" },
+  { id: "30", title: "Loft Industriale", code: "B302XL7" },
+  { id: "40", title: "Villa Moderna", code: "G815TQ2" },
+  { id: "50", title: "Appartamento Minimal", code: "H093JY6" },
+  { id: "60", title: "Studio Creativo", code: "N567WC8" },
+  { id: "70", title: "Penthouse Milano", code: "R124KD5" },
+  { id: "80", title: "Cascina Ristrutturata", code: "F690SE3" },
+  { id: "90", title: "Atelier Fotografico", code: "D743MZ1" },
+  { id: "100", title: "Showroom Design", code: "A856HB0" },
+  { id: "110", title: "Penthouse Roma", code: "T219UF8" },
 ]
 
 type Props = { projects?: PROJECTS_QUERY_RESULT }
@@ -36,6 +36,11 @@ export default function ProjectsList({ projects }: Props) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
   const [isScrolling, setIsScrolling] = useState(false)
+
+  const interactedItemsRef = useRef<Set<number>>(new Set())
+  const prevActiveRef = useRef(0)
+  const isMobileRef = useRef(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   const velocityRef = useRef(0)
   const prevTranslateRef = useRef<number | null>(null)
@@ -49,6 +54,18 @@ export default function ProjectsList({ projects }: Props) {
   // Cleanup RAF on unmount
   useEffect(() => {
     return () => cancelAnimationFrame(scrollCheckRef.current)
+  }, [])
+
+  // Rileva mobile per pilotare l'underline su activeIndex solo su mobile
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)")
+    const update = (matches: boolean) => {
+      isMobileRef.current = matches
+      setIsMobile(matches)
+    }
+    update(mq.matches)
+    mq.addEventListener("change", (e) => update(e.matches))
+    return () => mq.removeEventListener("change", (e) => update(e.matches))
   }, [])
 
   // Traccia la velocità dal delta tra frame successivi di onSetTranslate,
@@ -97,31 +114,40 @@ export default function ProjectsList({ projects }: Props) {
         }
         .pl-item-link {
           font-size: clamp(40px, 5.5vw, 70px);
-          font-weight: 300;
-          text-decoration: none;
           transition: color 0.45s cubic-bezier(0.6, 0, 0.2, 1);
+          @media (max-width: 767px) {
+            opacity: 0.5;
+          }
+        }
+        .pl-item-link[data-active="true"] { color: #000; }
+        @media (max-width: 767px) {
+          .pl-item-link[data-active="true"] { color: #fff; mix-blend-mode: difference; opacity: 1; }
         }
         .pl-underline {
-          height: 2px;
-          background-color: currentColor;
-          transition: clip-path 0.45s cubic-bezier(0.6, 0, 0.2, 1);
+          clip-path: inset(0 100% 0 0);
         }
-        .pl-fade-top,
-        .pl-fade-bottom {
-          position: absolute;
-          left: 0;
-          right: 0;
-          height: 30%;
-          pointer-events: none;
-          z-index: 2;
+        @keyframes pl-line-in {
+          from { clip-path: inset(0 100% 0 0); }
+          to   { clip-path: inset(0 0% 0 0); }
+        }
+        @keyframes pl-line-out {
+          from { clip-path: inset(0 0% 0 0); }
+          to   { clip-path: inset(0 0% 0 100%); }
+        }
+        .pl-item-link[data-line="in"] .pl-underline {
+          animation: pl-line-in 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+        }
+        .pl-item-link[data-line="out"] .pl-underline {
+          animation: pl-line-out 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
         }
         .pl-fade-top {
-          top: 0;
           background: linear-gradient(to bottom, #fff 20%, transparent 100%);
         }
         .pl-fade-bottom {
-          bottom: 0;
           background: linear-gradient(to top, #fff 20%, transparent 100%);
+        }
+        @media (max-width: 767px) {
+          .pl-swiper-blend { mix-blend-mode: difference; }
         }
       `}</style>
 
@@ -216,64 +242,88 @@ export default function ProjectsList({ projects }: Props) {
           role="region"
           aria-label="Lista progetti"
         >
-          <Swiper
-            direction="vertical"
-            loop
-            centeredSlides
-            slidesPerView={SLIDES_PER_VIEW}
-            speed={600}
-            freeMode={{
-              enabled: true,
-              momentum: true,
-              momentumRatio: 2,
-              momentumVelocityRatio: 1.5,
-              minimumVelocity: 0.02,
-              sticky: true,
-            }}
-            mousewheel={{ sensitivity: 1, thresholdDelta: 10 }}
-            modules={[FreeMode, Mousewheel]}
-            onRealIndexChange={(swiper) => setActiveIndex(swiper.realIndex)}
-            onSetTranslate={handleSetTranslate}
-            className="h-full"
-          >
-            {(usePlaceholder ? PLACEHOLDER_PROJECTS : projects!).map((p, i) => (
-              <SwiperSlide key={"id" in p ? p.id : p._id} role="listitem">
-                <div className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10">
-                  <a
-                    href="#"
-                    className="pl-item-link relative inline-block leading-tight cursor-pointer focus-visible:outline-none"
-                    style={{
-                      color:
-                        hoverIndex === i || activeIndex === i
-                          ? "#000"
-                          : "#bcbcbc",
-                    }}
-                    onMouseEnter={() => setHoverIndex(i)}
-                    onMouseLeave={() => setHoverIndex(null)}
-                    onFocus={() => setHoverIndex(i)}
-                    onBlur={() => setHoverIndex(null)}
-                    onClick={(e) => e.preventDefault()}
-                    aria-label={`${p.title}, case ${String(i + 1).padStart(3, "0")}`}
-                  >
-                    case {String(i + 1).padStart(3, "0")}
-                    <span
-                      className="pl-underline absolute left-0 bottom-0 w-full"
-                      style={{
-                        clipPath:
-                          hoverIndex === i
-                            ? "inset(0 0% 0 0)"
-                            : "inset(0 100% 0 0)",
-                      }}
-                    />
-                  </a>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+          <div className="pl-swiper-blend h-full">
+            <Swiper
+              direction="vertical"
+              loop
+              centeredSlides
+              slidesPerView={SLIDES_PER_VIEW}
+              speed={600}
+              freeMode={{
+                enabled: true,
+                momentum: true,
+                momentumRatio: 2,
+                momentumVelocityRatio: 1.5,
+                minimumVelocity: 0.02,
+                sticky: true,
+              }}
+              // breakpoints={{
+              //   1024: {
+              //     freeMode: {
+              //       sticky: false,
+              //     },
+              //   },
+              // }}
+              mousewheel={{ sensitivity: 1, thresholdDelta: 10 }}
+              modules={[FreeMode, Mousewheel]}
+              onRealIndexChange={(swiper) => {
+                if (isMobileRef.current) {
+                  interactedItemsRef.current.add(prevActiveRef.current)
+                  prevActiveRef.current = swiper.realIndex
+                }
+                setActiveIndex(swiper.realIndex)
+              }}
+              onSetTranslate={handleSetTranslate}
+              className="h-full"
+            >
+              {(usePlaceholder ? PLACEHOLDER_PROJECTS : projects!).map(
+                (p, i) => (
+                  <SwiperSlide key={"id" in p ? p.id : p._id} role="listitem">
+                    <div className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10">
+                      <a
+                        href="#"
+                        className="type-h1 pl-item-link text-secondary relative inline-block leading-tight cursor-pointer focus-visible:outline-none no-underline"
+                        data-active={
+                          hoverIndex === i || activeIndex === i
+                            ? "true"
+                            : "false"
+                        }
+                        data-line={
+                          hoverIndex === i || (isMobile && activeIndex === i)
+                            ? "in"
+                            : interactedItemsRef.current.has(i)
+                              ? "out"
+                              : undefined
+                        }
+                        onMouseEnter={() => {
+                          interactedItemsRef.current.add(i)
+                          setHoverIndex(i)
+                        }}
+                        onMouseLeave={() => setHoverIndex(null)}
+                        onFocus={() => setHoverIndex(i)}
+                        onBlur={() => setHoverIndex(null)}
+                        onClick={(e) => e.preventDefault()}
+                        aria-label={`${p.title}, ${"code" in p ? p.code : String(i + 1).padStart(3, "0")}`}
+                      >
+                        {"code" in p ? p.code : String(i + 1).padStart(3, "0")}
+                        <span className="pl-underline absolute left-0 w-full h-0.5 bg-current bottom-[0.1em]" />
+                      </a>
+                    </div>
+                  </SwiperSlide>
+                ),
+              )}
+            </Swiper>
+          </div>
 
           {/* Fade top/bottom — solo mobile */}
-          <div aria-hidden="true" className="pl-fade-top md:hidden" />
-          <div aria-hidden="true" className="pl-fade-bottom md:hidden" />
+          <div
+            aria-hidden="true"
+            className="pl-fade-top md:hidden absolute left-0 right-0 top-0 h-[30%] pointer-events-none z-[2]"
+          />
+          <div
+            aria-hidden="true"
+            className="pl-fade-bottom md:hidden absolute left-0 right-0 bottom-0 h-[30%] pointer-events-none z-[2]"
+          />
         </div>
       </div>
     </>

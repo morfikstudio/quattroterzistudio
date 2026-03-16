@@ -12,52 +12,64 @@
 
 /* ─── Typography ───────────────────────────────────────────────────────────── */
 
-@utility type-xxs {
-  font-size: 10px;
-}
-
-@utility type-xs {
-  font-size: 12px;
-}
-
-@utility type-sm {
-  font-size: 14px;
-}
-
-@utility type-base {
-  font-size: 16px;
-}
-
-@utility type-md {
-  font-size: 18px;
-  line-height: 1.2;
+/* Display XL: 60 → 140 → 170px | 90% lh | -2%/-4%/-4% ls | Medium */
+@utility type-display-xl {
+  font-size: 60px;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  font-weight: 500;
 
   @media (width >= 768px) {
-    font-size: 22px;
+    font-size: 140px;
+    letter-spacing: -0.04em;
   }
 
   @media (width >= 1024px) {
-    font-size: 24px;
+    font-size: 170px;
   }
 }
 
-@utility type-ml {
-  font-size: 34px;
-  line-height: 1.02;
+/* Display L: 46 → 82 → 118px | 100%/90%/90% lh | -2% ls | Medium */
+@utility type-display-l {
+  font-size: 46px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+
+  @media (width >= 768px) {
+    font-size: 82px;
+    line-height: 0.9;
+  }
+
+  @media (width >= 1024px) {
+    font-size: 118px;
+  }
 }
 
-@utility type-lg-2 {
+/* H1: 40 → 60 → 64px | 90% lh | 0/-2%/-2% ls | Regular → Light */
+@utility type-h1 {
   font-size: 40px;
-  line-height: 0.96;
+  line-height: 0.9;
+  letter-spacing: 0;
+  font-weight: 400;
+
+  @media (width >= 768px) {
+    font-size: 60px;
+    letter-spacing: -0.02em;
+    font-weight: 300;
+  }
 
   @media (width >= 1024px) {
-    font-size: 60px;
-    line-height: 0.88;
+    font-size: 64px;
   }
 }
 
-@utility type-lg {
+/* H2: 32 → 50 → 64px | 100% lh | 0 ls | Medium */
+@utility type-h2 {
   font-size: 32px;
+  line-height: 1;
+  letter-spacing: 0;
+  font-weight: 500;
 
   @media (width >= 768px) {
     font-size: 50px;
@@ -68,62 +80,150 @@
   }
 }
 
-@utility type-xl {
+/* H3: 40 → 40 → 60px | 100% lh | -2% ls | Light */
+@utility type-h3 {
   font-size: 40px;
+  line-height: 1;
   letter-spacing: -0.02em;
-
-  @media (width >= 768px) {
-    font-size: 60px;
-  }
+  font-weight: 300;
 
   @media (width >= 1024px) {
-    font-size: 70px;
+    font-size: 60px;
   }
 }
 
-@utility type-2xl {
+/* Body L: 34px | 102% lh | 0 ls | Medium → Regular */
+@utility type-body-l {
   font-size: 34px;
+  line-height: 1.02;
+  letter-spacing: 0;
+  font-weight: 500;
+
+  @media (width >= 768px) {
+    font-weight: 400;
+  }
+}
+
+/* Body M: 18 → 22 → 24px | 120% lh | 0 ls | Medium */
+@utility type-body-m {
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  font-weight: 500;
+
+  @media (width >= 768px) {
+    font-size: 22px;
+  }
+
+  @media (width >= 1024px) {
+    font-size: 24px;
+  }
+}
+
+/* Body S: 14 → 16 → 16px | 140% lh | 0 ls | Medium */
+@utility type-body-s {
+  font-size: 14px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  font-weight: 500;
+
+  @media (width >= 768px) {
+    font-size: 16px;
+  }
+}
+
+/* Menu: 16px | 140% lh | 0 ls | Regular */
+@utility type-menu {
+  font-size: 16px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+/* Caption: 12px | 140% lh | 2%/4%/4% ls | Medium | Geist Mono */
+@utility type-caption {
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  font-weight: 500;
+  font-family: var(--font-mono);
+
+  @media (width >= 768px) {
+    letter-spacing: 0.04em;
+  }
+}
+
+/* Label: 12 → 10 → 10px | 120% lh | 0 ls | Medium */
+@utility type-label {
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  font-weight: 500;
+
+  @media (width >= 768px) {
+    font-size: 10px;
+  }
+}
+
+/* Button XL: 34 → 52 → 78px | 90% lh | 0 ls | Regular */
+@utility type-button-xl {
+  font-size: 34px;
+  line-height: 0.9;
+  letter-spacing: 0;
+  font-weight: 400;
 
   @media (width >= 768px) {
     font-size: 52px;
   }
 
   @media (width >= 1024px) {
-    font-size: 80px;
+    font-size: 78px;
   }
 }
 
-@utility type-3xl {
-  font-size: 46px;
+/* Button L: 18 → 20 → 22px | 100% lh | 0 ls | Medium */
+@utility type-button-l {
+  font-size: 18px;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
+  font-weight: 500;
 
   @media (width >= 768px) {
-    font-size: 82px;
-    line-height: 0.9;
+    font-size: 20px;
   }
 
   @media (width >= 1024px) {
-    font-size: 108;
-    line-height: 0.9;
+    font-size: 22px;
   }
 }
 
-@utility type-display {
-  /* Mobile */
-  font-size: 60px;
-  letter-spacing: -0.02em;
-  line-height: 1;
+/* Button M: 12px | 120% lh | 12% ls | Medium | Geist Mono */
+@utility type-button-m {
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: 0.12em;
+  font-weight: 500;
+  font-family: var(--font-mono);
+}
 
-  /* Tablet */
-  @media (width >= 768px) {
-    font-size: 140px;
-    letter-spacing: -0.04em;
-  }
+/* ─── Underline hover animation ─────────────────────────────────────────────── */
 
-  /* Desktop */
-  @media (width >= 1024px) {
-    font-size: 170px;
-    letter-spacing: -0.04em;
+@utility link-underline {
+  position: relative;
+  display: inline-block;
+}
+
+@utility link-underline-bar {
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background-color: currentColor;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.45s cubic-bezier(0.6, 0, 0.2, 1);
+
+  .link-underline:hover & {
+    clip-path: inset(0 0% 0 0);
   }
 }
