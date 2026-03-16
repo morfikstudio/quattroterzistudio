@@ -2,7 +2,43 @@
 @import "../styles/theme.css";
 @plugin "@tailwindcss/typography";
 
-@theme {
-  --font-sans: var(--font-helvetica), Helvetica, Arial, sans-serif;
-  --font-mono: var(--font-geist-mono), "Courier New", monospace;
+/* Lenis smooth scroll */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+@keyframes icon-slide {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  30% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  31% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }

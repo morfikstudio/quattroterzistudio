@@ -2,7 +2,6 @@ import type { Metadata } from "next"
 import localFont from "next/font/local"
 import { Geist_Mono } from "next/font/google"
 import "./globals.css"
-import Header from "@/components/Header"
 import { cn } from "@/utils/classNames"
 
 const helvetica = localFont({
@@ -71,7 +70,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="relative bg-white font-sans font-normal">
-        <Header />
         {children}
       </body>
     </html>

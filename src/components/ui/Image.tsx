@@ -3,7 +3,11 @@
 import { useMemo } from "react"
 import * as NextImage from "next/image"
 
-import { getImageDimensions, getImageUrl } from "@/utils/media"
+import {
+  getImageDimensions,
+  getImageUrl,
+  isWidthOnlyResize,
+} from "@/utils/media"
 import type { ImageResizeId } from "@/utils/media"
 
 import { useBreakpoint } from "@/stores/breakpointStore"
@@ -30,7 +34,14 @@ export default function Image({
   priority = false,
 }: ImageProps) {
   const { current: breakpoint } = useBreakpoint()
-  const dimensions = !fill ? getImageDimensions({ resizeId, breakpoint }) : null
+  const fluidHeight = !fill && isWidthOnlyResize(resizeId)
+  const dimensions = !fill
+    ? getImageDimensions({
+        resizeId,
+        breakpoint,
+        ...(fluidHeight ? { image } : {}),
+      })
+    : null
 
   const url = useMemo(
     () =>
@@ -53,7 +64,9 @@ export default function Image({
       })}
       style={{ objectFit: fit, objectPosition: position }}
       sizes={sizes}
-      className={className}
+      className={
+        fluidHeight ? `${className} max-w-full h-auto`.trim() : className
+      }
       priority={priority}
     />
   ) : null

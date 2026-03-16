@@ -7,11 +7,18 @@ export const projectType = defineType({
   title: "Project",
   type: "document",
   icon: FolderIcon,
+  groups: [
+    { name: "content", title: "Content", default: true },
+    { name: "details", title: "Details" },
+    { name: "covers", title: "Covers" },
+    { name: "media", title: "Media" },
+  ],
   fields: [
     orderRankField({ type: "project" }),
     defineField({
       name: "title",
       type: "string",
+      group: "content",
     }),
     defineField({
       name: "slug",
@@ -19,10 +26,19 @@ export const projectType = defineType({
       options: {
         source: "title",
       },
+      group: "content",
+    }),
+    defineField({
+      name: "description",
+      title: "Description",
+      type: "array",
+      of: [{ type: "block" }],
+      group: "content",
     }),
     defineField({
       name: "year",
       type: "number",
+      group: "details",
       validation: (rule) =>
         rule
           .required()
@@ -32,9 +48,30 @@ export const projectType = defineType({
           .warning("Year is required"),
     }),
     defineField({
+      name: "client",
+      title: "Client",
+      type: "string",
+      group: "details",
+    }),
+    defineField({
+      name: "sector",
+      title: "Sector",
+      type: "string",
+      group: "details",
+    }),
+    defineField({
+      name: "credits",
+      title: "Credits",
+      type: "array",
+      of: [{ type: "string" }],
+      description: "Add one credit at a time (you can add multiple)",
+      group: "details",
+    }),
+    defineField({
       name: "coverImage",
       title: "Cover Image",
       type: "object",
+      group: "covers",
       fields: [
         defineField({
           name: "portrait",
@@ -62,6 +99,7 @@ export const projectType = defineType({
     defineField({
       name: "coverThumb",
       type: "image",
+      group: "covers",
       options: { hotspot: true },
       fields: [
         defineField({
@@ -72,8 +110,36 @@ export const projectType = defineType({
       ],
     }),
     defineField({
+      name: "coverDetail",
+      title: "Cover Detail",
+      type: "object",
+      group: "covers",
+      fields: [
+        defineField({
+          name: "portrait",
+          title: "Portrait",
+          type: "image",
+          description: "Load a portrait image",
+          options: { hotspot: true },
+        }),
+        defineField({
+          name: "landscape",
+          title: "Landscape",
+          type: "image",
+          description: "Load a landscape image",
+          options: { hotspot: true },
+        }),
+        defineField({
+          name: "alt",
+          type: "string",
+          title: "Alternative text",
+        }),
+      ],
+    }),
+    defineField({
       name: "media",
       type: "array",
+      group: "media",
       of: [
         defineArrayMember({
           type: "image",
