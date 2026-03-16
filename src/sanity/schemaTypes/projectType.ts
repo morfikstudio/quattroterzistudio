@@ -36,6 +36,13 @@ export const projectType = defineType({
       group: "content",
     }),
     defineField({
+      name: "payoff",
+      title: "Payoff",
+      type: "string",
+      description: "Una frase semplice senza formattazioni",
+      group: "content",
+    }),
+    defineField({
       name: "year",
       type: "number",
       group: "details",

@@ -37,6 +37,7 @@ export const PROJECT_QUERY = defineQuery(
     client,
     sector,
     credits,
+    payoff,
     coverDetail {
       portrait {
         _type,

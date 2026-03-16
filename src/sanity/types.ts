@@ -56,6 +56,7 @@ export type Project = {
     _type: "block"
     _key: string
   }>
+  payoff?: string
   year: number
   client?: string
   sector?: string
@@ -306,7 +307,7 @@ export type PROJECT_SLUGS_QUERY_RESULT = Array<{
 
 // Source: src/sanity/lib/queries.ts
 // Variable: PROJECT_QUERY
-// Query: *[_type == "project" && slug.current == $slug][0]{    _id,    orderRank,    title,    slug,    description,    year,    client,    sector,    credits,    coverDetail {      portrait {        _type,        "asset": asset-> {          _id,          _type,          url,          metadata { dimensions }        },        hotspot,        crop      },      landscape {        _type,        "asset": asset-> {          _id,          _type,          url,          metadata { dimensions }        },        hotspot,        crop      },      alt    },    "nextProject": coalesce(      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverImage, coverThumb, year },      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverImage, coverThumb, year }    )  }
+// Query: *[_type == "project" && slug.current == $slug][0]{    _id,    orderRank,    title,    slug,    description,    year,    client,    sector,    credits,    payoff,    coverDetail {      portrait {        _type,        "asset": asset-> {          _id,          _type,          url,          metadata { dimensions }        },        hotspot,        crop      },      landscape {        _type,        "asset": asset-> {          _id,          _type,          url,          metadata { dimensions }        },        hotspot,        crop      },      alt    },    "nextProject": coalesce(      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverImage, coverThumb, year },      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverImage, coverThumb, year }    )  }
 export type PROJECT_QUERY_RESULT = {
   _id: string
   orderRank: string | null
@@ -334,6 +335,7 @@ export type PROJECT_QUERY_RESULT = {
   client: string | null
   sector: string | null
   credits: Array<string> | null
+  payoff: string | null
   coverDetail: {
     portrait: {
       _type: "image"
@@ -435,6 +437,6 @@ declare module "@sanity/client" {
   interface SanityQueries {
     '*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverImage,\n    coverThumb\n  }': PROJECTS_QUERY_RESULT
     '*[_type == "project" && defined(slug.current)]{\n    "slug": slug.current\n  }': PROJECT_SLUGS_QUERY_RESULT
-    '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    description,\n    year,\n    client,\n    sector,\n    credits,\n    coverDetail {\n      portrait {\n        _type,\n        "asset": asset-> {\n          _id,\n          _type,\n          url,\n          metadata { dimensions }\n        },\n        hotspot,\n        crop\n      },\n      landscape {\n        _type,\n        "asset": asset-> {\n          _id,\n          _type,\n          url,\n          metadata { dimensions }\n        },\n        hotspot,\n        crop\n      },\n      alt\n    },\n    "nextProject": coalesce(\n      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverImage, coverThumb, year },\n      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverImage, coverThumb, year }\n    )\n  }': PROJECT_QUERY_RESULT
+    '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    description,\n    year,\n    client,\n    sector,\n    credits,\n    payoff,\n    coverDetail {\n      portrait {\n        _type,\n        "asset": asset-> {\n          _id,\n          _type,\n          url,\n          metadata { dimensions }\n        },\n        hotspot,\n        crop\n      },\n      landscape {\n        _type,\n        "asset": asset-> {\n          _id,\n          _type,\n          url,\n          metadata { dimensions }\n        },\n        hotspot,\n        crop\n      },\n      alt\n    },\n    "nextProject": coalesce(\n      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverImage, coverThumb, year },\n      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverImage, coverThumb, year }\n    )\n  }': PROJECT_QUERY_RESULT
   }
 }

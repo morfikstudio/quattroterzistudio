@@ -34,6 +34,7 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
   const [lenis, setLenis] = useState<Lenis | null>(null)
   const pathname = usePathname()
 
+  // create lenis instance
   useEffect(() => {
     const lenisInstance = new Lenis(getLenisOptions())
     setLenis(lenisInstance)
@@ -43,6 +44,7 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // scroll to top on route change
   useEffect(() => {
     if (!lenis) return
     lenis.scrollTo(0, { immediate: true, force: true })
