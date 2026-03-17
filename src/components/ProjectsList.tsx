@@ -182,11 +182,11 @@ export default function ProjectsList({ projects }: Props) {
                       style={{ display: displayIndex === i ? "block" : "none" }}
                     >
                       <Image
-                        image={p.coverThumb}
-                        resizeId="cover-thumb"
+                        image={p.coverDetail}
+                        resizeId="cover-detail"
                         fill
                         fit="cover"
-                        priority={i === 0}
+                        priority={i < 2}
                       />
                     </div>
                   ))}
@@ -224,11 +224,11 @@ export default function ProjectsList({ projects }: Props) {
                       style={{ display: displayIndex === i ? "block" : "none" }}
                     >
                       <Image
-                        image={p.coverThumb}
-                        resizeId="cover-thumb"
+                        image={p.coverDetail}
+                        resizeId="cover-detail"
                         fill
                         fit="cover"
-                        priority={i === 0}
+                        priority={i < 2}
                       />
                     </div>
                   ))}
