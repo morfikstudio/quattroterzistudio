@@ -42,8 +42,6 @@ export default function Marquee({ duration = 18 }: MarqueeProps) {
         textTransform: "uppercase",
         flexShrink: 0,
         paddingRight: "0.2em",
-        display: "flex",
-        alignItems: "center",
       }}
     >
       <span style={{ fontWeight: 600 }}>quattroterzi</span>
@@ -52,14 +50,8 @@ export default function Marquee({ duration = 18 }: MarqueeProps) {
   )
 
   return (
-    <div
-      className="overflow-x-hidden w-full flex items-center"
-      style={{ marginBottom: "-0.18em" }}
-    >
-      <div
-        ref={trackRef}
-        className="inline-flex items-center whitespace-nowrap"
-      >
+    <div className="overflow-x-hidden w-full">
+      <div ref={trackRef} className="inline-flex whitespace-nowrap">
         {item(0)}
         {item(1)}
         {item(2)}

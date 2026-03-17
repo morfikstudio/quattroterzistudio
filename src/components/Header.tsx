@@ -21,17 +21,41 @@ export default function Header() {
             <Image src="/logo.svg" alt="Logo" width={50} height={50} />
           </div>
           <div className="flex gap-2 text-[16px]">
-            <Link href="/projects" className={navLinkClass}>
+            <Link
+              href="/projects"
+              className={navLinkClass}
+              onMouseEnter={(e) => {
+                e.currentTarget.dataset.line = "in"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.dataset.line = "out"
+              }}
+            >
               Works,
               <span className={navUnderlineClass} />
             </Link>
-            <Link href="/about" className={navLinkClass}>
+            <Link
+              href="/about"
+              className={navLinkClass}
+              onMouseEnter={(e) => {
+                e.currentTarget.dataset.line = "in"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.dataset.line = "out"
+              }}
+            >
               About,
               <span className={navUnderlineClass} />
             </Link>
             <button
               onClick={() => setIsContactOpen(true)}
               className={cn(navLinkClass, "cursor-pointer")}
+              onMouseEnter={(e) => {
+                e.currentTarget.dataset.line = "in"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.dataset.line = "out"
+              }}
             >
               Contact
               <span className={navUnderlineClass} />

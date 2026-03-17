@@ -121,7 +121,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
               Images creLor fsvho iufsovhs fsvsc.
             </h2>
           </div>
-          <div className="flex flex-col gap-[30px] md:grid md:grid-cols-2 md:gap-x-[48px] md:gap-y-[60px] md:flex-1 md:min-w-0">
+          <div className="contact-grid flex flex-col gap-[30px] md:grid md:grid-cols-2 md:gap-x-[48px] md:gap-y-[60px] md:flex-1 md:min-w-0">
             <div className="flex flex-col uppercase">
               <span data-split className="type-caption text-secondary mb-2">
                 address
@@ -136,33 +136,93 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
               <span data-split className="type-caption text-secondary mb-2">
                 social
               </span>
-              <a data-split href="tel:+393333333333">
-                facebook
+              <a
+                href="tel:+393333333333"
+                className="link-underline w-fit"
+                onMouseEnter={(e) => {
+                  e.currentTarget.dataset.line = "in"
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.dataset.line = "out"
+                }}
+              >
+                <span data-split>facebook</span>
+                <span className="link-underline-bar" />
               </a>
-              <a data-split href="tel:+393333333333">
-                instagram
+              <a
+                href="tel:+393333333333"
+                className="link-underline w-fit"
+                onMouseEnter={(e) => {
+                  e.currentTarget.dataset.line = "in"
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.dataset.line = "out"
+                }}
+              >
+                <span data-split>instagram</span>
+                <span className="link-underline-bar" />
               </a>
             </div>{" "}
             <div className="flex flex-col uppercase">
               <span data-split className="type-caption text-secondary mb-2">
                 contact
               </span>
-              <a data-split href="mailto:info@quattroterzi.com">
-                info@quattroterzi.com
+              <a
+                href="mailto:info@quattroterzi.com"
+                className="link-underline w-fit"
+                onMouseEnter={(e) => {
+                  e.currentTarget.dataset.line = "in"
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.dataset.line = "out"
+                }}
+              >
+                <span data-split>info@quattroterzi.com</span>
+                <span className="link-underline-bar" />
               </a>
-              <a data-split href="tel:+393333333333">
-                +39 333 333 33 33
+              <a
+                href="tel:+393333333333"
+                className="link-underline w-fit"
+                onMouseEnter={(e) => {
+                  e.currentTarget.dataset.line = "in"
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.dataset.line = "out"
+                }}
+              >
+                <span data-split>+39 333 333 33 33</span>
+                <span className="link-underline-bar" />
               </a>
             </div>
             <div className="flex flex-col uppercase">
               <span data-split className="type-caption text-secondary mb-2">
                 legal
               </span>
-              <a data-split href="tel:+393333333333">
-                +privacy
+              <a
+                href="tel:+393333333333"
+                className="link-underline w-fit"
+                onMouseEnter={(e) => {
+                  e.currentTarget.dataset.line = "in"
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.dataset.line = "out"
+                }}
+              >
+                <span data-split>+privacy</span>
+                <span className="link-underline-bar" />
               </a>
-              <a data-split href="tel:+393333333333">
-                cookies
+              <a
+                href="tel:+393333333333"
+                className="link-underline w-fit"
+                onMouseEnter={(e) => {
+                  e.currentTarget.dataset.line = "in"
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.dataset.line = "out"
+                }}
+              >
+                <span data-split>cookies</span>
+                <span className="link-underline-bar" />
               </a>
             </div>
           </div>
@@ -170,7 +230,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
       </div>
 
       {/* Marquee */}
-      <div ref={marqueeRef} className="overflow-hidden">
+      <div ref={marqueeRef} className="overflow-x-hidden">
         <Marquee />
       </div>
     </div>

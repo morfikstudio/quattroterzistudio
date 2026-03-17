@@ -23,3 +23,11 @@ html.lenis body {
 .lenis.lenis-smooth iframe {
   pointer-events: none;
 }
+
+nav .link-underline-bar {
+  bottom: 1px;
+}
+
+.contact-grid .link-underline-bar {
+  bottom: 1px;
+}
