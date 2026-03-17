@@ -3,21 +3,12 @@ import { getSanityImageUrl } from "@/lib/sanity"
 import type { BreakpointName } from "@/stores/breakpointStore"
 
 const imageResizeMap = {
-  "cover-image": {
-    landscape: "1920x1080",
-    portrait: "720x1280",
-  },
-  "cover-thumb": {
-    landscape: "600x400",
-    portrait: "600x400",
-  },
-  "default-fluid": {
-    // width only
-    landscape: "1920",
-    portrait: "720",
-  },
   default: {
     landscape: "1920x1080", // 16:9
+    portrait: "720x1280", // 9:16
+  },
+  "cover-detail": {
+    landscape: "1920x1440", // 4:3
     portrait: "720x1280", // 9:16
   },
 } as const satisfies Record<string, Record<"landscape" | "portrait", string>>

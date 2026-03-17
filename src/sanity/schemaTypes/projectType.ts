@@ -75,8 +75,8 @@ export const projectType = defineType({
       group: "details",
     }),
     defineField({
-      name: "coverImage",
-      title: "Cover Image",
+      name: "coverList",
+      title: "Cover List",
       type: "object",
       group: "covers",
       fields: [
@@ -85,30 +85,25 @@ export const projectType = defineType({
           title: "Portrait (9:16)",
           type: "image",
           description:
-            "Load a portrait image in 9:16 format (e.g. 1080x1920px)",
-          options: { hotspot: true },
+            "Use a 9:16 image (e.g. 1080x1920px). If the uploaded image has a different ratio, use the crop tool to adapt the selection.",
+          options: {
+            hotspot: {
+              previews: [{ title: "9:16", aspectRatio: 9 / 16 }],
+            },
+          },
         }),
         defineField({
           name: "landscape",
           title: "Landscape (16:9)",
           type: "image",
           description:
-            "Load a landscape image in 16:9 format (e.g. 1920x1080px)",
-          options: { hotspot: true },
+            "Use a 16:9 image (e.g. 1920x1080px). If the uploaded image has a different ratio, use the crop tool to adapt the selection.",
+          options: {
+            hotspot: {
+              previews: [{ title: "16:9", aspectRatio: 16 / 9 }],
+            },
+          },
         }),
-        defineField({
-          name: "alt",
-          type: "string",
-          title: "Alternative text",
-        }),
-      ],
-    }),
-    defineField({
-      name: "coverThumb",
-      type: "image",
-      group: "covers",
-      options: { hotspot: true },
-      fields: [
         defineField({
           name: "alt",
           type: "string",
@@ -126,15 +121,25 @@ export const projectType = defineType({
           name: "portrait",
           title: "Portrait",
           type: "image",
-          description: "Load a portrait image",
-          options: { hotspot: true },
+          description:
+            "Use a 9:16 image (e.g. 1080x1920px). If the uploaded image has a different ratio, use the crop tool to adapt the selection.",
+          options: {
+            hotspot: {
+              previews: [{ title: "9:16", aspectRatio: 9 / 16 }],
+            },
+          },
         }),
         defineField({
           name: "landscape",
           title: "Landscape",
           type: "image",
-          description: "Load a landscape image",
-          options: { hotspot: true },
+          description:
+            "Use a 4:3 image (e.g. 1920x1440px). If the uploaded image has a different ratio, use the crop tool to adapt the selection.",
+          options: {
+            hotspot: {
+              previews: [{ title: "4:3", aspectRatio: 4 / 3 }],
+            },
+          },
         }),
         defineField({
           name: "alt",
@@ -211,10 +216,10 @@ export const projectType = defineType({
   preview: {
     select: {
       title: "title",
-      coverImage: "coverImage",
+      coverList: "coverList",
     },
-    prepare({ title, coverImage }) {
-      const media = coverImage?.portrait?.asset || coverImage?.landscape?.asset
+    prepare({ title, coverList }) {
+      const media = coverList?.portrait?.asset || coverList?.landscape?.asset
       return {
         title: title ?? "Untitled",
         media,

@@ -8,6 +8,10 @@ html.lenis body {
   height: auto;
 }
 
+html.lenis {
+  scrollbar-gutter: stable;
+}
+
 .lenis.lenis-smooth {
   scroll-behavior: auto !important;
 }

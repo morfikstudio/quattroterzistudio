@@ -11,8 +11,8 @@ export const PROJECTS_QUERY = defineQuery(
     title,
     slug,
     year,
-    coverImage,
-    coverThumb
+    coverList,
+    coverDetail
   }`,
 )
 
@@ -38,34 +38,10 @@ export const PROJECT_QUERY = defineQuery(
     sector,
     credits,
     payoff,
-    coverDetail {
-      portrait {
-        _type,
-        "asset": asset-> {
-          _id,
-          _type,
-          url,
-          metadata { dimensions }
-        },
-        hotspot,
-        crop
-      },
-      landscape {
-        _type,
-        "asset": asset-> {
-          _id,
-          _type,
-          url,
-          metadata { dimensions }
-        },
-        hotspot,
-        crop
-      },
-      alt
-    },
+    coverDetail,
     "nextProject": coalesce(
-      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverImage, coverThumb, year },
-      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverImage, coverThumb, year }
+      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year },
+      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year }
     )
   }`,
 )
