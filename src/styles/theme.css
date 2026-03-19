@@ -225,9 +225,30 @@
   height: 1px;
   background-color: currentColor;
   clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.45s cubic-bezier(0.6, 0, 0.2, 1);
+}
 
-  .link-underline:hover & {
+@keyframes link-line-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
     clip-path: inset(0 0% 0 0);
   }
+}
+
+@keyframes link-line-out {
+  from {
+    clip-path: inset(0 0% 0 0);
+  }
+  to {
+    clip-path: inset(0 0% 0 100%);
+  }
+}
+
+.link-underline[data-line="in"] .link-underline-bar {
+  animation: link-line-in 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+}
+
+.link-underline[data-line="out"] .link-underline-bar {
+  animation: link-line-out 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
 }
