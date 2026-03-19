@@ -31,3 +31,7 @@ nav .link-underline-bar {
 .contact-grid .link-underline-bar {
   bottom: 1px;
 }
+
+.contact-marquee {
+  transform: translateY(10px);
+}

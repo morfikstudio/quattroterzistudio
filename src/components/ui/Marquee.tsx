@@ -50,7 +50,7 @@ export default function Marquee({ duration = 18 }: MarqueeProps) {
   )
 
   return (
-    <div className="overflow-x-hidden w-full">
+    <div className="overflow-x-hidden w-full contact-marquee">
       <div ref={trackRef} className="inline-flex whitespace-nowrap">
         {item(0)}
         {item(1)}
