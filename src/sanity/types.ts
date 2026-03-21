@@ -12,12 +12,21 @@
  * ---------------------------------------------------------------------------------
  */
 
-// Source: src/sanity/extract.json
+export declare const internalGroqTypeReferenceTo: unique symbol
+
+// Source: src/sanity/schema.json
 export type SanityImageAssetReference = {
   _ref: string
   _type: "reference"
   _weak?: boolean
   [internalGroqTypeReferenceTo]?: "sanity.imageAsset"
+}
+
+export type SanityFileAssetReference = {
+  _ref: string
+  _type: "reference"
+  _weak?: boolean
+  [internalGroqTypeReferenceTo]?: "sanity.fileAsset"
 }
 
 export type Project = {
@@ -26,17 +35,88 @@ export type Project = {
   _createdAt: string
   _updatedAt: string
   _rev: string
+  orderRank?: string
   title?: string
   slug?: Slug
-  media?: Array<{
-    asset?: SanityImageAssetReference
-    media?: unknown
-    hotspot?: SanityImageHotspot
-    crop?: SanityImageCrop
-    alt?: string
-    _type: "image"
+  description?: Array<{
+    children?: Array<{
+      marks?: Array<string>
+      text?: string
+      _type: "span"
+      _key: string
+    }>
+    style?: "normal" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "blockquote"
+    listItem?: "bullet" | "number"
+    markDefs?: Array<{
+      href?: string
+      _type: "link"
+      _key: string
+    }>
+    level?: number
+    _type: "block"
     _key: string
   }>
+  payoff?: string
+  year: number
+  client?: string
+  sector?: string
+  credits?: Array<string>
+  coverList?: {
+    portrait?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    landscape?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    alt?: string
+  }
+  coverDetail?: {
+    portrait?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    landscape?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    alt?: string
+  }
+  media?: Array<
+    | {
+        asset?: SanityImageAssetReference
+        media?: unknown
+        hotspot?: SanityImageHotspot
+        crop?: SanityImageCrop
+        alt?: string
+        _type: "image"
+        _key: string
+      }
+    | {
+        file?: {
+          asset?: SanityFileAssetReference
+          media?: unknown
+          _type: "file"
+        }
+        url?: string
+        alt?: string
+        _type: "video"
+        _key: string
+      }
+  >
 }
 
 export type SanityImageCrop = {
@@ -110,14 +190,14 @@ export type SanityFileAsset = {
   title?: string
   description?: string
   altText?: string
-  sha1hash?: string
-  extension?: string
-  mimeType?: string
-  size?: number
-  assetId?: string
+  sha1hash: string
+  extension: string
+  mimeType: string
+  size: number
+  assetId: string
   uploadId?: string
-  path?: string
-  url?: string
+  path: string
+  url: string
   source?: SanityAssetSourceData
 }
 
@@ -139,14 +219,14 @@ export type SanityImageAsset = {
   title?: string
   description?: string
   altText?: string
-  sha1hash?: string
-  extension?: string
-  mimeType?: string
-  size?: number
-  assetId?: string
+  sha1hash: string
+  extension: string
+  mimeType: string
+  size: number
+  assetId: string
   uploadId?: string
-  path?: string
-  url?: string
+  path: string
+  url: string
   metadata?: SanityImageMetadata
   source?: SanityAssetSourceData
 }
@@ -160,6 +240,7 @@ export type Geopoint = {
 
 export type AllSanitySchemaTypes =
   | SanityImageAssetReference
+  | SanityFileAssetReference
   | Project
   | SanityImageCrop
   | SanityImageHotspot
@@ -173,57 +254,196 @@ export type AllSanitySchemaTypes =
   | SanityImageAsset
   | Geopoint
 
-export declare const internalGroqTypeReferenceTo: unique symbol
-
 // Source: src/sanity/lib/queries.ts
 // Variable: PROJECTS_QUERY
-// Query: *[_type == "project" && defined(slug.current)]|order(_createdAt desc)[0...50]{_id,title,slug,media}
+// Query: *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{    _id,    orderRank,    title,    slug,    year,    coverList,    coverDetail  }
 export type PROJECTS_QUERY_RESULT = Array<{
   _id: string
+  orderRank: string | null
   title: string | null
   slug: Slug
-  media: Array<{
-    asset?: SanityImageAssetReference
-    media?: unknown
-    hotspot?: SanityImageHotspot
-    crop?: SanityImageCrop
+  year: number
+  coverList: {
+    portrait?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    landscape?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
     alt?: string
-    _type: "image"
-    _key: string
-  }> | null
+  } | null
+  coverDetail: {
+    portrait?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    landscape?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    alt?: string
+  } | null
 }>
 
 // Source: src/sanity/lib/queries.ts
 // Variable: PROJECT_SLUGS_QUERY
-// Query: *[_type == "project" && defined(slug.current)]{ "slug": slug.current }
+// Query: *[_type == "project" && defined(slug.current)]{    "slug": slug.current  }
 export type PROJECT_SLUGS_QUERY_RESULT = Array<{
   slug: string
 }>
 
 // Source: src/sanity/lib/queries.ts
 // Variable: PROJECT_QUERY
-// Query: *[_type == "project" && slug.current == $slug][0]{    _id,    title,    slug,    media[]  }
+// Query: *[_type == "project" && slug.current == $slug][0]{    _id,    orderRank,    title,    slug,    description,    year,    client,    sector,    credits,    payoff,    coverDetail,    "nextProject": coalesce(      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year },      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year }    )  }
 export type PROJECT_QUERY_RESULT = {
   _id: string
+  orderRank: string | null
   title: string | null
   slug: Slug | null
-  media: Array<{
-    asset?: SanityImageAssetReference
-    media?: unknown
-    hotspot?: SanityImageHotspot
-    crop?: SanityImageCrop
-    alt?: string
-    _type: "image"
+  description: Array<{
+    children?: Array<{
+      marks?: Array<string>
+      text?: string
+      _type: "span"
+      _key: string
+    }>
+    style?: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal"
+    listItem?: "bullet" | "number"
+    markDefs?: Array<{
+      href?: string
+      _type: "link"
+      _key: string
+    }>
+    level?: number
+    _type: "block"
     _key: string
   }> | null
+  year: number
+  client: string | null
+  sector: string | null
+  credits: Array<string> | null
+  payoff: string | null
+  coverDetail: {
+    portrait?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    landscape?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    alt?: string
+  } | null
+  nextProject:
+    | {
+        id: string
+        slug: Slug
+        title: string | null
+        coverList: {
+          portrait?: {
+            asset?: SanityImageAssetReference
+            media?: unknown
+            hotspot?: SanityImageHotspot
+            crop?: SanityImageCrop
+            _type: "image"
+          }
+          landscape?: {
+            asset?: SanityImageAssetReference
+            media?: unknown
+            hotspot?: SanityImageHotspot
+            crop?: SanityImageCrop
+            _type: "image"
+          }
+          alt?: string
+        } | null
+        coverDetail: {
+          portrait?: {
+            asset?: SanityImageAssetReference
+            media?: unknown
+            hotspot?: SanityImageHotspot
+            crop?: SanityImageCrop
+            _type: "image"
+          }
+          landscape?: {
+            asset?: SanityImageAssetReference
+            media?: unknown
+            hotspot?: SanityImageHotspot
+            crop?: SanityImageCrop
+            _type: "image"
+          }
+          alt?: string
+        } | null
+        year: number
+      }
+    | {
+        id: string
+        slug: Slug | null
+        title: string | null
+        coverList: {
+          portrait?: {
+            asset?: SanityImageAssetReference
+            media?: unknown
+            hotspot?: SanityImageHotspot
+            crop?: SanityImageCrop
+            _type: "image"
+          }
+          landscape?: {
+            asset?: SanityImageAssetReference
+            media?: unknown
+            hotspot?: SanityImageHotspot
+            crop?: SanityImageCrop
+            _type: "image"
+          }
+          alt?: string
+        } | null
+        coverDetail: {
+          portrait?: {
+            asset?: SanityImageAssetReference
+            media?: unknown
+            hotspot?: SanityImageHotspot
+            crop?: SanityImageCrop
+            _type: "image"
+          }
+          landscape?: {
+            asset?: SanityImageAssetReference
+            media?: unknown
+            hotspot?: SanityImageHotspot
+            crop?: SanityImageCrop
+            _type: "image"
+          }
+          alt?: string
+        } | null
+        year: number
+      }
+    | null
 } | null
 
 // Query TypeMap
 import "@sanity/client"
 declare module "@sanity/client" {
   interface SanityQueries {
-    '*[_type == "project" && defined(slug.current)]|order(_createdAt desc)[0...50]{_id,title,slug,media}': PROJECTS_QUERY_RESULT
-    '*[_type == "project" && defined(slug.current)]{ "slug": slug.current }': PROJECT_SLUGS_QUERY_RESULT
-    '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    title,\n    slug,\n    media[]\n  }': PROJECT_QUERY_RESULT
+    '*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverList,\n    coverDetail\n  }': PROJECTS_QUERY_RESULT
+    '*[_type == "project" && defined(slug.current)]{\n    "slug": slug.current\n  }': PROJECT_SLUGS_QUERY_RESULT
+    '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    description,\n    year,\n    client,\n    sector,\n    credits,\n    payoff,\n    coverDetail,\n    "nextProject": coalesce(\n      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year },\n      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year }\n    )\n  }': PROJECT_QUERY_RESULT
   }
 }

@@ -1,36 +1,72 @@
-import { ButtonHTMLAttributes, PropsWithChildren } from "react"
+import Link from "next/link"
+import { ReactNode } from "react"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/utils/classNames"
 
-const variants = {
-  primary:
-    "bg-neutral-800 text-neutral-100 border-neutral-600 hover:bg-neutral-700 hover:border-neutral-500",
-  ghost:
-    "bg-transparent text-neutral-800 border-neutral-300 hover:bg-neutral-100 hover:border-neutral-400",
-} as const
-
-const base =
-  "cursor-pointer px-4 py-2 rounded-md text-sm font-medium border transition-colors"
-
-type ButtonProps = PropsWithChildren<
-  ButtonHTMLAttributes<HTMLButtonElement> & {
-    variant?: keyof typeof variants
-  }
->
+interface ButtonProps {
+  icon: ReactNode
+  label: string
+  href?: string
+  className?: string
+  onClick?: () => void
+}
 
 export default function Button({
-  variant = "primary",
-  className = "",
-  children,
-  ...props
+  icon,
+  label,
+  href,
+  className,
+  onClick,
 }: ButtonProps) {
+  const sharedClassName = cn(
+    "group inline-flex items-center gap-2 cursor-pointer",
+    className,
+  )
+
+  const content = (
+    <>
+      <span className="overflow-hidden inline-flex items-center justify-center">
+        <span className="inline-flex group-hover:animate-[icon-slide_0.5s_ease-in-out]">
+          {icon}
+        </span>
+      </span>
+      <span className="transition-transform duration-300 ease-out group-hover:translate-x-1">
+        {label}
+      </span>
+    </>
+  )
+
   return (
-    <button
-      type="button"
-      className={cn(base, variants[variant], className)}
-      {...props}
-    >
-      {children}
-    </button>
+    <>
+      <style>{`
+        @keyframes icon-slide {
+          0% {
+            transform: translateX(0);
+            opacity: 1;
+          }
+          30% {
+            transform: translateX(120%);
+            opacity: 0;
+          }
+          31% {
+            transform: translateX(-120%);
+            opacity: 0;
+          }
+          100% {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
+      {href ? (
+        <Link href={href} className={sharedClassName}>
+          {content}
+        </Link>
+      ) : (
+        <button type="button" onClick={onClick} className={sharedClassName}>
+          {content}
+        </button>
+      )}
+    </>
   )
 }

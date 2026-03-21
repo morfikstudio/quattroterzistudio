@@ -14,6 +14,7 @@ export const resolve: PresentationPluginOptions["resolve"] = {
             href: `/projects/${doc?.slug}`,
           },
           { title: "Projects index", href: `/projects` },
+          { title: "Archive", href: `/archive` },
         ],
       }),
     }),

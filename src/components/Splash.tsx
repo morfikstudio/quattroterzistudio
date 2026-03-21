@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import gsap from "gsap"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/utils/classNames"
 import { useCursorStore } from "@/stores/cursorStore"
 import { useIsTouch } from "@/hooks/useIsTouch"
 
@@ -78,7 +78,7 @@ export default function Splash({ title, ctaText }: SplashProps) {
     tl.current = gsap
       .timeline({
         onStart: () => setShow(true),
-        delay: 1,
+        delay: 0.5,
       })
       .set(marqueeEl, { xPercent: 0, x: marqueeX(), force3D: false }, 0)
       .from(
@@ -129,6 +129,10 @@ export default function Splash({ title, ctaText }: SplashProps) {
     return () => {
       if (tl.current) {
         tl.current.kill()
+        // clear styles
+        gsap.set([marqueeEl, rectRef.current, ...letters].filter(Boolean), {
+          clearProps: "all",
+        })
       }
     }
   }, [])
@@ -165,7 +169,11 @@ export default function Splash({ title, ctaText }: SplashProps) {
       >
         <div
           ref={rectRef}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[65vw] md:max-w-[75vw] lg:max-w-[35vw] aspect-4/3 bg-black"
+          className={cn(
+            "absolute aspect-4/3 bg-black",
+            "w-full max-w-[65vw] md:max-w-[75vw] lg:max-w-[35vw]",
+            "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
+          )}
         />
 
         <div
@@ -183,7 +191,12 @@ export default function Splash({ title, ctaText }: SplashProps) {
         </div>
 
         {isTouch && (
-          <span className="absolute bottom-25 left-1/2 -translate-x-1/2 font-[Helvetica] text-[12px] font-medium uppercase text-black">
+          <span
+            className={cn(
+              "absolute bottom-25 left-1/2 -translate-x-1/2",
+              "font-[Helvetica] text-[12px] font-medium uppercase text-black",
+            )}
+          >
             {ctaText}
           </span>
         )}
