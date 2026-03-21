@@ -6,10 +6,12 @@ import { cn } from "@/utils/classNames"
 
 type ScrollIndicatorProps = {
   delay?: number
+  variant?: "light" | "dark"
 }
 
 export default function ScrollIndicator({
   delay = 4000,
+  variant = "light",
 }: ScrollIndicatorProps) {
   const [show, setShow] = useState(true)
   const tm = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -81,12 +83,18 @@ export default function ScrollIndicator({
       <div
         className={cn(
           "relative w-[3px] h-[38px]",
-          "overflow-hidden bg-white/20 pointer-events-none",
+          "overflow-hidden pointer-events-none",
+          variant === "dark" ? "bg-black/20" : "bg-white/20",
           "transition-opacity duration-500 ease-out",
           show ? "opacity-100" : "opacity-0",
         )}
       >
-        <div className="scroll-indicator-bar absolute top-0 left-0 w-full h-[32px] bg-white" />
+        <div
+          className={cn(
+            "scroll-indicator-bar absolute top-0 left-0 w-full h-[32px]",
+            variant === "dark" ? "bg-black" : "bg-white",
+          )}
+        />
       </div>
     </>
   )
