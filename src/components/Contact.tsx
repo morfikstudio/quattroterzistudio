@@ -97,7 +97,10 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
     <div
       ref={containerRef}
       style={{ clipPath: "inset(0% 0% 100% 0%)", pointerEvents: "none" }}
-      className="fixed inset-0 z-[100] bg-black text-white flex flex-col"
+      className={cn(
+        "bg-black text-white",
+        "fixed inset-0 z-[100]  flex flex-col",
+      )}
     >
       {/* Header interno */}
       <div className="flex justify-between items-center p-3 md:p-7">
@@ -117,11 +120,20 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
       <div className="flex-1 flex flex-col justify-end px-3 pb-3 md:px-7 md:pb-12">
         <div className="flex flex-col md:flex-row md:items-start">
           <div className={cn("title", "md:flex-1 md:min-w-0")}>
-            <h2 data-split className="w-[100%] md:w-[80%] type-h3 uppercase ">
+            <h2
+              data-split
+              className={cn("type-h3 uppercase", "w-[100%] md:w-[80%]  ")}
+            >
               Images creLor fsvho iufsovhs fsvsc.
             </h2>
           </div>
-          <div className="contact-grid flex flex-col gap-[30px] md:grid md:grid-cols-2 md:gap-x-[48px] md:gap-y-[60px] md:flex-1 md:min-w-0">
+          <div
+            className={cn(
+              "contact-grid",
+              "flex flex-col gap-[30px]",
+              "md:grid md:grid-cols-2 md:gap-x-[48px] md:gap-y-[60px] md:flex-1 md:min-w-0",
+            )}
+          >
             <div className="flex flex-col uppercase">
               <span data-split className="type-caption text-secondary mb-2">
                 address
@@ -138,7 +150,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
               </span>
               <a
                 href="tel:+393333333333"
-                className="link-underline w-fit"
+                className={cn("link-underline w-fit")}
                 onMouseEnter={(e) => {
                   e.currentTarget.dataset.line = "in"
                 }}
@@ -151,7 +163,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
               </a>
               <a
                 href="tel:+393333333333"
-                className="link-underline w-fit"
+                className={cn("link-underline w-fit")}
                 onMouseEnter={(e) => {
                   e.currentTarget.dataset.line = "in"
                 }}
@@ -160,7 +172,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                 }}
               >
                 <span data-split>instagram</span>
-                <span className="link-underline-bar" />
+                <span className={cn("link-underline-bar")} />
               </a>
             </div>{" "}
             <div className="flex flex-col uppercase">
@@ -169,7 +181,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
               </span>
               <a
                 href="mailto:info@quattroterzi.com"
-                className="link-underline w-fit"
+                className={cn("link-underline w-fit")}
                 onMouseEnter={(e) => {
                   e.currentTarget.dataset.line = "in"
                 }}
@@ -178,11 +190,11 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                 }}
               >
                 <span data-split>info@quattroterzi.com</span>
-                <span className="link-underline-bar" />
+                <span className={cn("link-underline-bar")} />
               </a>
               <a
                 href="tel:+393333333333"
-                className="link-underline w-fit"
+                className={cn("link-underline w-fit")}
                 onMouseEnter={(e) => {
                   e.currentTarget.dataset.line = "in"
                 }}
@@ -191,7 +203,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                 }}
               >
                 <span data-split>+39 333 333 33 33</span>
-                <span className="link-underline-bar" />
+                <span className={cn("link-underline-bar")} />
               </a>
             </div>
             <div className="flex flex-col uppercase">
@@ -200,7 +212,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
               </span>
               <a
                 href="tel:+393333333333"
-                className="link-underline w-fit"
+                className={cn("link-underline w-fit")}
                 onMouseEnter={(e) => {
                   e.currentTarget.dataset.line = "in"
                 }}
@@ -209,11 +221,11 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                 }}
               >
                 <span data-split>+privacy</span>
-                <span className="link-underline-bar" />
+                <span className={cn("link-underline-bar")} />
               </a>
               <a
                 href="tel:+393333333333"
-                className="link-underline w-fit"
+                className={cn("link-underline w-fit")}
                 onMouseEnter={(e) => {
                   e.currentTarget.dataset.line = "in"
                 }}
@@ -222,7 +234,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                 }}
               >
                 <span data-split>cookies</span>
-                <span className="link-underline-bar" />
+                <span className={cn("link-underline-bar")} />
               </a>
             </div>
           </div>

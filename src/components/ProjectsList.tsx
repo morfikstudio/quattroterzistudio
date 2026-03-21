@@ -10,6 +10,7 @@ import NextImage from "next/image"
 import Image from "@/components/ui/Image"
 import { useImageScale } from "@/hooks/useImageScale"
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
+import { cn } from "@/utils/classNames"
 
 const SLIDES_PER_VIEW = 7
 
@@ -242,7 +243,7 @@ export default function ProjectsList({ projects }: Props) {
           role="region"
           aria-label="Lista progetti"
         >
-          <div className="pl-swiper-blend h-full">
+          <div className={cn("pl-swiper-blend h-full", "group")}>
             <Swiper
               direction="vertical"
               loop
@@ -282,7 +283,11 @@ export default function ProjectsList({ projects }: Props) {
                     <div className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10">
                       <a
                         href="#"
-                        className="type-h1 pl-item-link text-secondary relative inline-block leading-tight cursor-pointer focus-visible:outline-none no-underline"
+                        className={cn(
+                          "pl-item-link",
+                          "type-h1  text-secondary no-underline focus-visible:outline-none",
+                          "relative inline-block leading-tight cursor-pointer  ",
+                        )}
                         data-active={
                           hoverIndex === i || activeIndex === i
                             ? "true"
@@ -306,7 +311,13 @@ export default function ProjectsList({ projects }: Props) {
                         aria-label={`${p.title}, ${"code" in p ? p.code : String(i + 1).padStart(3, "0")}`}
                       >
                         {"code" in p ? p.code : String(i + 1).padStart(3, "0")}
-                        <span className="pl-underline absolute left-0 w-full h-0.5 bg-current bottom-[0.1em]" />
+                        <span
+                          className={cn(
+                            "pl-underline",
+                            "absolute left-0 w-full h-0.5 bg-current bottom-[0.1em]",
+                            "transition-transform duration-300 ease-out group-hover:translate-x-1",
+                          )}
+                        />
                       </a>
                     </div>
                   </SwiperSlide>
@@ -318,11 +329,19 @@ export default function ProjectsList({ projects }: Props) {
           {/* Fade top/bottom — solo mobile */}
           <div
             aria-hidden="true"
-            className="pl-fade-top md:hidden absolute left-0 right-0 top-0 h-[30%] pointer-events-none z-[2]"
+            className={cn(
+              "pl-fade-top",
+              "md:hidden absolute left-0 right-0 top-0 h-[30%] pointer-events-none z-[2]",
+              "transition-transform duration-300 ease-out group-hover:translate-x-1",
+            )}
           />
           <div
             aria-hidden="true"
-            className="pl-fade-bottom md:hidden absolute left-0 right-0 bottom-0 h-[30%] pointer-events-none z-[2]"
+            className={cn(
+              "pl-fade-bottom",
+              "md:hidden absolute left-0 right-0 bottom-0 h-[30%] pointer-events-none z-[2]",
+              "transition-transform duration-300 ease-out group-hover:translate-x-1",
+            )}
           />
         </div>
       </div>
