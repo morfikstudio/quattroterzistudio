@@ -52,12 +52,12 @@ export default function ProjectsList({ projects }: Props) {
     velocityRef,
   })
 
-  // Cleanup RAF on unmount
+  // Cleanup requestAnimationFrame on unmount
   useEffect(() => {
     return () => cancelAnimationFrame(scrollCheckRef.current)
   }, [])
 
-  // Rileva mobile per pilotare l'underline su activeIndex solo su mobile
+  // Detect mobile to drive the underline on activeIndex only on mobile
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)")
     const update = (matches: boolean) => {
@@ -69,8 +69,8 @@ export default function ProjectsList({ projects }: Props) {
     return () => mq.removeEventListener("change", (e) => update(e.matches))
   }, [])
 
-  // Traccia la velocità dal delta tra frame successivi di onSetTranslate,
-  // avvia lo scale loop e gestisce il flag isScrolling.
+  // Track the velocity from the delta between successive frames of onSetTranslate,
+  // start the scale loop and manage the isScrolling flag.
   const handleSetTranslate = useCallback(
     (_swiper: SwiperType, translate: number) => {
       if (prevTranslateRef.current !== null) {
@@ -98,8 +98,8 @@ export default function ProjectsList({ projects }: Props) {
     [startScaleLoop],
   )
 
-  // Durante lo scroll l'immagine segue l'elemento attivo;
-  // solo a riposo segue l'hover.
+  // During scroll the image follows the active element;
+  // only at rest it follows the hover.
   const displayIndex = isScrolling
     ? activeIndex
     : hoverIndex !== null
@@ -153,7 +153,7 @@ export default function ProjectsList({ projects }: Props) {
       `}</style>
 
       <div className="relative h-screen md:grid md:grid-cols-2">
-        {/* Immagine — solo mobile, assoluta dietro la lista */}
+        {/* Mobile image */}
         <div className="md:hidden absolute inset-0">
           <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw]">
             <div
@@ -195,7 +195,7 @@ export default function ProjectsList({ projects }: Props) {
           </div>
         </div>
 
-        {/* Immagine — solo desktop */}
+        {/* Desktop image */}
         <div className="hidden md:block relative h-screen">
           <div className="absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] lg:w-[35vw]">
             <div
@@ -326,7 +326,7 @@ export default function ProjectsList({ projects }: Props) {
             </Swiper>
           </div>
 
-          {/* Fade top/bottom — solo mobile */}
+          {/* Fade top/bottom */}
           <div
             aria-hidden="true"
             className={cn(
