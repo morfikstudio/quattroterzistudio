@@ -51,7 +51,7 @@ export default function HeroAbout({ title, pretitle, label }: HeroAboutProps) {
   }, [])
 
   return (
-    <div ref={containerRef} className={cn("hero-about")}>
+    <div ref={containerRef} className={cn("hero-about", "px-4 md:px-12")}>
       <div
         className={cn(
           "content uppercase",
