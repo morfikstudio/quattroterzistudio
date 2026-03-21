@@ -17,8 +17,8 @@ import type { PROJECT_QUERY_RESULT } from "@/sanity/types"
 import Image from "@/components/ui/Image"
 import { useLenis } from "@/components/LenisProvider"
 
-const ENTER_THRESHOLD = 0.6
-const LOAD_DURATION = 1.5
+const ENTER_THRESHOLD = 0.7
+const LOAD_DURATION = 2
 const SCROLL_DURATION = 1
 
 type NextProjectTeaserProps = {
