@@ -10,6 +10,7 @@ import { getImageUrl } from "@/utils/media"
 import { cn } from "@/utils/classNames"
 
 import { useBreakpoint } from "@/stores/breakpointStore"
+import { useIsTouch } from "@/hooks/useIsTouch"
 
 import Image from "@/components/ui/Image"
 import ScrollIndicator from "@/components/ScrollIndicator"
@@ -26,6 +27,7 @@ function clamp(value: number) {
 
 export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const { current: breakpoint } = useBreakpoint()
+  const isTouch = useIsTouch()
 
   const [firstBgReady, setFirstBgReady] = useState(false)
   const [firstThumbReady, setFirstThumbReady] = useState(false)
@@ -39,9 +41,22 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const yearsRefs = useRef<(HTMLSpanElement | null)[]>([])
 
   const raf = useRef<number | null>(null)
+  const lastWidth = useRef<number>(
+    typeof window !== "undefined" ? window.innerWidth : 0,
+  )
 
   const onResize = useCallback(() => {
+    /*
+    Only trigger if the width has changed to avoid
+    mobile browser bars causing vertical resizing
+    */
+    const newWidth = window.innerWidth
+    if (newWidth === lastWidth.current) return
+
+    lastWidth.current = newWidth
+
     if (raf.current !== null) return
+
     raf.current = window.requestAnimationFrame(() => {
       raf.current = null
       ScrollTrigger.refresh()
@@ -113,7 +128,6 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         const isDown = nextIndex > activeIndex
         const outgoingY = isDown ? "-100%" : "100%"
         const incomingFromY = isDown ? "100%" : "-100%"
-        const textSwapDelay = 0.01 // Delay between text and year animations
 
         /* Set the default position */
         applyTextCanonicalState(activeIndex)
@@ -167,7 +181,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             stagger: 0.02,
             overwrite: "auto",
           },
-          0.25,
+          0.1,
         )
 
         if (yearIn) {
@@ -179,7 +193,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
               ease: "expo.out",
               overwrite: "auto",
             },
-            0.5,
+            0.4,
           )
         }
       }
@@ -240,7 +254,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           Keep the same reveal start, but finish earlier
           so the thumb stays fully visible longer
         */
-        const compressedProgress = clamp(baseProgress * 2.5)
+        const compressedProgress = clamp(baseProgress * 2)
         /* Thumb animation */
         handleThumbs(nextIndex, compressedProgress)
         /* Text animation */
@@ -292,8 +306,10 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         })
       })
 
-      /* Sections snap */
-      if (projects.length > 1) {
+      /* Sections snap
+      (only desktop due to mobile browser bars)
+      */
+      if (projects.length > 1 && !isTouch) {
         ScrollTrigger.create({
           trigger: wrapRef.current,
           start: "top top",
@@ -335,7 +351,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
       ctx.revert()
     }
-  }, [breakpoint, projects])
+  }, [breakpoint, isTouch, projects])
 
   /* Initialize first background image */
   useEffect(() => {
@@ -365,7 +381,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         {projects.map((p, i) => (
           <section
             key={p._id}
-            className="relative w-full h-svh max-md:h-dvh shrink-0"
+            className="relative w-full h-lvh shrink-0"
             ref={(el) => {
               sectionsRefs.current[i] = el
             }}
@@ -391,7 +407,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       </div>
 
       {/* THUMBS + TITLES + YEARS */}
-      <div className="fixed top-0 left-0 w-full h-svh max-md:h-dvh z-20 pointer-events-none">
+      <div className="fixed top-0 left-0 w-full h-lvh z-20 pointer-events-none">
         {projects.map((p, i) => (
           <div key={`overlay-${p._id}`}>
             {/* THUMB */}
@@ -423,7 +439,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             </div>
 
             {/* TITLE */}
-            <div className="fixed overflow-hidden top-1/2 -translate-y-1/2 left-[14px] md:left-[calc(50%)] z-20">
+            <div className="absolute overflow-hidden top-1/2 -translate-y-1/2 left-[14px] md:left-[calc(50%)] z-20">
               <h1>
                 {(p.title ?? "").split("").map((char, j) => (
                   <span
