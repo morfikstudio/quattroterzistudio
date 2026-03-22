@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useCallback } from "react"
+import { useEffect, useRef, useCallback, useState, useMemo } from "react"
 import Link from "next/link"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
@@ -27,6 +27,9 @@ function clamp(value: number) {
 export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const { current: breakpoint } = useBreakpoint()
 
+  const [firstBgReady, setFirstBgReady] = useState(false)
+  const [firstThumbReady, setFirstThumbReady] = useState(false)
+
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const sectionsRefs = useRef<(HTMLElement | null)[]>([])
   const bgRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -44,6 +47,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       ScrollTrigger.refresh()
     })
   }, [])
+
+  const show = useMemo(
+    () => firstBgReady && firstThumbReady,
+    [firstBgReady, firstThumbReady],
+  )
 
   useEffect(() => {
     if (!breakpoint || projects.length === 0 || !wrapRef.current) return
@@ -329,8 +337,29 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     }
   }, [breakpoint, projects])
 
+  /* Initialize first background image */
+  useEffect(() => {
+    if (!projects[0]) return
+    const img = new window.Image()
+    img.onload = () => setFirstBgReady(true)
+    img.onerror = () => setFirstBgReady(true)
+    img.src = projects[0]
+      ? getImageUrl({
+          image: projects[0].coverList,
+          breakpoint,
+        })
+      : ""
+  }, [])
+
   return (
-    <div ref={wrapRef} className="max-md:overflow-x-clip max-md:touch-pan-y">
+    <div
+      ref={wrapRef}
+      className={cn(
+        "max-md:overflow-x-clip max-md:touch-pan-y",
+        "transition-opacity duration-500 ease-out",
+        !show && "opacity-0 pointer-events-none",
+      )}
+    >
       {/* BACKGROUNDS */}
       <div className="relative z-10">
         {projects.map((p, i) => (
@@ -388,6 +417,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                   fill
                   fit="cover"
                   priority={i < 2}
+                  onLoad={i === 0 ? () => setFirstThumbReady(true) : undefined}
                 />
               </div>
             </div>
@@ -398,7 +428,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                 {(p.title ?? "").split("").map((char, j) => (
                   <span
                     key={`${p._id}-${j}`}
-                    className="inline-block type-h1 leading-[1.2] text-white"
+                    className="inline-block type-h1 leading-none text-white"
                     ref={(el) => {
                       if (!wordsRefs.current[i]) wordsRefs.current[i] = []
                       wordsRefs.current[i][j] = el

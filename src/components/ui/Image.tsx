@@ -21,6 +21,7 @@ interface ImageProps {
   sizes?: string
   className?: string
   priority?: boolean
+  onLoad?: () => void
 }
 
 export default function Image({
@@ -32,6 +33,7 @@ export default function Image({
   sizes = "",
   className = "",
   priority = false,
+  onLoad,
 }: ImageProps) {
   const { current: breakpoint } = useBreakpoint()
   const fluidHeight = !fill && isWidthOnlyResize(resizeId)
@@ -68,6 +70,7 @@ export default function Image({
         fluidHeight ? `${className} max-w-full h-auto`.trim() : className
       }
       priority={priority}
+      onLoadingComplete={onLoad ? () => onLoad() : undefined}
     />
   ) : null
 }
