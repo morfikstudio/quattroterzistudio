@@ -181,8 +181,8 @@ export default function NextProjectTeaser({
   }, [inView, state])
 
   return nextProject ? (
-    <div ref={wrapRef}>
-      <div className="relative w-full h-svh overflow-hidden text-white">
+    <section ref={wrapRef}>
+      <div className="relative w-full h-lvh overflow-hidden text-white">
         {/* COVER */}
         <Image
           image={nextProject?.coverList}
@@ -191,37 +191,6 @@ export default function NextProjectTeaser({
           fit="cover"
           sizes="100vw"
         />
-
-        {/* TITLE */}
-        <div
-          className={cn(
-            "absolute",
-            "top-1/2 -translate-y-1/2 left-[14px] md:left-[calc(50%)]",
-          )}
-        >
-          <div className="text-5xl md:text-7xl leading-tight opacity-[0.35]">
-            {nextProject?.title ?? ""}
-          </div>
-          <div
-            ref={maskRef}
-            aria-hidden="true"
-            style={{ WebkitBackgroundClip: "text" }}
-            className={cn(
-              "absolute inset-0 text-5xl md:text-7xl leading-tight",
-              "bg-clip-text text-transparent bg-size-[0%_100%] bg-no-repeat",
-              "bg-[linear-gradient(to_right,white_100%,white_100%)]",
-            )}
-          >
-            {nextProject?.title ?? ""}
-          </div>
-        </div>
-
-        {/* YEAR */}
-        <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px]">
-          <span className="flex leading-[1.2] text-sm overflow-hidden">
-            <span>{nextProject?.year}</span>
-          </span>
-        </div>
 
         {/* THUMB */}
         <div
@@ -238,7 +207,38 @@ export default function NextProjectTeaser({
             className="w-full"
           />
         </div>
+
+        {/* TITLE */}
+        <div
+          className={cn(
+            "absolute",
+            "top-1/2 -translate-y-1/2 left-[14px] md:left-[calc(50%)]",
+          )}
+        >
+          <div className="type-h1 leading-[1.2] text-white opacity-[0.35]">
+            {nextProject?.title ?? ""}
+          </div>
+          <div
+            ref={maskRef}
+            aria-hidden="true"
+            style={{ WebkitBackgroundClip: "text" }}
+            className={cn(
+              "absolute inset-0 type-h1 leading-[1.2]",
+              "bg-clip-text text-transparent bg-size-[0%_100%] bg-no-repeat",
+              "bg-[linear-gradient(to_right,white_100%,white_100%)]",
+            )}
+          >
+            {nextProject?.title ?? ""}
+          </div>
+        </div>
+
+        {/* YEAR */}
+        <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px]">
+          <span className="flex overflow-hidden">
+            <span className="type-caption text-white">{nextProject?.year}</span>
+          </span>
+        </div>
       </div>
-    </div>
+    </section>
   ) : null
 }

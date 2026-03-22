@@ -151,6 +151,7 @@
   letter-spacing: 0.02em;
   font-weight: 500;
   font-family: var(--font-mono);
+  text-transform: uppercase;
 
   @media (width >= 768px) {
     letter-spacing: 0.04em;

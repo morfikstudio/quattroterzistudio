@@ -4,7 +4,7 @@ import { useLayoutEffect, useRef } from "react"
 import gsap from "gsap"
 import { SplitText } from "gsap/SplitText"
 import { cn } from "@/utils/classNames"
-import ScrollIndicator from "@/components/ui/ScrollIndicator"
+import ScrollIndicator from "@/components/ScrollIndicator"
 
 interface HeroAboutProps {
   title?: string
