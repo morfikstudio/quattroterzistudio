@@ -7,7 +7,7 @@ import type { PROJECT_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
 
 import Image from "@/components/ui/Image"
-import ScrollIndicator from "@/components/ui/ScrollIndicator"
+import ScrollIndicator from "@/components/ScrollIndicator"
 import NextProjectTeaser from "@/components/NextProjectTeaser"
 
 type ProjectProps = {
@@ -60,9 +60,9 @@ export default function ProjectDetail({
                 "top-[50vh] -translate-y-1/2 ml-[14px] md:ml-[calc(50%)]",
               )}
             >
-              <h1 className="leading-[1.2] text-5xl md:text-7xl">
+              <h1>
                 {(title ?? "").split("").map((char, i) => (
-                  <span key={i} className="inline-block">
+                  <span key={i} className="inline-block type-h1 leading-[1.2]">
                     {char === " " ? "\u00A0" : char}
                   </span>
                 ))}
@@ -75,8 +75,8 @@ export default function ProjectDetail({
                 "top-[50vh] -translate-y-1/2 right-[14px] md:right-[24px]",
               )}
             >
-              <span className="flex leading-[1.2] text-sm overflow-hidden">
-                <span>{year}</span>
+              <span className="flex overflow-hidden">
+                <span className="type-caption">{year}</span>
               </span>
             </div>
           </div>
@@ -95,19 +95,19 @@ export default function ProjectDetail({
           {/* DETAILS */}
           <div className="flex flex-wrap gap-[24px] md:flex-1/2">
             <div className="basis-[calc(50%-12px)] md:basis-full shrink-0">
-              <span>Client</span>
-              <div>{client}</div>
+              <span className="type-caption text-[#B7B7B7]">Client</span>
+              <div className="type-body-s uppercase">{client}</div>
             </div>
 
             <div className="flex flex-col basis-[calc(50%-12px)] md:basis-full shrink-0 gap-[6px]">
-              <span>Sector</span>
-              <div>{sector}</div>
+              <span className="type-caption text-[#B7B7B7]">Sector</span>
+              <div className="type-body-s uppercase">{sector}</div>
             </div>
 
             {credits && credits.length > 0 && (
               <div className="basis-[calc(50%-12px)] md:basis-full shrink-0">
-                <span>Credits</span>
-                <div>
+                <span className="type-caption text-[#B7B7B7]">Credits</span>
+                <div className="type-body-s uppercase">
                   {credits.map((credit) => (
                     <div key={credit}>{credit}</div>
                   ))}
@@ -118,10 +118,10 @@ export default function ProjectDetail({
 
           {/* DESCRIPTION */}
           <div className="flex flex-col gap-[6px] md:flex-1/2">
-            <span>Description</span>
+            <span className="type-caption text-[#B7B7B7]">Description</span>
 
             {description?.length ? (
-              <div className="prose prose-neutral dark:prose-invert max-w-none prose-strong:text-inherit text-black">
+              <div className="prose prose-neutral dark:prose-invert max-w-none prose-strong:text-inherit text-black type-body-s uppercase">
                 <PortableText
                   value={description}
                   components={portableTextComponents}
@@ -138,7 +138,7 @@ export default function ProjectDetail({
           <div
             className={cn(
               "px-[12px] md:px-[24px] py-[48px]",
-              "uppercase font-medium text-4xl md:text-8xl text-black",
+              "type-display-l uppercase text-black",
             )}
           >
             {payoff}

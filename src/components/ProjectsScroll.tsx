@@ -12,7 +12,7 @@ import { cn } from "@/utils/classNames"
 import { useBreakpoint } from "@/stores/breakpointStore"
 
 import Image from "@/components/ui/Image"
-import ScrollIndicator from "@/components/ui/ScrollIndicator"
+import ScrollIndicator from "@/components/ScrollIndicator"
 
 type ProjectsScrollProps = {
   projects: PROJECTS_QUERY_RESULT
@@ -330,13 +330,13 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   }, [breakpoint, projects])
 
   return (
-    <div ref={wrapRef}>
+    <div ref={wrapRef} className="max-md:overflow-x-clip max-md:touch-pan-y">
       {/* BACKGROUNDS */}
       <div className="relative z-10">
         {projects.map((p, i) => (
           <section
             key={p._id}
-            className="relative w-full h-svh"
+            className="relative w-full h-svh max-md:h-dvh shrink-0"
             ref={(el) => {
               sectionsRefs.current[i] = el
             }}
@@ -362,7 +362,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       </div>
 
       {/* THUMBS + TITLES + YEARS */}
-      <div className="fixed inset-0 text-white z-20 pointer-events-none">
+      <div className="fixed top-0 left-0 w-full h-svh max-md:h-dvh z-20 pointer-events-none">
         {projects.map((p, i) => (
           <div key={`overlay-${p._id}`}>
             {/* THUMB */}
@@ -393,16 +393,16 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             </div>
 
             {/* TITLE */}
-            <div className="fixed overflow-hidden top-1/2 -translate-y-1/2 left-[14px] md:left-[calc(50%)] z-20 text-white">
-              <h1 className="leading-[1.2] text-5xl md:text-7xl">
+            <div className="fixed overflow-hidden top-1/2 -translate-y-1/2 left-[14px] md:left-[calc(50%)] z-20">
+              <h1>
                 {(p.title ?? "").split("").map((char, j) => (
                   <span
                     key={`${p._id}-${j}`}
+                    className="inline-block type-h1 leading-[1.2] text-white"
                     ref={(el) => {
                       if (!wordsRefs.current[i]) wordsRefs.current[i] = []
                       wordsRefs.current[i][j] = el
                     }}
-                    className="inline-block"
                   >
                     {char === " " ? "\u00A0" : char}
                   </span>
@@ -412,8 +412,9 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
             {/* YEAR */}
             <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-20">
-              <span className="flex leading-[1.2] text-sm overflow-hidden">
+              <span className="flex overflow-hidden">
                 <span
+                  className="type-caption text-white"
                   ref={(el) => {
                     yearsRefs.current[i] = el
                   }}

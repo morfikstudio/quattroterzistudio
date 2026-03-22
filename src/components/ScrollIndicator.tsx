@@ -10,7 +10,7 @@ type ScrollIndicatorProps = {
 }
 
 export default function ScrollIndicator({
-  delay = 4000,
+  delay = 3500,
   variant = "light",
 }: ScrollIndicatorProps) {
   const [show, setShow] = useState(true)
@@ -31,10 +31,6 @@ export default function ScrollIndicator({
       tm.current = null
     }, delay)
   }, [delay])
-
-  useEffect(() => {
-    setShow(window.scrollY === 0)
-  }, [])
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -62,6 +58,8 @@ export default function ScrollIndicator({
   }, [hide])
 
   useEffect(() => {
+    setShow(window.scrollY === 0)
+
     return () => {
       if (tm.current) {
         clearTimeout(tm.current)
