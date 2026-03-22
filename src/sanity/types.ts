@@ -15,6 +15,16 @@
 export declare const internalGroqTypeReferenceTo: unique symbol
 
 // Source: src/sanity/schema.json
+export type Media1 = {
+  image?: Media1Image
+  alt?: string
+}
+
+export type Media2 = {
+  image?: Media2Image
+  alt?: string
+}
+
 export type SanityImageAssetReference = {
   _ref: string
   _type: "reference"
@@ -22,11 +32,67 @@ export type SanityImageAssetReference = {
   [internalGroqTypeReferenceTo]?: "sanity.imageAsset"
 }
 
+export type Media1Image = {
+  asset?: SanityImageAssetReference
+  media?: unknown // Unable to locate the referenced type "image.media" in schema
+  hotspot?: SanityImageHotspot
+  crop?: SanityImageCrop
+  _type: "image"
+}
+
+export type Media2Image = {
+  asset?: SanityImageAssetReference
+  media?: unknown // Unable to locate the referenced type "media2.image.media" in schema
+  hotspot?: SanityImageHotspot
+  crop?: SanityImageCrop
+  _type: "image"
+}
+
+export type ProjectMediaPayoff = {
+  _type: "projectMediaPayoff"
+  payoff: string
+}
+
+export type ProjectMediaDouble = {
+  _type: "projectMediaDouble"
+  variant: "v1" | "v2"
+  media1?: Media1
+  media2?: Media2
+}
+
 export type SanityFileAssetReference = {
   _ref: string
   _type: "reference"
   _weak?: boolean
   [internalGroqTypeReferenceTo]?: "sanity.fileAsset"
+}
+
+export type ProjectMediaSingle = {
+  _type: "projectMediaSingle"
+  variant:
+    | "full-width"
+    | "float-left-l"
+    | "float-left-m"
+    | "float-left-s"
+    | "float-left-xs"
+    | "float-right"
+    | "float-right-m"
+    | "float-right-s"
+    | "float-right-xs"
+  useVideo?: boolean
+  image?: {
+    asset?: SanityImageAssetReference
+    media?: unknown
+    hotspot?: SanityImageHotspot
+    crop?: SanityImageCrop
+    _type: "image"
+  }
+  video?: {
+    asset?: SanityFileAssetReference
+    media?: unknown
+    _type: "file"
+  }
+  alt?: string
 }
 
 export type Project = {
@@ -56,7 +122,6 @@ export type Project = {
     _type: "block"
     _key: string
   }>
-  payoff?: string
   year: number
   client?: string
   sector?: string
@@ -95,27 +160,16 @@ export type Project = {
     }
     alt?: string
   }
-  media?: Array<
-    | {
-        asset?: SanityImageAssetReference
-        media?: unknown
-        hotspot?: SanityImageHotspot
-        crop?: SanityImageCrop
-        alt?: string
-        _type: "image"
+  blocks?: Array<
+    | ({
         _key: string
-      }
-    | {
-        file?: {
-          asset?: SanityFileAssetReference
-          media?: unknown
-          _type: "file"
-        }
-        url?: string
-        alt?: string
-        _type: "video"
+      } & ProjectMediaSingle)
+    | ({
         _key: string
-      }
+      } & ProjectMediaDouble)
+    | ({
+        _key: string
+      } & ProjectMediaPayoff)
   >
 }
 
@@ -239,8 +293,15 @@ export type Geopoint = {
 }
 
 export type AllSanitySchemaTypes =
+  | Media1
+  | Media2
   | SanityImageAssetReference
+  | Media1Image
+  | Media2Image
+  | ProjectMediaPayoff
+  | ProjectMediaDouble
   | SanityFileAssetReference
+  | ProjectMediaSingle
   | Project
   | SanityImageCrop
   | SanityImageHotspot
@@ -308,7 +369,7 @@ export type PROJECT_SLUGS_QUERY_RESULT = Array<{
 
 // Source: src/sanity/lib/queries.ts
 // Variable: PROJECT_QUERY
-// Query: *[_type == "project" && slug.current == $slug][0]{    _id,    orderRank,    title,    slug,    description,    year,    client,    sector,    credits,    payoff,    coverDetail,    "nextProject": coalesce(      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year },      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year }    )  }
+// Query: *[_type == "project" && slug.current == $slug][0]{    _id,    orderRank,    title,    slug,    description,    year,    client,    sector,    credits,    coverDetail,    blocks[]{      _key,      _type,      payoff,      "variant": coalesce(variant, singleVariant, doubleVariant),      useVideo,      image,      alt,      "videoAsset": video.asset->{ url, mimeType, originalFilename },      media1{        image,        alt      },      media2{        image,        alt      }    },    "nextProject": coalesce(      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year },      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year }    )  }
 export type PROJECT_QUERY_RESULT = {
   _id: string
   orderRank: string | null
@@ -336,7 +397,6 @@ export type PROJECT_QUERY_RESULT = {
   client: string | null
   sector: string | null
   credits: Array<string> | null
-  payoff: string | null
   coverDetail: {
     portrait?: {
       asset?: SanityImageAssetReference
@@ -354,6 +414,69 @@ export type PROJECT_QUERY_RESULT = {
     }
     alt?: string
   } | null
+  blocks: Array<
+    | {
+        _key: string
+        _type: "projectMediaDouble"
+        payoff: null
+        variant: "v1" | "v2"
+        useVideo: null
+        image: null
+        alt: null
+        videoAsset: null
+        media1: {
+          image: Media1Image | null
+          alt: string | null
+        } | null
+        media2: {
+          image: Media2Image | null
+          alt: string | null
+        } | null
+      }
+    | {
+        _key: string
+        _type: "projectMediaPayoff"
+        payoff: string
+        variant: null
+        useVideo: null
+        image: null
+        alt: null
+        videoAsset: null
+        media1: null
+        media2: null
+      }
+    | {
+        _key: string
+        _type: "projectMediaSingle"
+        payoff: null
+        variant:
+          | "float-left-l"
+          | "float-left-m"
+          | "float-left-s"
+          | "float-left-xs"
+          | "float-right-m"
+          | "float-right-s"
+          | "float-right-xs"
+          | "float-right"
+          | "full-width"
+        useVideo: boolean | null
+        image: {
+          asset?: SanityImageAssetReference
+          media?: unknown
+          hotspot?: SanityImageHotspot
+          crop?: SanityImageCrop
+          _type: "image"
+        } | null
+        alt: string | null
+        videoAsset: {
+          url: string
+          mimeType: string
+          originalFilename: string | null
+        } | null
+        media1: null
+        media2: null
+      }
+  > | null
   nextProject:
     | {
         id: string
@@ -444,6 +567,6 @@ declare module "@sanity/client" {
   interface SanityQueries {
     '*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverList,\n    coverDetail\n  }': PROJECTS_QUERY_RESULT
     '*[_type == "project" && defined(slug.current)]{\n    "slug": slug.current\n  }': PROJECT_SLUGS_QUERY_RESULT
-    '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    description,\n    year,\n    client,\n    sector,\n    credits,\n    payoff,\n    coverDetail,\n    "nextProject": coalesce(\n      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year },\n      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year }\n    )\n  }': PROJECT_QUERY_RESULT
+    '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    description,\n    year,\n    client,\n    sector,\n    credits,\n    coverDetail,\n    blocks[]{\n      _key,\n      _type,\n      payoff,\n      "variant": coalesce(variant, singleVariant, doubleVariant),\n      useVideo,\n      image,\n      alt,\n      "videoAsset": video.asset->{ url, mimeType, originalFilename },\n      media1{\n        image,\n        alt\n      },\n      media2{\n        image,\n        alt\n      }\n    },\n    "nextProject": coalesce(\n      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year },\n      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year }\n    )\n  }': PROJECT_QUERY_RESULT
   }
 }
