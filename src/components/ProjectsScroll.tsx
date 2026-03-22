@@ -167,7 +167,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             stagger: 0.02,
             overwrite: "auto",
           },
-          0,
+          0.25,
         )
 
         if (yearIn) {
@@ -179,7 +179,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
               ease: "expo.out",
               overwrite: "auto",
             },
-            0.25,
+            0.5,
           )
         }
       }
