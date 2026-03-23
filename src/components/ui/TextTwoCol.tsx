@@ -1,0 +1,93 @@
+"use client"
+
+import { useLayoutEffect, useRef } from "react"
+import gsap from "gsap"
+import { SplitText } from "gsap/SplitText"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { cn } from "@/utils/classNames"
+import Button from "./Button"
+import Icon from "./Icon"
+
+interface TextTwoColProps {
+  label: string
+  paragraphs: string[]
+  className?: string
+}
+
+export default function TextTwoCol({
+  label,
+  paragraphs,
+  className,
+}: TextTwoColProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    if (!containerRef.current) return
+
+    gsap.registerPlugin(SplitText, ScrollTrigger)
+
+    const ctx = gsap.context(() => {
+      const textEls =
+        containerRef.current?.querySelectorAll<HTMLElement>("[data-split]") ??
+        []
+      if (!textEls.length) return
+
+      const splits = Array.from(textEls).map(
+        (el) => new SplitText(el, { type: "lines", mask: "lines" }),
+      )
+      const lines = splits.flatMap((s) => s.lines)
+
+      gsap.set(lines, { yPercent: 110 })
+      gsap.to(lines, {
+        yPercent: 0,
+        duration: 1.25,
+        ease: "power3.out",
+        stagger: 0.03,
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top 85%",
+        },
+      })
+
+      return () => {
+        splits.forEach((s) => s.revert())
+      }
+    }, containerRef)
+
+    return () => {
+      ctx.revert()
+    }
+  }, [])
+
+  return (
+    <div
+      ref={containerRef}
+      className={cn(
+        "text-two-col my-12 md:my-24 px-4 md:px-24",
+        "flex flex-col md:flex-row",
+      )}
+    >
+      {/* Left: label */}
+      <span data-split className="type-caption md:flex-1 uppercase">
+        {label}
+      </span>
+
+      {/* Right: paragraphs */}
+      <div className="flex flex-col gap-6 md:gap-8 md:flex-1  ">
+        {paragraphs.map((text, i) => (
+          <p data-split key={i} className="uppercase font-medium">
+            {text}
+          </p>
+        ))}
+
+        <div className="cta font-medium">
+          <Button
+            label="See all projects"
+            icon={<Icon type="close" size="xxs" />}
+            href="/about"
+          />
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -3,6 +3,7 @@
 @theme {
   --color-primary: #ffffff;
   --color-secondary: #afafaf;
+  --color-tertiary: #b7b7b7;
   --color-accent: #000000;
 
   /* Fonts (CSS vars from layout.tsx) */
