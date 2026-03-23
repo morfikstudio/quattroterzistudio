@@ -117,7 +117,11 @@ export default function Footer() {
               <span data-split>Ready to discuss your project?</span>
             </div>
             <div className={cn("button")}>
-              <Button icon={<Icon type="close" size="xxs" />} label="Contact" />
+              <Button
+                icon={<Icon type="arrowRight" size="l" />}
+                label="Contact us"
+                size="xl"
+              />
             </div>
           </div>
           <div

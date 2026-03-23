@@ -110,9 +110,10 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
           </span>
         </div>
         <Button
-          icon={<Icon type="close" size="xxs" />}
+          icon={<Icon type="close" size="xs" />}
           label="Close"
           onClick={onClose}
+          size="l"
         />
       </div>
 
@@ -220,7 +221,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                   e.currentTarget.dataset.line = "out"
                 }}
               >
-                <span data-split>+privacy</span>
+                <span data-split>privacy</span>
                 <span className={cn("link-underline-bar")} />
               </a>
               <a

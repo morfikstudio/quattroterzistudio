@@ -4,7 +4,7 @@ type SvgProps = {
   sizePx: number | string
 }
 
-type IconSizeType = "xxs" | "xs" | "s" | "m" | "l" | "xl" | "full"
+type IconSizeType = "xxs" | "xs" | "s" | "m" | "l" | "xl" | "xxl" | "full"
 
 export type IconType = {
   type: keyof typeof Icons
@@ -47,6 +47,26 @@ export const Icons = {
       />
     </svg>
   ),
+  arrowRight: ({ sizePx }: SvgProps) => (
+    <svg
+      width={sizePx}
+      height={sizePx}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M10.8739 22.805L21.7461 11.9329L10.8739 1.06068"
+        stroke="currentColor"
+        strokeWidth="3"
+      />
+      <path
+        d="M21.3047 11.9329L0.437826 11.9329"
+        stroke="currentColor"
+        strokeWidth="3"
+      />
+    </svg>
+  ),
 }
 
 /**
@@ -60,6 +80,7 @@ export default function Icon({ type, size = "m", className }: IconType) {
     m: 20,
     l: 24,
     xl: 32,
+    xxl: 40,
     full: "100%",
   }
 

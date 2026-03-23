@@ -84,8 +84,9 @@ export default function TextTwoCol({
         <div className="cta font-medium">
           <Button
             label="See all projects"
-            icon={<Icon type="close" size="xxs" />}
+            icon={<Icon type="arrowRight" size="s" />}
             href="/about"
+            size="l"
           />
         </div>
       </div>
