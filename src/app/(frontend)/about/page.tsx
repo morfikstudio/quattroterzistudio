@@ -1,7 +1,7 @@
 import HeroAbout from "@/components/HeroAbout"
 import DoubleMarquee from "@/components/ui/DoubleMarquee"
-import TextTwoCol from "@/components/ui/TextTwoCol"
-import HoverList from "@/components/ui/HoverList"
+import TextTwoCol from "@/components/TextTwoCol"
+import HoverList from "@/components/HoverList"
 
 export default function Page() {
   return (
