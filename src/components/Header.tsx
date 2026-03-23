@@ -15,24 +15,59 @@ export default function Header() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 w-full z-50 mix-blend-difference">
-        <div className="flex justify-between items-center mx-auto p-3 md:p-4">
+      <nav
+        className={cn("fixed top-0 left-0 w-full z-50", "mix-blend-difference")}
+      >
+        <div
+          className={cn(
+            "flex justify-between items-center",
+            "mx-auto p-3 md:p-4",
+          )}
+        >
           <Link href="/" className="block text-white">
-            <div className="logo group flex items-center">
-              <div className="rect w-[44px] h-[33px] bg-transparent relative border-3 border-current">
-                <div className="rect-inner absolute top-0 left-0 w-full h-full bg-current [clip-path:polygon(0_0,_100%_0%,_100%_100%,_0%_100%)] transition-[clip-path] duration-700 ease-out group-hover:[clip-path:polygon(100%_0,_100%_0%,_100%_100%,_100%_100%)]"></div>
+            <div className={cn("logo", "group flex items-center")}>
+              <div
+                className={cn(
+                  "rect bg-transparent relative",
+                  "w-[44px] h-[33px] border-3 border-current",
+                )}
+              >
+                <div
+                  className={cn(
+                    "rect-inner bg-current",
+                    "absolute top-0 left-0 w-full h-full",
+                    "[clip-path:polygon(0_0,_100%_0%,_100%_100%,_0%_100%)] transition-[clip-path] duration-700 ease-out group-hover:[clip-path:polygon(100%_0,_100%_0%,_100%_100%,_100%_100%)]",
+                  )}
+                ></div>
               </div>
-              <div className="text-container flex flex-col w-[120px] overflow-hidden pl-2">
-                <span className="text-1 uppercase text-[14px] font-medium h-[16px] -translate-x-[120px] transition-transform duration-700 ease-out group-hover:translate-x-0">
+              <div
+                className={cn(
+                  "text-container overflow-hidden",
+                  "flex flex-col w-[120px]  pl-2",
+                )}
+              >
+                <span
+                  className={cn(
+                    "text-1",
+                    "uppercase type-menu",
+                    "h-[16px] -translate-x-[120px] transition-transform duration-700 ease-out group-hover:translate-x-0",
+                  )}
+                >
                   quattroterzi
                 </span>
-                <span className="text-2 uppercase text-[14px] font-medium h-[16px] -translate-x-[120px] transition-transform duration-700 ease-out group-hover:translate-x-0">
+                <span
+                  className={cn(
+                    "text-2",
+                    "uppercase type-menu",
+                    "h-[16px] -translate-x-[120px] transition-transform duration-700 ease-out group-hover:translate-x-0",
+                  )}
+                >
                   studio
                 </span>
               </div>
             </div>
           </Link>
-          <div className="flex gap-2 text-[16px] text-white">
+          <div className={cn("flex gap-2", "type-menu text-white")}>
             <Link
               href="/projects"
               className={navLinkClass}

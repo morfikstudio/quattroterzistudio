@@ -2,6 +2,7 @@ import HeroAbout from "@/components/HeroAbout"
 import DoubleMarquee from "@/components/ui/DoubleMarquee"
 import TextTwoCol from "@/components/TextTwoCol"
 import HoverList from "@/components/HoverList"
+import Footer from "@/components/Footer"
 
 export default function Page() {
   return (
@@ -16,6 +17,7 @@ export default function Page() {
       />
       <DoubleMarquee />
       <HoverList label="Imcommodo tellus" />
+      <Footer />
     </main>
   )
 }
