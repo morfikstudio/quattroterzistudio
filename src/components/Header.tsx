@@ -49,7 +49,7 @@ export default function Header() {
                 <span
                   className={cn(
                     "text-1",
-                    "uppercase type-menu",
+                    "uppercase text-[14px] font-medium",
                     "h-[16px] -translate-x-[120px] transition-transform duration-700 ease-out group-hover:translate-x-0",
                   )}
                 >
@@ -58,7 +58,7 @@ export default function Header() {
                 <span
                   className={cn(
                     "text-2",
-                    "uppercase type-menu",
+                    "uppercase text-[14px] font-medium",
                     "h-[16px] -translate-x-[120px] transition-transform duration-700 ease-out group-hover:translate-x-0",
                   )}
                 >
