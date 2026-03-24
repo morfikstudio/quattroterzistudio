@@ -10,6 +10,10 @@ import {
 import { usePathname } from "next/navigation"
 import Lenis from "lenis"
 import type { LenisOptions } from "lenis"
+import gsap from "gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
+
+gsap.registerPlugin(ScrollTrigger)
 
 const LenisContext = createContext<Lenis | null>(null)
 
@@ -21,8 +25,8 @@ function getLenisOptions(): LenisOptions {
       ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
       : false
   return {
-    autoRaf: true,
-    duration: prefersReducedMotion ? 0 : 1.2,
+    autoRaf: false,
+    duration: prefersReducedMotion ? 0 : 1.25,
     easing: defaultEasing,
     syncTouch: false,
     anchors: true,
@@ -34,11 +38,18 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
   const [lenis, setLenis] = useState<Lenis | null>(null)
   const pathname = usePathname()
 
-  // create lenis instance
+  // create lenis instance and wire GSAP ticker
   useEffect(() => {
     const lenisInstance = new Lenis(getLenisOptions())
+
+    const rafHandler = (time: number) => lenisInstance.raf(time * 1000)
+    gsap.ticker.add(rafHandler)
+    gsap.ticker.lagSmoothing(0)
+    lenisInstance.on("scroll", ScrollTrigger.update)
+
     setLenis(lenisInstance)
     return () => {
+      gsap.ticker.remove(rafHandler)
       lenisInstance.destroy()
       setLenis(null)
     }

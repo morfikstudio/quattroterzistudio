@@ -1,335 +1,466 @@
 "use client"
 
-import { useCallback, useEffect, useRef } from "react"
+import { useEffect, useRef, useCallback, useState, useMemo } from "react"
 import Link from "next/link"
 import gsap from "gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
 
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
+import { getImageUrl } from "@/utils/media"
 import { cn } from "@/utils/classNames"
 
+import { useBreakpoint } from "@/stores/breakpointStore"
+
 import Image from "@/components/ui/Image"
-import ScrollIndicator from "@/components/ui/ScrollIndicator"
+import ScrollIndicator from "@/components/ScrollIndicator"
 
 type ProjectsScrollProps = {
   projects: PROJECTS_QUERY_RESULT
 }
 
-function useGsapScroll({
-  sectionCount,
-  sections,
-  thumbs,
-  words,
-  years,
-}: {
-  sectionCount: number
-  sections: (HTMLElement | null)[]
-  thumbs: (HTMLDivElement | null)[]
-  words: (HTMLSpanElement | null)[][]
-  years: (HTMLSpanElement | null)[]
-}) {
-  const currentRef = useRef(0)
-  const isAnimatingRef = useRef(false)
-  const touchStartYRef = useRef(0)
+gsap.registerPlugin(ScrollTrigger)
 
-  const goToSection = useCallback(
-    (nextIndex: number, scrollDirection?: 1 | -1) => {
-      if (isAnimatingRef.current) return
-
-      // if user scrolls down from last section, go to first section
-      if (nextIndex >= sectionCount) nextIndex = 0
-      // if user scrolls up from first section, go to last section
-      else if (nextIndex < 0) nextIndex = sectionCount - 1
-
-      if (nextIndex === currentRef.current) return
-
-      const prevIndex = currentRef.current
-      const direction = scrollDirection ?? (nextIndex > prevIndex ? 1 : -1)
-
-      const incomingSection = sections[nextIndex]
-
-      const incomingThumb = thumbs[nextIndex]
-      const incomingLetters = words[nextIndex]?.filter(Boolean) ?? []
-      const incomingYear = years[nextIndex]
-
-      const outgoingSection = sections[prevIndex]
-      const outgoingLetters = words[prevIndex]?.filter(Boolean) ?? []
-
-      if (!incomingSection || !incomingThumb) return
-
-      isAnimatingRef.current = true
-      currentRef.current = nextIndex
-
-      // initial clip path based on direction
-      const fromClip =
-        direction > 0 ? "inset(100% 0 0% 0)" : "inset(0% 0 100% 0)"
-      const fromY = direction > 0 ? 16 : -16
-
-      gsap.set(incomingSection, { zIndex: 10, clipPath: fromClip })
-      gsap.set(incomingThumb, { clipPath: fromClip, y: fromY })
-      gsap.set(incomingLetters, { y: "110%" })
-      gsap.set(incomingYear, { y: "110%" })
-
-      gsap
-        .timeline({
-          onComplete: () => {
-            if (outgoingSection) {
-              gsap.set(outgoingSection, { zIndex: 0 })
-            }
-
-            gsap.set(incomingSection, { zIndex: 1 })
-
-            // reset outgoing letters, ready for next visit
-            if (outgoingLetters.length) {
-              gsap.set(outgoingLetters, { y: "110%" })
-            }
-
-            isAnimatingRef.current = false
-          },
-        })
-        .to(
-          incomingSection,
-          {
-            clipPath: "inset(0% 0 0% 0)",
-            duration: 1,
-            ease: "expo.inOut",
-          },
-          0,
-        )
-        .to(
-          incomingLetters,
-          {
-            y: "0%",
-            duration: 0.5,
-            ease: "expo.out",
-            stagger: 0.02,
-          },
-          0.5,
-        )
-        .to(
-          incomingThumb,
-          {
-            clipPath: "inset(0% 0 0% 0)",
-            y: 0,
-            duration: 0.75,
-            ease: "power4.out",
-          },
-          0.6,
-        )
-
-        .to(
-          incomingYear,
-          {
-            y: "0%",
-            duration: 1,
-            ease: "expo.out",
-          },
-          0.6,
-        )
-    },
-    [sectionCount, sections, thumbs, words],
-  )
-
-  // initial renderstate
-  useEffect(() => {
-    if (sectionCount === 0) return
-
-    // show section 0
-    gsap.set(sections[0], {
-      zIndex: 1,
-      clipPath: "inset(0% 0 0% 0)",
-    })
-    gsap.set(thumbs[0], { clipPath: "inset(0% 0 0% 0)", y: 0 })
-    gsap.set(words[0]?.filter(Boolean) ?? [], { y: "0%" })
-    gsap.set(years[0], { y: "0%" })
-
-    // hide all other sections
-    for (let i = 1; i < sectionCount; i++) {
-      gsap.set(sections[i], {
-        zIndex: 0,
-        clipPath: "inset(100% 0 0% 0)",
-      })
-      gsap.set(thumbs[i], { clipPath: "inset(100% 0 0% 0)", y: 0 })
-      gsap.set(words[i]?.filter(Boolean) ?? [], { y: "110%" })
-      gsap.set(years[i], { y: "110%" })
-    }
-
-    return () => {
-      sections.forEach((el) => {
-        if (el) gsap.killTweensOf(el)
-      })
-      thumbs.forEach((el) => {
-        if (el) gsap.killTweensOf(el)
-      })
-      words.forEach((letters) =>
-        letters?.forEach((el) => {
-          if (el) gsap.killTweensOf(el)
-        }),
-      )
-      years.forEach((el) => {
-        if (el) gsap.killTweensOf(el)
-      })
-    }
-  }, [sectionCount, sections, thumbs, words, years])
-
-  // wheel listener
-  useEffect(() => {
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault()
-      if (isAnimatingRef.current || e.deltaY === 0) return
-      const dir = e.deltaY > 0 ? 1 : -1
-      goToSection(currentRef.current + dir, dir)
-    }
-    window.addEventListener("wheel", onWheel, { passive: false })
-    return () => window.removeEventListener("wheel", onWheel)
-  }, [goToSection])
-
-  // keyboard listener
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowDown" || e.key === "PageDown") {
-        e.preventDefault()
-        goToSection(currentRef.current + 1, 1)
-      } else if (e.key === "ArrowUp" || e.key === "PageUp") {
-        e.preventDefault()
-        goToSection(currentRef.current - 1, -1)
-      }
-    }
-    window.addEventListener("keydown", onKeyDown)
-    return () => window.removeEventListener("keydown", onKeyDown)
-  }, [goToSection])
-
-  // touch listener (touchmove + preventDefault blocks native scroll and pull-to-refresh on iOS)
-  useEffect(() => {
-    const onTouchStart = (e: TouchEvent) => {
-      touchStartYRef.current = e.touches[0].clientY
-    }
-
-    const onTouchMove = (e: TouchEvent) => {
-      e.preventDefault()
-    }
-
-    const onTouchEnd = (e: TouchEvent) => {
-      if (isAnimatingRef.current) return
-      const delta = touchStartYRef.current - e.changedTouches[0].clientY
-      if (Math.abs(delta) < 50) return
-      const dir = delta > 0 ? 1 : -1
-      goToSection(currentRef.current + dir, dir)
-    }
-
-    window.addEventListener("touchstart", onTouchStart, { passive: true })
-    window.addEventListener("touchmove", onTouchMove, { passive: false })
-    window.addEventListener("touchend", onTouchEnd, { passive: true })
-    return () => {
-      window.removeEventListener("touchstart", onTouchStart)
-      window.removeEventListener("touchmove", onTouchMove)
-      window.removeEventListener("touchend", onTouchEnd)
-    }
-  }, [goToSection])
+function clamp(value: number) {
+  return Math.min(1, Math.max(0, value))
 }
 
 export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
+  const { current: breakpoint } = useBreakpoint()
+
+  const [firstBgReady, setFirstBgReady] = useState(false)
+  const [firstThumbReady, setFirstThumbReady] = useState(false)
+
+  const wrapRef = useRef<HTMLDivElement | null>(null)
   const sectionsRefs = useRef<(HTMLElement | null)[]>([])
-  const thumbsRefs = useRef<(HTMLDivElement | null)[]>([])
+  const bgRefs = useRef<(HTMLDivElement | null)[]>([])
+  const thumbWrapRefs = useRef<(HTMLDivElement | null)[]>([]) // Outer thumb wrapper controls stacking order (z-index) across sections.
+  const thumbClipRefs = useRef<(HTMLDivElement | null)[]>([]) // Inner thumb (overflow-hidden) receives clip-path animations.
   const wordsRefs = useRef<(HTMLSpanElement | null)[][]>([])
   const yearsRefs = useRef<(HTMLSpanElement | null)[]>([])
 
-  useGsapScroll({
-    sectionCount: projects.length,
-    sections: sectionsRefs.current,
-    thumbs: thumbsRefs.current,
-    words: wordsRefs.current,
-    years: yearsRefs.current,
-  })
+  const raf = useRef<number | null>(null)
+
+  const onResize = useCallback(() => {
+    if (raf.current !== null) return
+    raf.current = window.requestAnimationFrame(() => {
+      raf.current = null
+      ScrollTrigger.refresh()
+    })
+  }, [])
+
+  const show = useMemo(
+    () => firstBgReady && firstThumbReady,
+    [firstBgReady, firstThumbReady],
+  )
+
+  useEffect(() => {
+    if (!breakpoint || projects.length === 0 || !wrapRef.current) return
+
+    let textTl: gsap.core.Timeline | null = null
+    let refreshSyncHandler: (() => void) | null = null
+
+    const ctx = gsap.context(() => {
+      let activeIndex = 0
+      let targetIndex = 0
+
+      // overall progress of each section
+      const sectionProgresses = Array.from({ length: projects.length }, () => 0)
+
+      /*
+        Set default position of text
+        (y: 0% for active section, -110% for previous section, 110% for future section)
+      */
+      function applyTextCanonicalState(activeIdx: number) {
+        for (let i = 0; i < projects.length; i++) {
+          const letters = wordsRefs.current[i]?.filter(Boolean) ?? []
+          const year = yearsRefs.current[i]
+          const y = i < activeIdx ? "-110%" : i === activeIdx ? "0%" : "110%"
+          gsap.set(letters, { y })
+          if (year) gsap.set(year, { y })
+        }
+      }
+
+      function handleTexts(nextIndex: number) {
+        if (
+          /* If the text is already being animated to the next index, do nothing */
+          (textTl && targetIndex === nextIndex) ||
+          /* If the next index is the same as the active index, do nothing */
+          nextIndex === activeIndex
+        )
+          return
+
+        /* If text is already being animated, kill it and reset the active index */
+        if (textTl) {
+          textTl.kill()
+          textTl = null
+          activeIndex = targetIndex
+        }
+
+        /* Kill all tweens */
+        const allLetters = wordsRefs.current.flat().filter(Boolean)
+        const allYears = yearsRefs.current.filter(Boolean)
+        gsap.killTweensOf(allLetters)
+        gsap.killTweensOf(allYears)
+
+        /* Set the target index */
+        targetIndex = nextIndex
+
+        const lettersOut = wordsRefs.current[activeIndex]?.filter(Boolean) ?? []
+        const yearOut = yearsRefs.current[activeIndex]
+        const lettersIn = wordsRefs.current[nextIndex]?.filter(Boolean) ?? []
+        const yearIn = yearsRefs.current[nextIndex]
+
+        const isDown = nextIndex > activeIndex
+        const outgoingY = isDown ? "-100%" : "100%"
+        const incomingFromY = isDown ? "100%" : "-100%"
+        const textSwapDelay = 0.01 // Delay between text and year animations
+
+        /* Set the default position */
+        applyTextCanonicalState(activeIndex)
+
+        const tl = gsap.timeline({
+          onComplete: () => {
+            activeIndex = nextIndex
+            targetIndex = nextIndex
+            textTl = null
+          },
+        })
+
+        textTl = tl
+
+        tl.to(
+          lettersOut,
+          {
+            y: outgoingY,
+            duration: 0.3,
+            ease: "power2.in",
+            overwrite: "auto",
+          },
+          0,
+        )
+
+        if (yearOut) {
+          tl.to(
+            yearOut,
+            {
+              y: outgoingY,
+              duration: 0.3,
+              ease: "power2.in",
+              overwrite: "auto",
+            },
+            0,
+          )
+        }
+
+        tl.set(lettersIn, { y: incomingFromY }, 0)
+
+        if (yearIn) {
+          tl.set(yearIn, { y: incomingFromY }, 0)
+        }
+
+        tl.to(
+          lettersIn,
+          {
+            y: "0%",
+            duration: 0.45,
+            ease: "expo.out",
+            stagger: 0.02,
+            overwrite: "auto",
+          },
+          0.25,
+        )
+
+        if (yearIn) {
+          tl.to(
+            yearIn,
+            {
+              y: "0%",
+              duration: 0.7,
+              ease: "expo.out",
+              overwrite: "auto",
+            },
+            0.5,
+          )
+        }
+      }
+
+      function handleThumbs(activeIdx: number, progress: number) {
+        const prevIdx = activeIdx - 1
+
+        /*
+          Normalize the inset top percentage to 3 decimal places
+          so it can be used in the clip-path animation
+        */
+        function normalizeInsetTopPerc(value: number) {
+          const clamped = Math.min(100, Math.max(0, value))
+
+          const snapEpsilon = 0.2
+
+          if (clamped <= snapEpsilon) return 0
+          if (clamped >= 100 - snapEpsilon) return 100
+
+          return Math.round(clamped * 1000) / 1000 // 3 decimals rounding
+        }
+
+        for (let i = 0; i < projects.length; i++) {
+          const thumbClip = thumbClipRefs.current[i]
+          const thumbWrap = thumbWrapRefs.current[i]
+
+          if (!thumbClip || !thumbWrap) continue
+
+          if (i === activeIdx) {
+            /* ACTIVE SECTION */
+            const topPerc = normalizeInsetTopPerc((1 - progress) * 100)
+            gsap.set(thumbClip, { clipPath: `inset(${topPerc}% 0% 0% 0%)` })
+            gsap.set(thumbWrap, { zIndex: 2 })
+          } else if (i === prevIdx) {
+            /* PREVIOUS SECTION */
+            gsap.set(thumbClip, { clipPath: "inset(0% 0% 0% 0%)" })
+            gsap.set(thumbWrap, { zIndex: 1 })
+          } else {
+            /* FUTURE SECTION */
+            gsap.set(thumbClip, { clipPath: "inset(100% 0% 0% 0%)" })
+            gsap.set(thumbWrap, { zIndex: 0 })
+          }
+        }
+      }
+
+      function getActiveIndexFromProgress() {
+        for (let i = projects.length - 1; i >= 0; i--) {
+          if (sectionProgresses[i] > 0) return i
+        }
+        return 0
+      }
+
+      const syncFromProgress = () => {
+        const nextIndex = getActiveIndexFromProgress()
+        const baseProgress = clamp(sectionProgresses[nextIndex] ?? 0)
+
+        /*
+          Keep the same reveal start, but finish earlier
+          so the thumb stays fully visible longer
+        */
+        const compressedProgress = clamp(baseProgress * 2.5)
+        /* Thumb animation */
+        handleThumbs(nextIndex, compressedProgress)
+        /* Text animation */
+        handleTexts(nextIndex)
+      }
+
+      sectionsRefs.current.forEach((s, i) => {
+        const bg = bgRefs.current[i]
+        const { innerHeight: wh } = window
+
+        if (!s || !bg) return
+
+        const isFirst = i === 0
+
+        /* Background parallax */
+        gsap.fromTo(
+          bg,
+          {
+            backgroundPosition: () =>
+              isFirst ? "50% 0px" : `50% ${-wh * 0.5}px`,
+          },
+          {
+            backgroundPosition: () => `50% ${wh * 0.5}px`,
+            ease: "none",
+            scrollTrigger: {
+              trigger: s,
+              start: () => (isFirst ? "top top" : "top bottom"),
+              end: "bottom top",
+              scrub: true,
+              invalidateOnRefresh: true,
+            },
+          },
+        )
+
+        /* Section main progress */
+        ScrollTrigger.create({
+          trigger: s,
+          start: "top center",
+          end: "bottom center",
+          scrub: true,
+          onUpdate: ({ progress }) => {
+            sectionProgresses[i] = clamp(progress)
+            syncFromProgress()
+          },
+          onRefresh: ({ progress }) => {
+            sectionProgresses[i] = clamp(progress)
+            syncFromProgress()
+          },
+        })
+      })
+
+      /* Sections snap */
+      if (projects.length > 1) {
+        ScrollTrigger.create({
+          trigger: wrapRef.current,
+          start: "top top",
+          end: () => `+=${window.innerHeight * (projects.length - 1)}`,
+          snap: {
+            snapTo: 1 / (projects.length - 1),
+            directional: false,
+            inertia: true,
+            delay: 0,
+            duration: { min: 0.2, max: 0.35 },
+            ease: "power1.out",
+          },
+          onUpdate: syncFromProgress,
+          onRefresh: syncFromProgress,
+        })
+      }
+
+      applyTextCanonicalState(0)
+      handleThumbs(0, 1)
+      refreshSyncHandler = syncFromProgress
+      ScrollTrigger.addEventListener("refreshInit", refreshSyncHandler)
+      ScrollTrigger.addEventListener("refresh", refreshSyncHandler)
+      syncFromProgress()
+    }, wrapRef)
+
+    window.addEventListener("resize", onResize)
+
+    return () => {
+      window.removeEventListener("resize", onResize)
+
+      if (raf.current !== null) {
+        window.cancelAnimationFrame(raf.current)
+      }
+
+      if (refreshSyncHandler) {
+        ScrollTrigger.removeEventListener("refreshInit", refreshSyncHandler)
+        ScrollTrigger.removeEventListener("refresh", refreshSyncHandler)
+      }
+
+      ctx.revert()
+    }
+  }, [breakpoint, projects])
+
+  /* Initialize first background image */
+  useEffect(() => {
+    if (!projects[0]) return
+    const img = new window.Image()
+    img.onload = () => setFirstBgReady(true)
+    img.onerror = () => setFirstBgReady(true)
+    img.src = projects[0]
+      ? getImageUrl({
+          image: projects[0].coverList,
+          breakpoint,
+        })
+      : ""
+  }, [])
 
   return (
-    <div className="relative w-full h-svh overflow-hidden">
-      {projects.map((p, i) => (
-        <section key={p._id}>
-          <div
+    <div
+      ref={wrapRef}
+      className={cn(
+        "max-md:overflow-x-clip max-md:touch-pan-y",
+        "transition-opacity duration-500 ease-out",
+        !show && "opacity-0 pointer-events-none",
+      )}
+    >
+      {/* BACKGROUNDS */}
+      <div className="relative z-10">
+        {projects.map((p, i) => (
+          <section
+            key={p._id}
+            className="relative w-full h-svh max-md:h-dvh shrink-0"
             ref={(el) => {
               sectionsRefs.current[i] = el
             }}
-            className="absolute inset-0 overflow-hidden text-white"
+            style={{ zIndex: i + 10 }}
           >
             <Link href={`/projects/${p.slug?.current ?? ""}`}>
-              {/* COVER */}
-              <div className="absolute inset-0">
+              <div
+                ref={(el) => {
+                  bgRefs.current[i] = el
+                }}
+                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                style={{
+                  willChange: "background-position",
+                  backgroundImage: `url(${getImageUrl({
+                    image: p.coverList,
+                    breakpoint,
+                  })})`,
+                }}
+              />
+            </Link>
+          </section>
+        ))}
+      </div>
+
+      {/* THUMBS + TITLES + YEARS */}
+      <div className="fixed top-0 left-0 w-full h-svh max-md:h-dvh z-20 pointer-events-none">
+        {projects.map((p, i) => (
+          <div key={`overlay-${p._id}`}>
+            {/* THUMB */}
+            <div
+              className={cn(
+                "absolute top-1/2 left-1/2 md:left-[7vw] -translate-y-1/2 -translate-x-1/2 md:translate-x-0",
+                "w-[70vw] md:w-[50vw] lg:w-[35vw]",
+              )}
+              ref={(el) => {
+                thumbWrapRefs.current[i] = el
+              }}
+            >
+              <div
+                ref={(el) => {
+                  thumbClipRefs.current[i] = el
+                }}
+                className="relative aspect-4/3 overflow-hidden w-full"
+                style={{ willChange: "clip-path" }}
+              >
                 <Image
-                  image={p.coverList}
-                  resizeId="default"
+                  image={p.coverDetail}
+                  resizeId="cover-detail"
                   fill
                   fit="cover"
-                  sizes="100vw"
                   priority={i < 2}
+                  onLoad={i === 0 ? () => setFirstThumbReady(true) : undefined}
                 />
               </div>
+            </div>
 
-              {/* THUMB */}
-              <div
-                className={cn(
-                  "absolute top-1/2 left-1/2 md:left-[7vw] -translate-y-1/2 -translate-x-1/2 md:translate-x-0",
-                  "w-[70vw] md:w-[50vw] lg:w-[35vw]",
-                )}
-              >
-                <div
-                  ref={(el) => {
-                    thumbsRefs.current[i] = el
-                  }}
-                  className="relative aspect-4/3 overflow-hidden w-full"
-                >
-                  <Image
-                    image={p.coverDetail}
-                    resizeId="cover-detail"
-                    fill
-                    fit="cover"
-                    priority={i < 2}
-                  />
-                </div>
-              </div>
-
-              {/* TITLE */}
-              <div
-                className={cn(
-                  "absolute overflow-hidden",
-                  "top-1/2 -translate-y-1/2 left-[14px] md:left-[calc(50%)]",
-                )}
-              >
-                <h1 className="leading-[1.2] text-5xl md:text-7xl">
-                  {(p.title ?? "").split("").map((char, j) => (
-                    <span
-                      key={j}
-                      ref={(el) => {
-                        if (!wordsRefs.current[i]) wordsRefs.current[i] = []
-                        wordsRefs.current[i][j] = el
-                      }}
-                      className="inline-block"
-                    >
-                      {char === " " ? "\u00A0" : char}
-                    </span>
-                  ))}
-                </h1>
-              </div>
-
-              {/* YEAR */}
-              <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px]">
-                <span className="flex leading-[1.2] text-sm overflow-hidden">
+            {/* TITLE */}
+            <div className="fixed overflow-hidden top-1/2 -translate-y-1/2 left-[14px] md:left-[calc(50%)] z-20">
+              <h1>
+                {(p.title ?? "").split("").map((char, j) => (
                   <span
-                    ref={(r) => {
-                      yearsRefs.current[i] = r
+                    key={`${p._id}-${j}`}
+                    className="inline-block type-h1 leading-none text-white"
+                    ref={(el) => {
+                      if (!wordsRefs.current[i]) wordsRefs.current[i] = []
+                      wordsRefs.current[i][j] = el
                     }}
                   >
-                    {p.year}
+                    {char === " " ? "\u00A0" : char}
                   </span>
-                </span>
-              </div>
-            </Link>
+                ))}
+              </h1>
+            </div>
 
-            <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-10">
-              <ScrollIndicator />
+            {/* YEAR */}
+            <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-20">
+              <span className="flex overflow-hidden">
+                <span
+                  className="type-caption text-white"
+                  ref={(el) => {
+                    yearsRefs.current[i] = el
+                  }}
+                >
+                  {p.year}
+                </span>
+              </span>
             </div>
           </div>
-        </section>
-      ))}
+        ))}
+      </div>
+
+      {/* SCROLL INDICATOR */}
+      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+        <ScrollIndicator />
+      </div>
     </div>
   )
 }

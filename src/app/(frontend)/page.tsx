@@ -1,9 +1,9 @@
-import Splash from "@/components/Splash"
+import SplashMarquee from "@/components/SplashMarquee"
 
 export default function Page() {
   return (
     <main>
-      <Splash
+      <SplashMarquee
         title="Welcome to Quattroterzi Studio"
         ctaText="Click anywhere to enter"
       />
