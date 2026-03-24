@@ -5,6 +5,7 @@ import gsap from "gsap"
 import { SplitText } from "gsap/SplitText"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { cn } from "@/utils/classNames"
+import { useLenis } from "@/components/LenisProvider"
 import { defaultItems, HoverListProps } from "./types"
 
 export default function HoverListMobile({
@@ -19,6 +20,7 @@ export default function HoverListMobile({
   const descSplits = useRef<SplitText[]>([])
   const activeIdxRef = useRef<number>(0)
   const [activeIndex, setActiveIndex] = useState(0)
+  const lenis = useLenis()
 
   /* ── Open a specific accordion item ─────────────────────────────────── */
   const openItem = (index: number) => {
@@ -71,6 +73,8 @@ export default function HoverListMobile({
 
   /* ── Setup ───────────────────────────────────────────────────────────── */
   useLayoutEffect(() => {
+    if (!lenis) return
+
     gsap.registerPlugin(SplitText, ScrollTrigger)
 
     const ctx = gsap.context(() => {
@@ -108,6 +112,7 @@ export default function HoverListMobile({
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top 80%",
+          invalidateOnRefresh: true,
           onEnter: () => {
             // Animate first item's description lines in on viewport enter
             const firstLines = descSplits.current[0]?.lines
@@ -134,6 +139,7 @@ export default function HoverListMobile({
         start: "top 15%",
         end: `+=${totalScroll}`,
         pin: true,
+        invalidateOnRefresh: true,
         snap: {
           snapTo: 1 / (items.length - 1),
           duration: { min: 0.3, max: 0.6 },
@@ -152,7 +158,7 @@ export default function HoverListMobile({
     }, containerRef)
 
     return () => ctx.revert()
-  }, [])
+  }, [lenis])
 
   /* ── Render ─────────────────────────────────────────────────────────── */
   return (
@@ -161,7 +167,7 @@ export default function HoverListMobile({
       className={cn("hover-list-mobile px-4 my-12", className)}
     >
       {label && (
-        <span className="type-caption uppercase block mb-6">{label}</span>
+        <span className="type-caption uppercase block mb-8">{label}</span>
       )}
 
       <div className="flex flex-col">

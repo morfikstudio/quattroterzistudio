@@ -5,6 +5,7 @@ import gsap from "gsap"
 import { SplitText } from "gsap/SplitText"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { cn } from "@/utils/classNames"
+import { useLenis } from "@/components/LenisProvider"
 import { defaultItems, HoverListProps } from "./types"
 
 export default function HoverListDesktop({
@@ -18,6 +19,7 @@ export default function HoverListDesktop({
   const splitInstances = useRef<SplitText[]>([])
   const activeIdx = useRef<number | null>(null)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(0)
+  const lenis = useLenis()
 
   /* ── Animate a panel in ──────────────────────────────────────────────── */
   const animateIn = (panelIndex: number) => {
@@ -42,6 +44,8 @@ export default function HoverListDesktop({
 
   /* ── Viewport-enter: animate titles + show first item ───────────────── */
   useLayoutEffect(() => {
+    if (!lenis) return
+
     gsap.registerPlugin(SplitText, ScrollTrigger)
 
     const ctx = gsap.context(() => {
@@ -69,6 +73,7 @@ export default function HoverListDesktop({
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top 85%",
+          invalidateOnRefresh: true,
           onEnter: () => {
             activeIdx.current = 0
             animateIn(0)
@@ -83,7 +88,7 @@ export default function HoverListDesktop({
     }, containerRef)
 
     return () => ctx.revert()
-  }, [])
+  }, [lenis])
 
   /* ── Hover handlers ──────────────────────────────────────────────────── */
   const handleRowEnter = (index: number) => {
@@ -117,9 +122,9 @@ export default function HoverListDesktop({
         </span>
       )}
 
-      <div className="flex flex-row">
+      <div className="flex flex-row gap-8">
         {/* ── Left: title list ─────────────────────────────────────────── */}
-        <div className="flex-1">
+        <div className="flex-1 shrink-0 min-w-max">
           {items.map((item, i) => (
             <div
               key={i}
@@ -131,7 +136,7 @@ export default function HoverListDesktop({
                   titleRefs.current[i] = el
                 }}
                 className={cn(
-                  "type-h2 uppercase block transition-colors duration-300",
+                  "type-h2 uppercase block whitespace-nowrap transition-colors duration-300",
                   hoveredIndex !== null && hoveredIndex !== i
                     ? "text-tertiary"
                     : "text-black",

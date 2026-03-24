@@ -3,16 +3,22 @@ import { useLayoutEffect, useRef } from "react"
 import gsap from "gsap"
 import { SplitText } from "gsap/SplitText"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
+import { useLenis } from "@/components/LenisProvider"
 import Button from "@/components/ui/Button"
 import Icon from "@/components/ui/Icon"
+import { useBreakpoint } from "@/stores/breakpointStore"
 import { cn } from "@/utils/classNames"
 
 export default function Footer() {
   const logoRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const lenis = useLenis()
+  const { current: breakpoint } = useBreakpoint()
+  const buttonSize =
+    breakpoint === "mobile" || breakpoint === "mobileLandscape" ? "l" : "xl"
 
   useLayoutEffect(() => {
-    if (!logoRef.current) return
+    if (!lenis || !logoRef.current) return
 
     gsap.registerPlugin(SplitText, ScrollTrigger)
 
@@ -35,6 +41,7 @@ export default function Footer() {
         scrollTrigger: {
           trigger: logoRef.current,
           start: "top 85%",
+          invalidateOnRefresh: true,
         },
       })
 
@@ -46,10 +53,10 @@ export default function Footer() {
     return () => {
       ctx.revert()
     }
-  }, [])
+  }, [lenis])
 
   useLayoutEffect(() => {
-    if (!bottomRef.current) return
+    if (!lenis || !bottomRef.current) return
 
     gsap.registerPlugin(SplitText, ScrollTrigger)
 
@@ -69,10 +76,32 @@ export default function Footer() {
           scrollTrigger: {
             trigger: el,
             start: "top 90%",
+            invalidateOnRefresh: true,
           },
         })
         return split
       })
+
+      const readyTriggerEl =
+        bottomRef.current?.querySelector<HTMLElement>("[data-ready-trigger]") ??
+        null
+      const buttonEl =
+        bottomRef.current?.querySelector<HTMLElement>("[data-button-reveal]") ??
+        null
+      if (buttonEl) {
+        gsap.set(buttonEl, { yPercent: 110, opacity: 0 })
+        gsap.to(buttonEl, {
+          yPercent: 0,
+          opacity: 1,
+          duration: 1.25,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: readyTriggerEl ?? buttonEl,
+            start: "top 90%",
+            invalidateOnRefresh: true,
+          },
+        })
+      }
 
       return () => {
         allSplits.forEach((s) => s.revert())
@@ -82,7 +111,7 @@ export default function Footer() {
     return () => {
       ctx.revert()
     }
-  }, [])
+  }, [lenis])
 
   return (
     <footer className={cn("footer bg-black text-white h-svh")}>
@@ -114,11 +143,18 @@ export default function Footer() {
             )}
           >
             <div className={cn("text", "type-body-l uppercase")}>
-              <span data-split>Ready to discuss your project?</span>
+              <span data-split data-ready-trigger>
+                Ready to discuss your project?
+              </span>
             </div>
-            <div className={cn("button")}>
+            <div className={cn("button")} data-button-reveal>
               <Button
-                icon={<Icon type="arrowRight" size="l" />}
+                icon={
+                  <Icon
+                    type="arrowRight"
+                    size={buttonSize === "l" ? "l" : "xxl"}
+                  />
+                }
                 label="Contact us"
                 size="xl"
               />

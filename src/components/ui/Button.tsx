@@ -23,7 +23,13 @@ export default function Button({
   const sizeClass = {
     default: "type-button-m",
     l: "type-button-l",
-    xl: "type-button-xl",
+    xl: "type-button-xl ",
+  }[size]
+
+  const paddingClass = {
+    default: "",
+    l: "px-4 py-2",
+    xl: "md:px-7 md:py-5 px-6 py-4",
   }[size]
 
   const sharedClassName = cn(
@@ -33,8 +39,17 @@ export default function Button({
 
   const content = (
     <>
-      <span className="corner-border overflow-hidden inline-flex items-center justify-center px-4 py-2">
-        <span className="inline-flex group-hover:animate-[icon-slide_0.5s_ease-in-out]">
+      <span
+        className={cn(
+          "corner-border overflow-hidden inline-flex items-center justify-center",
+        )}
+      >
+        <span
+          className={cn(
+            "inline-flex group-hover:animate-[icon-slide_0.5s_ease-in-out]",
+            paddingClass,
+          )}
+        >
           {icon}
         </span>
       </span>

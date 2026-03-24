@@ -104,17 +104,19 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
     >
       {/* Header interno */}
       <div className="flex justify-between items-center p-3 md:p-7">
-        <div className={cn("copyright")}>
+        <div className={cn("copyright md:block hidden")}>
           <span data-split className="text-[16px]">
             Copyright © quattroterzi 2026
           </span>
         </div>
-        <Button
-          icon={<Icon type="close" size="xs" />}
-          label="Close"
-          onClick={onClose}
-          size="l"
-        />
+        <div className="ml-auto items-end">
+          <Button
+            icon={<Icon type="close" size="xs" />}
+            label="Close"
+            onClick={onClose}
+            size="l"
+          />
+        </div>
       </div>
 
       {/* Contenuto */}

@@ -5,6 +5,7 @@ import gsap from "gsap"
 import { SplitText } from "gsap/SplitText"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { cn } from "@/utils/classNames"
+import { useLenis } from "@/components/LenisProvider"
 import Button from "./ui/Button"
 import Icon from "./ui/Icon"
 
@@ -20,9 +21,10 @@ export default function TextTwoCol({
   className,
 }: TextTwoColProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const lenis = useLenis()
 
   useLayoutEffect(() => {
-    if (!containerRef.current) return
+    if (!lenis || !containerRef.current) return
 
     gsap.registerPlugin(SplitText, ScrollTrigger)
 
@@ -46,6 +48,7 @@ export default function TextTwoCol({
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top 85%",
+          invalidateOnRefresh: true,
         },
       })
 
@@ -57,7 +60,7 @@ export default function TextTwoCol({
     return () => {
       ctx.revert()
     }
-  }, [])
+  }, [lenis])
 
   return (
     <div
