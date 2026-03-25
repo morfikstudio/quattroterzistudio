@@ -106,7 +106,7 @@ export default function HoverListDesktop({
   }
 
   const handleListLeave = () => {
-    setHoveredIndex(null)
+    setHoveredIndex(activeIdx.current)
   }
 
   /* ── Render ──────────────────────────────────────────────────────────── */

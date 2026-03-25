@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 
 import { cn } from "@/utils/classNames"
 import Contact from "@/components/Contact"
@@ -12,6 +13,10 @@ const navUnderlineClass = cn("link-underline-bar")
 
 export default function Header() {
   const [isContactOpen, setIsContactOpen] = useState(false)
+  const pathname = usePathname()
+  const isProjectsActive =
+    pathname === "/projects" || pathname.startsWith("/projects/")
+  const isAboutActive = pathname === "/about" || pathname.startsWith("/about/")
 
   return (
     <>
@@ -70,7 +75,10 @@ export default function Header() {
           <div className={cn("flex gap-2", "type-menu text-white")}>
             <Link
               href="/projects"
-              className={navLinkClass}
+              className={cn(
+                navLinkClass,
+                isProjectsActive && "text-active-link",
+              )}
               onMouseEnter={(e) => {
                 e.currentTarget.dataset.line = "in"
               }}
@@ -83,7 +91,7 @@ export default function Header() {
             </Link>
             <Link
               href="/about"
-              className={navLinkClass}
+              className={cn(navLinkClass, isAboutActive && "text-active-link")}
               onMouseEnter={(e) => {
                 e.currentTarget.dataset.line = "in"
               }}

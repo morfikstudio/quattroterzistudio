@@ -5,6 +5,7 @@
   --color-secondary: #afafaf;
   --color-tertiary: #b7b7b7;
   --color-accent: #000000;
+  --color-active-link: #878787;
 
   /* Fonts (CSS vars from layout.tsx) */
   --font-sans: var(--font-helvetica), Helvetica, Arial, sans-serif;

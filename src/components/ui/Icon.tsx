@@ -67,6 +67,26 @@ export const Icons = {
       />
     </svg>
   ),
+  arrowUp: ({ sizePx }: SvgProps) => (
+    <svg
+      width={sizePx}
+      height={sizePx}
+      viewBox="0 0 10 10"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M9.49649 5.49039L4.99609 0.98999L0.495694 5.49039"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <path
+        d="M4.99609 1.17188L4.99609 9.80945"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+    </svg>
+  ),
 }
 
 /**

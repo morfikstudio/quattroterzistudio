@@ -89,10 +89,10 @@ export default function Footer() {
         bottomRef.current?.querySelector<HTMLElement>("[data-button-reveal]") ??
         null
       if (buttonEl) {
-        gsap.set(buttonEl, { yPercent: 110, opacity: 0 })
+        gsap.set(buttonEl, { yPercent: 110 })
         gsap.to(buttonEl, {
           yPercent: 0,
-          opacity: 1,
+
           duration: 1.25,
           ease: "power3.out",
           scrollTrigger: {
@@ -115,7 +115,7 @@ export default function Footer() {
 
   return (
     <footer className={cn("footer bg-black text-white h-svh")}>
-      <div className="p-4 flex flex-col justify-between h-full">
+      <div className="md:px-4 md:py-8 p-4 flex flex-col justify-between h-full">
         <div
           ref={logoRef}
           className={cn(
@@ -139,15 +139,20 @@ export default function Footer() {
             className={cn(
               "contact",
               "flex flex-col gap-12",
-              "md:flex-row md:justify-between md:items-center",
+              "md:flex-row md:items-center md:gap-8",
             )}
           >
-            <div className={cn("text", "type-body-l uppercase")}>
+            <div className={cn("type-body-l uppercase md:flex-1")}>
               <span data-split data-ready-trigger>
                 Ready to discuss your project?
               </span>
             </div>
-            <div className={cn("button")} data-button-reveal>
+            <div
+              className={cn(
+                "button max-h-[80px] md:flex-1 md:flex md:justify-start ",
+              )}
+              data-button-reveal
+            >
               <Button
                 icon={
                   <Icon
@@ -165,17 +170,17 @@ export default function Footer() {
               "infos",
               "type-caption uppercase",
               "flex flex-col-reverse gap-2",
-              "md:flex-row md:justify-between md:items-center",
+              "md:flex-row md:items-center md:gap-8",
             )}
           >
-            <div className="copyright">
+            <div className="copyright md:flex-1">
               <span>Copyright © quattroterzi 2026</span>
             </div>
             <div
               className={cn(
                 "terms",
                 "flex flex-col gap-2",
-                "md:flex-row md:justify-between md:items-center md:gap-10",
+                "md:flex-1 md:flex-row md:justify-start md:items-center md:gap-10",
               )}
             >
               <a href="https://www.google.com">Privacy</a>
@@ -183,6 +188,18 @@ export default function Footer() {
             </div>
           </div>
         </div>
+      </div>
+      <div
+        className={cn(
+          "btt",
+          "md:hidden block absolute bottom-4.5 right-4",
+          "flex items-center gap-2 ",
+        )}
+      >
+        <Icon type="arrowUp" size="xs" />
+        <span className="font-medium uppercase text-[12px] leading-none">
+          Back to top
+        </span>
       </div>
     </footer>
   )

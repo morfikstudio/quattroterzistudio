@@ -8,6 +8,7 @@ interface ButtonProps {
   label: string
   href?: string
   size?: "default" | "l" | "xl"
+  variant?: "default" | "boxed"
   className?: string
   onClick?: () => void
 }
@@ -17,6 +18,7 @@ export default function Button({
   label,
   href,
   size = "default",
+  variant = "default",
   className,
   onClick,
 }: ButtonProps) {
@@ -46,7 +48,7 @@ export default function Button({
       >
         <span
           className={cn(
-            "inline-flex group-hover:animate-[icon-slide_0.5s_ease-in-out]",
+            "inline-flex group-hover:animate-[icon-slide_0.65s_ease-in-out]",
             paddingClass,
           )}
         >
