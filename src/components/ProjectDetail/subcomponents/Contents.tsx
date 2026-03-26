@@ -11,7 +11,7 @@ import { components as portableTextComponents } from "@/sanity/portableTextCompo
 import type { PROJECT_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
 
-import { useLenis } from "@/components/LenisProvider"
+import { useLenis, useAnimationKey } from "@/components/LenisProvider"
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
 
@@ -29,6 +29,7 @@ export default function Contents({
   description,
 }: ContentsProps) {
   const lenis = useLenis()
+  const animationKey = useAnimationKey()
   const wrapRef = useRef<HTMLDivElement>(null)
 
   function getBlockElements(selector: string) {
@@ -78,7 +79,7 @@ export default function Contents({
     return () => {
       ctx.revert()
     }
-  }, [lenis])
+  }, [lenis, animationKey])
 
   return (
     <div

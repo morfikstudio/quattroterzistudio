@@ -12,7 +12,7 @@ import {
 } from "@/constants/projectMediaVariants"
 import { cn } from "@/utils/classNames"
 
-import { useLenis } from "@/components/LenisProvider"
+import { useLenis, useAnimationKey } from "@/components/LenisProvider"
 import Image from "@/components/ui/Image"
 
 gsap.registerPlugin(SplitText, ScrollTrigger)
@@ -52,6 +52,7 @@ function getMediaLayoutByVariant(
 
 export default function MediaBlocks({ blocks }: MediaBlocksProps) {
   const lenis = useLenis()
+  const animationKey = useAnimationKey()
   const wrapRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
@@ -276,7 +277,7 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
         window.cancelAnimationFrame(raf)
       }
     }
-  }, [lenis])
+  }, [lenis, animationKey])
 
   return (
     <div ref={wrapRef} className="flex flex-col gap-[48px] md:gap-[160px]">

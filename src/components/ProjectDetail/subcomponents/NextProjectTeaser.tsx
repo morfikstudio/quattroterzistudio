@@ -8,7 +8,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 import type { PROJECT_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
 
-import { useLenis } from "@/components/LenisProvider"
+import { useLenis, useAnimationKey } from "@/components/LenisProvider"
 import Image from "@/components/ui/Image"
 
 gsap.registerPlugin(ScrollTrigger)
@@ -33,6 +33,7 @@ export default function NextProjectTeaser({
 }: NextProjectTeaserProps) {
   const router = useRouter()
   const lenis = useLenis()
+  const animationKey = useAnimationKey()
 
   const [state, setState] = useState<"idle" | "loading" | "navigating">("idle")
 
@@ -189,7 +190,7 @@ export default function NextProjectTeaser({
       abortRef.current = null
       lenis.start()
     }
-  }, [lenis])
+  }, [lenis, animationKey])
 
   return nextProject ? (
     <div ref={wrapRef}>

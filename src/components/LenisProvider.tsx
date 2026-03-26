@@ -7,6 +7,11 @@ import {
   useState,
   type ReactNode,
 } from "react"
+
+type LenisContextType = {
+  lenis: Lenis | null
+  animationKey: number
+}
 import { usePathname } from "next/navigation"
 import Lenis from "lenis"
 import type { LenisOptions } from "lenis"
@@ -15,7 +20,10 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 
 gsap.registerPlugin(ScrollTrigger)
 
-const LenisContext = createContext<Lenis | null>(null)
+const LenisContext = createContext<LenisContextType>({
+  lenis: null,
+  animationKey: 0,
+})
 
 const defaultEasing = (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
 
@@ -37,6 +45,7 @@ function getLenisOptions(): LenisOptions {
 
 export default function LenisProvider({ children }: { children: ReactNode }) {
   const [lenis, setLenis] = useState<Lenis | null>(null)
+  const [animationKey, setAnimationKey] = useState(0)
   const pathname = usePathname()
 
   /* Create lenis instance and wire GSAP ticker */
@@ -88,6 +97,7 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
       requestAnimationFrame(() => {
         if (!cancelled) {
           ScrollTrigger.refresh()
+          setAnimationKey((k) => k + 1)
         }
       })
 
@@ -102,9 +112,17 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
     }
   }, [lenis, pathname])
 
-  return <LenisContext.Provider value={lenis}>{children}</LenisContext.Provider>
+  return (
+    <LenisContext.Provider value={{ lenis, animationKey }}>
+      {children}
+    </LenisContext.Provider>
+  )
 }
 
 export function useLenis(): Lenis | null {
-  return useContext(LenisContext)
+  return useContext(LenisContext).lenis
+}
+
+export function useAnimationKey(): number {
+  return useContext(LenisContext).animationKey
 }
