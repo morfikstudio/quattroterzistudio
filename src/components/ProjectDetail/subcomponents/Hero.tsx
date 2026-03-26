@@ -10,10 +10,9 @@ type HeroProps = {
   cover: NonNullable<PROJECT_QUERY_RESULT>["coverDetail"]
   title: NonNullable<PROJECT_QUERY_RESULT>["title"] | null
   year: NonNullable<PROJECT_QUERY_RESULT>["year"] | null
-  onCoverLoad: (ready: boolean) => void
 }
 
-export default function Hero({ cover, title, year, onCoverLoad }: HeroProps) {
+export default function Hero({ cover, title, year }: HeroProps) {
   return (
     <div className="relative">
       {/* COVER IMAGE */}
@@ -23,7 +22,6 @@ export default function Hero({ cover, title, year, onCoverLoad }: HeroProps) {
           resizeId="cover-detail"
           className="w-full"
           priority
-          onLoad={() => onCoverLoad(true)}
         />
 
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-10">

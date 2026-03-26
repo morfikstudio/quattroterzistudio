@@ -1,9 +1,3 @@
-"use client"
-
-import { useState } from "react"
-import gsap from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
-
 import type { PROJECT_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
 
@@ -11,8 +5,6 @@ import Hero from "./subcomponents/Hero"
 import Contents from "./subcomponents/Contents"
 import MediaBlocks from "./subcomponents/MediaBlocks"
 import NextProjectTeaser from "./subcomponents/NextProjectTeaser"
-
-gsap.registerPlugin(ScrollTrigger)
 
 type ProjectProps = {
   coverDetail: NonNullable<PROJECT_QUERY_RESULT>["coverDetail"] | null
@@ -37,23 +29,10 @@ export default function ProjectDetail({
   blocks,
   nextProject,
 }: ProjectProps) {
-  const [coverReady, setCoverReady] = useState(false)
-
   return (
-    <div
-      className={cn(
-        "relative",
-        "transition-opacity duration-500 ease-out",
-        !coverReady && "opacity-0 pointer-events-none",
-      )}
-    >
+    <>
       <section>
-        <Hero
-          cover={coverDetail}
-          title={title}
-          year={year}
-          onCoverLoad={() => setCoverReady(true)}
-        />
+        <Hero cover={coverDetail} title={title} year={year} />
       </section>
 
       <section
@@ -73,7 +52,8 @@ export default function ProjectDetail({
       {blocks && blocks.length > 0 && (
         <section
           className={cn(
-            "relative px-[12px] md:px-[24px] pt-[80px] md:pt-[120px]",
+            "relative",
+            "px-[12px] md:px-[24px] pt-[80px] md:pt-[120px]",
           )}
         >
           <MediaBlocks blocks={blocks} />
@@ -85,6 +65,6 @@ export default function ProjectDetail({
           <NextProjectTeaser nextProject={nextProject} />
         </section>
       )}
-    </div>
+    </>
   )
 }
