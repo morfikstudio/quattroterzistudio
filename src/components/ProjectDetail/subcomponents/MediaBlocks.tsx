@@ -1,6 +1,6 @@
 "use client"
 
-import { useLayoutEffect, useRef } from "react"
+import { useEffect, useLayoutEffect, useRef } from "react"
 import gsap from "gsap"
 import SplitText from "gsap/SplitText"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
@@ -88,8 +88,11 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
             trigger: payoff,
             start: "top 75%",
             invalidateOnRefresh: true,
+            markers: true,
           },
         })
+
+        requestAnimationFrame(() => ScrollTrigger.refresh())
       })
     }
 
@@ -122,6 +125,7 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
               trigger: mediaSingle,
               start: "top 75%",
               invalidateOnRefresh: true,
+              markers: true,
             },
           })
           .to(
@@ -222,6 +226,7 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
                 trigger: mediaInner,
                 start: `top-=${y}px 75%`,
                 invalidateOnRefresh: true,
+                markers: true,
               },
             })
             .to(
@@ -278,6 +283,18 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
       }
     }
   }, [lenis, animationKey])
+
+  /*
+   * After animationKey changes, useLayoutEffect has already re-run SplitText
+   * which modifies the DOM layout. A second ScrollTrigger.refresh() here
+   * (fired after paint via useEffect) ensures trigger positions are
+   * recalculated with the stable, post-SplitText layout.
+   */
+  // useEffect(() => {
+  //   if (animationKey === 0) return
+  //   const raf = requestAnimationFrame(() => ScrollTrigger.refresh())
+  //   return () => cancelAnimationFrame(raf)
+  // }, [animationKey])
 
   return (
     <div ref={wrapRef} className="flex flex-col gap-[48px] md:gap-[160px]">
