@@ -15,6 +15,10 @@ const imageResizeMap = {
     landscape: "1500x1000", // 3:2
     portrait: "900x600", // 3:2
   },
+  "media-block-double": {
+    landscape: "1080x1620", // 2:3
+    portrait: "720x1080", // 2:3
+  },
 } as const satisfies Record<string, Record<"landscape" | "portrait", string>>
 
 export type ImageResizeId = keyof typeof imageResizeMap

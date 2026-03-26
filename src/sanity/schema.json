@@ -216,11 +216,7 @@
             "of": [
               {
                 "type": "string",
-                "value": "v1"
-              },
-              {
-                "type": "string",
-                "value": "v2"
+                "value": "50-50"
               }
             ]
           },

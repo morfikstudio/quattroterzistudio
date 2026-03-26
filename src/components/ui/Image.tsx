@@ -21,7 +21,7 @@ interface ImageProps {
   sizes?: string
   className?: string
   priority?: boolean
-  onLoad?: () => void
+  onLoad?: (img: HTMLImageElement) => void
 }
 
 export default function Image({
@@ -70,7 +70,13 @@ export default function Image({
         fluidHeight ? `${className} max-w-full h-auto`.trim() : className
       }
       priority={priority}
-      onLoadingComplete={onLoad ? () => onLoad() : undefined}
+      onLoadingComplete={
+        onLoad
+          ? (img: HTMLImageElement) => {
+              onLoad(img)
+            }
+          : undefined
+      }
     />
   ) : null
 }

@@ -26,7 +26,7 @@ function getLenisOptions(): LenisOptions {
       : false
   return {
     autoRaf: false,
-    duration: prefersReducedMotion ? 0 : 1.25,
+    duration: prefersReducedMotion ? 0 : 1,
     easing: defaultEasing,
     syncTouch: false,
     anchors: true,
@@ -48,6 +48,17 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
     lenisInstance.on("scroll", ScrollTrigger.update)
 
     setLenis(lenisInstance)
+
+    /* REFRESH SCROLLTRIGGER AFTER ALL RESOURCES (IMAGES, FONTS) ARE LOADED */
+    const refresh = () => ScrollTrigger.refresh()
+    if (document.readyState === "complete") {
+      requestAnimationFrame(refresh)
+    } else {
+      window.addEventListener("load", refresh, {
+        once: true,
+      })
+    }
+
     return () => {
       gsap.ticker.remove(rafHandler)
       lenisInstance.destroy()

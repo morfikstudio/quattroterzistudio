@@ -53,23 +53,55 @@ export const SINGLE_MEDIA_VARIANTS = [
 ] as const
 
 export const DOUBLE_MEDIA_VARIANTS = [
-  { title: "Variant 1", value: "v1" },
-  { title: "Variant 2", value: "v2" },
+  {
+    title: "50 / 51",
+    value: "50-51",
+    layout1: "col-span-6",
+    layout2: "col-span-6",
+  },
+  {
+    title: "51 / 50",
+    value: "51-50",
+    layout1: "col-span-6",
+    layout2: "col-span-6",
+  },
+  {
+    title: "40 / 50",
+    value: "40-50",
+    layout1: "col-span-5",
+    layout2: "col-span-6 col-start-7",
+  },
+  {
+    title: "50 / 40",
+    value: "50-40",
+    layout1: "col-span-6",
+    layout2: "col-span-5 col-start-8",
+  },
+  {
+    title: "30 / 50",
+    value: "30-50",
+    layout1: "col-span-4 col-start-2",
+    layout2: "col-span-6 col-start-7",
+  },
+  {
+    title: "50 / 30",
+    value: "50-30",
+    layout1: "col-span-6",
+    layout2: "col-span-4 col-start-8",
+  },
+  {
+    title: "20 / 80",
+    value: "20-80",
+    layout1: "col-span-3",
+    layout2: "col-span-8 col-start-5",
+  },
+  {
+    title: "80 / 20",
+    value: "80-20",
+    layout1: "col-span-8",
+    layout2: "col-span-3 col-start-10",
+  },
 ] as const
-
-export function getMediaLayoutByVariant(
-  type: "projectMediaSingle" | "projectMediaDouble",
-  variant: string | null | undefined,
-): string {
-  if (type === "projectMediaSingle") {
-    return (
-      SINGLE_MEDIA_VARIANTS.find((item) => item.value === variant)?.layout ??
-      "col-span-12 w-full min-w-0"
-    )
-  }
-
-  return ""
-}
 
 export function getMediaVariantTitle(
   type: "projectMediaSingle" | "projectMediaDouble",
@@ -79,9 +111,7 @@ export function getMediaVariantTitle(
     return (
       SINGLE_MEDIA_VARIANTS.find((item) => item.value === variant)?.title ?? ""
     )
-  }
-
-  if (type === "projectMediaDouble") {
+  } else if (type === "projectMediaDouble") {
     return (
       DOUBLE_MEDIA_VARIANTS.find((item) => item.value === variant)?.title ?? ""
     )

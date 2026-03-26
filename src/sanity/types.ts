@@ -55,7 +55,7 @@ export type ProjectMediaPayoff = {
 
 export type ProjectMediaDouble = {
   _type: "projectMediaDouble"
-  variant: "v1" | "v2"
+  variant: "50-50"
   media1?: Media1
   media2?: Media2
 }
@@ -419,7 +419,7 @@ export type PROJECT_QUERY_RESULT = {
         _key: string
         _type: "projectMediaDouble"
         payoff: null
-        variant: "v1" | "v2"
+        variant: "50-50"
         useVideo: null
         image: null
         alt: null
