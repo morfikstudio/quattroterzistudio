@@ -105,6 +105,7 @@ export default function NextProjectTeaser({
 
     /* Navigate to the next project */
     if (!signal.aborted) {
+      lenis.scrollTo(0, { immediate: true, force: true })
       router.push(`/projects/${nextProject?.slug?.current ?? ""}`)
     }
   }, [nextProject, router, lenis])
