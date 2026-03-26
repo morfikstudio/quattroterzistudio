@@ -72,7 +72,6 @@ export default function Contents({
           trigger: wrapRef.current,
           start: "top 75%",
           invalidateOnRefresh: true,
-          markers: true,
         },
       })
     }, wrapRef)

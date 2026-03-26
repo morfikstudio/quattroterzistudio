@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 
+import { useLenis } from "@/components/LenisProvider"
+
 import { cn } from "@/utils/classNames"
 
 type ScrollIndicatorProps = {
@@ -10,10 +12,13 @@ type ScrollIndicatorProps = {
 }
 
 export default function ScrollIndicator({
-  delay = 3500,
+  delay = 3000,
   variant = "light",
 }: ScrollIndicatorProps) {
+  const lenis = useLenis()
+
   const [show, setShow] = useState(true)
+
   const tm = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const hide = useCallback(() => {
@@ -24,48 +29,45 @@ export default function ScrollIndicator({
     }
 
     tm.current = setTimeout(() => {
-      // only show if at top of page
-      if (window.scrollY === 0) {
-        setShow(true)
-      }
+      if (window.scrollY === 0) setShow(true)
       tm.current = null
     }, delay)
   }, [delay])
 
   useEffect(() => {
+    if (!lenis) return
+
+    setShow(lenis.scroll === 0)
+    let lastScrollY = lenis.scroll || 0
+
     const onKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.key === "ArrowDown" ||
-        e.key === "ArrowUp" ||
-        e.key === "PageDown" ||
-        e.key === "PageUp"
-      ) {
+      if (e.key === "ArrowDown" || e.key === "PageDown") {
         hide()
       }
     }
 
-    window.addEventListener("scroll", hide, { passive: true })
-    window.addEventListener("wheel", hide, { passive: true })
-    window.addEventListener("touchstart", hide, { passive: true })
+    const onScroll = () => {
+      if (lenis.scroll > lastScrollY) hide()
+      lastScrollY = lenis.scroll
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true })
+    window.addEventListener("wheel", onScroll, { passive: true })
+    window.addEventListener("touchstart", onScroll, { passive: true })
     window.addEventListener("keydown", onKeyDown)
 
     return () => {
-      window.removeEventListener("scroll", hide)
-      window.removeEventListener("wheel", hide)
-      window.removeEventListener("touchstart", hide)
+      window.removeEventListener("scroll", onScroll)
+      window.removeEventListener("wheel", onScroll)
+      window.removeEventListener("touchstart", onScroll)
       window.removeEventListener("keydown", onKeyDown)
-    }
-  }, [hide])
 
-  useEffect(() => {
-    setShow(window.scrollY === 0)
-
-    return () => {
       if (tm.current) {
         clearTimeout(tm.current)
+        tm.current = null
       }
     }
-  }, [])
+  }, [hide, lenis])
 
   return (
     <>
