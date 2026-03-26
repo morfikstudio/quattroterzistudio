@@ -216,7 +216,35 @@
             "of": [
               {
                 "type": "string",
-                "value": "50-50"
+                "value": "50-51"
+              },
+              {
+                "type": "string",
+                "value": "51-50"
+              },
+              {
+                "type": "string",
+                "value": "40-50"
+              },
+              {
+                "type": "string",
+                "value": "50-40"
+              },
+              {
+                "type": "string",
+                "value": "30-50"
+              },
+              {
+                "type": "string",
+                "value": "50-30"
+              },
+              {
+                "type": "string",
+                "value": "20-80"
+              },
+              {
+                "type": "string",
+                "value": "80-20"
               }
             ]
           },
