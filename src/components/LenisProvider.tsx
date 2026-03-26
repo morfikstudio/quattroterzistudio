@@ -24,9 +24,10 @@ function getLenisOptions(): LenisOptions {
     typeof window !== "undefined"
       ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
       : false
+
   return {
     autoRaf: false,
-    duration: prefersReducedMotion ? 0 : 1.25,
+    duration: prefersReducedMotion ? 0 : 1,
     easing: defaultEasing,
     syncTouch: false,
     anchors: true,
@@ -38,16 +39,18 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
   const [lenis, setLenis] = useState<Lenis | null>(null)
   const pathname = usePathname()
 
-  // create lenis instance and wire GSAP ticker
+  /* Create lenis instance and wire GSAP ticker */
   useEffect(() => {
     const lenisInstance = new Lenis(getLenisOptions())
 
     const rafHandler = (time: number) => lenisInstance.raf(time * 1000)
+
     gsap.ticker.add(rafHandler)
     gsap.ticker.lagSmoothing(0)
     lenisInstance.on("scroll", ScrollTrigger.update)
 
     setLenis(lenisInstance)
+
     return () => {
       gsap.ticker.remove(rafHandler)
       lenisInstance.destroy()
@@ -55,10 +58,48 @@ export default function LenisProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // scroll to top on route change
+  /* Refresh ScrollTrigger after all resources (images, fonts) are loaded. */
+  useEffect(() => {
+    const refresh = () => ScrollTrigger.refresh()
+
+    if (document.readyState === "complete") {
+      requestAnimationFrame(refresh)
+      return
+    }
+
+    window.addEventListener("load", refresh, { once: true })
+    return () => {
+      window.removeEventListener("load", refresh)
+    }
+  }, [])
+
+  /* On route change:
+   * scroll to top,
+   * then refresh ScrollTrigger once fonts settle.
+   */
   useEffect(() => {
     if (!lenis) return
+
     lenis.scrollTo(0, { immediate: true, force: true })
+
+    let cancelled = false
+
+    const refresh = () =>
+      requestAnimationFrame(() => {
+        if (!cancelled) {
+          ScrollTrigger.refresh()
+        }
+      })
+
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(refresh).catch(refresh)
+    } else {
+      refresh()
+    }
+
+    return () => {
+      cancelled = true
+    }
   }, [lenis, pathname])
 
   return <LenisContext.Provider value={lenis}>{children}</LenisContext.Provider>
