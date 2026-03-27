@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback, useState, useMemo } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
@@ -11,6 +12,7 @@ import { cn } from "@/utils/classNames"
 
 import { useBreakpoint } from "@/stores/breakpointStore"
 import { useIsTouch } from "@/hooks/useIsTouch"
+import { useLenis } from "@/components/LenisProvider"
 
 import Image from "@/components/ui/Image"
 import ScrollIndicator from "@/components/ScrollIndicator"
@@ -26,6 +28,8 @@ function clamp(value: number) {
 }
 
 export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
+  const router = useRouter()
+  const lenis = useLenis()
   const { current: breakpoint } = useBreakpoint()
   const isTouch = useIsTouch()
 
@@ -40,10 +44,22 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const wordsRefs = useRef<(HTMLSpanElement | null)[][]>([])
   const yearsRefs = useRef<(HTMLSpanElement | null)[]>([])
 
+  const transitioningRef = useRef(false)
+  const transitionTweenRef = useRef<gsap.core.Tween | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
+
   const raf = useRef<number | null>(null)
   const lastWidth = useRef<number>(
     typeof window !== "undefined" ? window.innerWidth : 0,
   )
+
+  const isDesktop = useMemo(() => {
+    return (
+      typeof window !== "undefined" &&
+      window?.innerWidth / window?.innerHeight >= 1.35 && // 4:3 ratio
+      breakpoint?.startsWith("desktop")
+    )
+  }, [breakpoint])
 
   const onResize = useCallback(() => {
     /*
@@ -62,6 +78,72 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       ScrollTrigger.refresh()
     })
   }, [])
+
+  const handleProjectClick = useCallback(
+    async (e: React.MouseEvent, i: number, slug: string) => {
+      e.preventDefault()
+
+      if (transitioningRef.current || !lenis) return
+      transitioningRef.current = true
+
+      if (!isDesktop) {
+        router.push(`/projects/${slug}`)
+        return
+      }
+
+      abortRef.current?.abort()
+      abortRef.current = new AbortController()
+      const { signal } = abortRef.current
+
+      const el = thumbWrapRefs.current[i]
+      const clipEl = thumbClipRefs.current[i]
+      if (!el || !clipEl) {
+        transitioningRef.current = false
+        return
+      }
+
+      lenis.stop()
+      gsap.killTweensOf(el)
+      transitionTweenRef.current?.kill()
+      transitionTweenRef.current = null
+
+      const rect = el.getBoundingClientRect()
+
+      el.style.setProperty("--tw-translate-x", "0px")
+      el.style.setProperty("--tw-translate-y", "0px")
+
+      gsap.set(clipEl, { clipPath: "none" })
+
+      gsap.set(el, {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        zIndex: 100,
+        overwrite: true,
+      })
+
+      try {
+        await new Promise<void>((resolve) => {
+          transitionTweenRef.current = gsap.to(el, {
+            top: 0,
+            left: 0,
+            width: "100%",
+            overwrite: true,
+            duration: 1,
+            ease: "expo.out",
+            onComplete: resolve,
+          })
+        })
+
+        if (!signal.aborted) {
+          router.push(`/projects/${slug}`)
+        }
+      } finally {
+        transitionTweenRef.current = null
+      }
+    },
+    [lenis, router, isDesktop],
+  )
 
   const show = useMemo(
     () => firstBgReady && firstThumbReady,
@@ -349,9 +431,15 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         ScrollTrigger.removeEventListener("refresh", refreshSyncHandler)
       }
 
+      abortRef.current?.abort()
+      abortRef.current = null
+      transitionTweenRef.current?.kill()
+      transitionTweenRef.current = null
+
       ctx.revert()
+      lenis?.start()
     }
-  }, [breakpoint, isTouch, projects])
+  }, [breakpoint, isTouch, projects, lenis])
 
   /* Initialize first background image */
   useEffect(() => {
@@ -387,7 +475,10 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             }}
             style={{ zIndex: i + 10 }}
           >
-            <Link href={`/projects/${p.slug?.current ?? ""}`}>
+            <Link
+              href={`/projects/${p.slug?.current ?? ""}`}
+              onClick={(e) => handleProjectClick(e, i, p.slug?.current ?? "")}
+            >
               <div
                 ref={(el) => {
                   bgRefs.current[i] = el
@@ -414,7 +505,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             <div
               className={cn(
                 "absolute top-1/2 left-1/2 md:left-[7vw] -translate-y-1/2 -translate-x-1/2 md:translate-x-0",
-                "w-[70vw] md:w-[50vw] lg:w-[35vw]",
+                "w-[70vw] max-md:landscape:w-[50vw] md:w-[50vw] lg:w-[35vw]",
               )}
               ref={(el) => {
                 thumbWrapRefs.current[i] = el
