@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useRef } from "react"
+import { useLayoutEffect, useRef } from "react"
 import gsap from "gsap"
 import SplitText from "gsap/SplitText"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
@@ -58,6 +58,10 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
   useLayoutEffect(() => {
     if (!lenis || !wrapRef.current) return
 
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches
+
     function getBlockElements(selector: string) {
       return wrapRef.current
         ? Array.from(
@@ -101,15 +105,15 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
     }
 
     const mediaSingleAnimations = () => {
-      const mediaSindles = getBlockElements("[data-block-media-single]")
-      if (mediaSindles.length === 0) return
+      const mediaSingles = getBlockElements("[data-block-media-single]")
+      if (mediaSingles.length === 0) return
 
-      mediaSindles.forEach((mediaSingle: HTMLElement) => {
+      mediaSingles.forEach((mediaSingle: HTMLElement) => {
         if (!mediaSingle) return
 
-        const mediaInner = mediaSingle.firstChild as HTMLDivElement
+        const mediaInner = mediaSingle.firstChild as HTMLElement
         if (!mediaInner) return
-        const mediaImg = mediaInner.firstChild as HTMLDivElement
+        const mediaImg = mediaInner.querySelector("img")
         if (!mediaImg) return
 
         gsap.killTweensOf([mediaInner, mediaImg])
@@ -164,8 +168,8 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
         const [media1, media2] = Array.from(mediaDouble.children || [])
         if (!media1 || !media2) return
 
-        const img1 = media1.firstChild as HTMLImageElement
-        const img2 = media2.firstChild as HTMLImageElement
+        const img1 = media1.querySelector("img")
+        const img2 = media2.querySelector("img")
         if (!img1 || !img2) return
 
         const variant = mediaDouble.getAttribute(
@@ -200,8 +204,8 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
         const [media1, media2] = Array.from(mediaDouble.children || [])
         if (!media1 || !media2) return
 
-        const img1 = media1.firstChild as HTMLImageElement
-        const img2 = media2.firstChild as HTMLImageElement
+        const img1 = media1.querySelector("img")
+        const img2 = media2.querySelector("img")
         if (!img1 || !img2) return
 
         const animationElements = [
@@ -255,6 +259,61 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
       })
     }
 
+    const mediaParallaxAnimations = () => {
+      if (prefersReducedMotion) return
+
+      getBlockElements("[data-block-media-single]").forEach((mediaSingle) => {
+        const wrap = mediaSingle.querySelector<HTMLElement>(
+          "[data-media-parallax-wrap]",
+        )
+        if (!wrap) return
+
+        gsap.killTweensOf(wrap)
+        gsap.fromTo(
+          wrap,
+          { yPercent: -24 },
+          {
+            yPercent: 24,
+            ease: "none",
+            scrollTrigger: {
+              trigger: mediaSingle,
+              start: "top bottom",
+              end: "bottom top",
+              scrub: true,
+              invalidateOnRefresh: true,
+            },
+          },
+        )
+      })
+
+      getBlockElements("[data-block-media-double]").forEach((mediaDouble) => {
+        Array.from(mediaDouble.children).forEach((cell) => {
+          if (!(cell instanceof HTMLElement)) return
+          const wrap = cell.querySelector<HTMLElement>(
+            "[data-media-parallax-wrap]",
+          )
+          if (!wrap) return
+
+          gsap.killTweensOf(wrap)
+          gsap.fromTo(
+            wrap,
+            { yPercent: -24 },
+            {
+              yPercent: 24,
+              ease: "none",
+              scrollTrigger: {
+                trigger: cell,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: true,
+                invalidateOnRefresh: true,
+              },
+            },
+          )
+        })
+      })
+    }
+
     let raf: number | null = null
     const onResize = () => {
       if (raf !== null) return
@@ -266,14 +325,16 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
     }
 
     const ctx = gsap.context(() => {
-      /* PAYOFF TRANSITIONS */
+      /* Parallax transitions */
       payoffsAnimations()
-      /* MEDIA SINGLE TRANSITIONS */
+      /* Media single transitions */
       mediaSingleAnimations()
-      /* MEDIA DOUBLE MARGINS SETUP & TRANSITIONS */
+      /* Media double margins setup & transitions */
       mediaDoubleMarginsSetup()
       mediaDoubleAnimations()
-      /* RESIZE */
+      /* Media parallax transitions */
+      mediaParallaxAnimations()
+      /* Resize */
       window.addEventListener("resize", onResize)
     }, wrapRef)
 
@@ -292,12 +353,13 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
         switch (block._type) {
           case "projectMediaPayoff":
             return (
-              <div
-                key={block._key}
-                className="type-display-l uppercase leading-none text-black"
-                data-block-payoff
-              >
-                {block.payoff}
+              <div key={block._key}>
+                <div
+                  className="type-display-l uppercase leading-none text-black"
+                  data-block-payoff
+                >
+                  {block.payoff}
+                </div>
               </div>
             )
           case "projectMediaSingle":
@@ -313,11 +375,13 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
                     getMediaLayoutByVariant(block._type, block.variant),
                   )}
                 >
-                  <Image
-                    image={block.image}
-                    resizeId="media-block-single"
-                    className="w-full"
-                  />
+                  <div data-media-parallax-wrap className="w-full">
+                    <Image
+                      image={block.image}
+                      resizeId="media-block-single"
+                      className="w-full"
+                    />
+                  </div>
                 </div>
               </div>
             )
@@ -338,14 +402,16 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
                   <div
                     className={cn("w-full min-w-0 overflow-hidden", layout1)}
                   >
-                    <Image
-                      image={{
-                        ...block.media1.image,
-                        alt: block.media1.alt ?? "",
-                      }}
-                      resizeId="media-block-double"
-                      className="w-full"
-                    />
+                    <div data-media-parallax-wrap className="w-full">
+                      <Image
+                        image={{
+                          ...block.media1.image,
+                          alt: block.media1.alt ?? "",
+                        }}
+                        resizeId="media-block-double"
+                        className="w-full"
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -353,14 +419,16 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
                   <div
                     className={cn("w-full min-w-0 overflow-hidden", layout2)}
                   >
-                    <Image
-                      image={{
-                        ...block.media2.image,
-                        alt: block.media2.alt ?? "",
-                      }}
-                      resizeId="media-block-double"
-                      className="w-full"
-                    />
+                    <div data-media-parallax-wrap className="w-full">
+                      <Image
+                        image={{
+                          ...block.media2.image,
+                          alt: block.media2.alt ?? "",
+                        }}
+                        resizeId="media-block-double"
+                        className="w-full"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
