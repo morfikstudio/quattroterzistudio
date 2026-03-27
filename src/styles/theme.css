@@ -14,6 +14,12 @@
   --breakpoint-desktop: 1024px;
 }
 
+/* Text selection highlight */
+::selection {
+  background-color: #000;
+  color: #fff;
+}
+
 /* ─── Typography ───────────────────────────────────────────────────────────── */
 
 /* Display XL: 60 → 140 → 170px | 90% lh | -2%/-4%/-4% ls | Medium */
