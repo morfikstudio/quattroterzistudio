@@ -24,7 +24,7 @@ export default function Hero({ cover, title, year }: HeroProps) {
           priority
         />
 
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-10">
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
           <ScrollIndicator />
         </div>
       </div>

@@ -565,7 +565,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       </div>
 
       {/* SCROLL INDICATOR */}
-      <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
         <ScrollIndicator />
       </div>
     </div>
