@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 
-import { useLenis } from "@/components/LenisProvider"
+import { useLenis, useAnimationKey } from "@/components/LenisProvider"
 
 import { cn } from "@/utils/classNames"
 
@@ -16,6 +16,7 @@ export default function ScrollIndicator({
   variant = "light",
 }: ScrollIndicatorProps) {
   const lenis = useLenis()
+  const animationKey = useAnimationKey()
 
   const [show, setShow] = useState(true)
 
@@ -67,7 +68,7 @@ export default function ScrollIndicator({
         tm.current = null
       }
     }
-  }, [hide, lenis])
+  }, [lenis, animationKey, hide])
 
   return (
     <>
