@@ -119,7 +119,6 @@ export default function Footer() {
         <div
           ref={logoRef}
           className={cn(
-            "logo",
             "uppercase text-[12.5vw] md:text-[13vw] w-full",
             "flex flex-col items-end justify-end",
           )}

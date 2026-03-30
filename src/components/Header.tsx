@@ -17,6 +17,10 @@ export default function Header() {
   const isProjectsActive =
     pathname === "/projects" || pathname.startsWith("/projects/")
   const isAboutActive = pathname === "/about" || pathname.startsWith("/about/")
+  const navItems = [
+    { href: "/projects", label: "Works,", isActive: isProjectsActive },
+    { href: "/about", label: "About,", isActive: isAboutActive },
+  ]
 
   return (
     <>
@@ -73,35 +77,25 @@ export default function Header() {
             </div>
           </Link>
           <div className={cn("flex gap-2", "type-menu text-white")}>
-            <Link
-              href="/projects"
-              className={cn(
-                navLinkClass,
-                isProjectsActive && "text-active-link",
-              )}
-              onMouseEnter={(e) => {
-                e.currentTarget.dataset.line = "in"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.dataset.line = "out"
-              }}
-            >
-              Works,
-              <span className={navUnderlineClass} />
-            </Link>
-            <Link
-              href="/about"
-              className={cn(navLinkClass, isAboutActive && "text-active-link")}
-              onMouseEnter={(e) => {
-                e.currentTarget.dataset.line = "in"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.dataset.line = "out"
-              }}
-            >
-              About,
-              <span className={navUnderlineClass} />
-            </Link>
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  navLinkClass,
+                  item.isActive && "text-active-link",
+                )}
+                onMouseEnter={(e) => {
+                  e.currentTarget.dataset.line = "in"
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.dataset.line = "out"
+                }}
+              >
+                {item.label}
+                <span className={navUnderlineClass} />
+              </Link>
+            ))}
             <button
               onClick={() => setIsContactOpen(true)}
               className={cn(navLinkClass, "cursor-pointer")}
