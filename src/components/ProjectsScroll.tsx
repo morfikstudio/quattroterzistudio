@@ -129,6 +129,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
       const doTransition = async () => {
         let previousInlineTransition = ""
+        let didNavigate = false
         try {
           if (signal.aborted) return
 
@@ -173,6 +174,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             })
 
             if (!signal.aborted) {
+              didNavigate = true
               router.push(url)
             }
           } finally {
@@ -180,7 +182,9 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             transitionTweenRef.current = null
           }
         } finally {
-          setIsRouteTransitioning(false)
+          if (!didNavigate) {
+            setIsRouteTransitioning(false)
+          }
         }
       }
 
@@ -690,6 +694,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
+                  e.currentTarget.dataset.line = "out"
                   const idx = activeSectionIndexRef.current
                   const slug = projects[idx]?.slug?.current ?? ""
                   handleProjectClick(idx, `/projects/${slug}`)
