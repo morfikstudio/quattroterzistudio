@@ -12,10 +12,10 @@ import { cn } from "@/utils/classNames"
 
 import { useBreakpoint } from "@/stores/breakpointStore"
 import { useIsTouch } from "@/hooks/useIsTouch"
-import { useLenis } from "@/components/LenisProvider"
 
-import Image from "@/components/ui/Image"
+import { useLenis } from "@/components/LenisProvider"
 import ScrollIndicator from "@/components/ScrollIndicator"
+import Image from "@/components/ui/Image"
 
 type ProjectsScrollProps = {
   projects: PROJECTS_QUERY_RESULT
@@ -27,6 +27,10 @@ function clamp(value: number) {
   return Math.min(1, Math.max(0, value))
 }
 
+function projectTitleId(project: PROJECTS_QUERY_RESULT[number]) {
+  return `project-${project._id}-title`
+}
+
 export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const router = useRouter()
   const lenis = useLenis()
@@ -35,18 +39,24 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
   const [firstBgReady, setFirstBgReady] = useState(false)
   const [firstThumbReady, setFirstThumbReady] = useState(false)
+  const [isRouteTransitioning, setIsRouteTransitioning] = useState(false)
+  const scrollDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const sectionsRefs = useRef<(HTMLElement | null)[]>([])
   const bgRefs = useRef<(HTMLDivElement | null)[]>([])
   const thumbWrapRefs = useRef<(HTMLDivElement | null)[]>([]) // Outer thumb wrapper controls stacking order (z-index) across sections.
   const thumbClipRefs = useRef<(HTMLDivElement | null)[]>([]) // Inner thumb (overflow-hidden) receives clip-path animations.
+  const thumbInnerRefs = useRef<(HTMLDivElement | null)[]>([]) // Inner media layer receives hover scale and is reset before route transition.
   const wordsRefs = useRef<(HTMLSpanElement | null)[][]>([])
   const yearsRefs = useRef<(HTMLSpanElement | null)[]>([])
+  const copyGroupRefs = useRef<(HTMLDivElement | null)[]>([])
+  const activeSectionIndexRef = useRef(0)
 
   const transitioningRef = useRef(false)
   const transitionTweenRef = useRef<gsap.core.Tween | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const isSnappedRef = useRef(true) // true when scroll is fully at rest (user + snap animation)
 
   const raf = useRef<number | null>(null)
   const lastWidth = useRef<number>(
@@ -80,14 +90,21 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   }, [])
 
   const handleProjectClick = useCallback(
-    async (e: React.MouseEvent, i: number, slug: string) => {
-      e.preventDefault()
-
+    async (index: number, url: string) => {
       if (transitioningRef.current || !lenis) return
       transitioningRef.current = true
 
       if (!isDesktop) {
-        router.push(`/projects/${slug}`)
+        setIsRouteTransitioning(true)
+        if (!isSnappedRef.current && wrapRef.current) {
+          const targetY = wrapRef.current.offsetTop + index * window.innerHeight
+          lenis.scrollTo(targetY, {
+            duration: 0.3,
+            onComplete: () => router.push(url),
+          })
+        } else {
+          router.push(url)
+        }
         return
       }
 
@@ -95,51 +112,86 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       abortRef.current = new AbortController()
       const { signal } = abortRef.current
 
-      const el = thumbWrapRefs.current[i]
-      const clipEl = thumbClipRefs.current[i]
-      if (!el || !clipEl) {
+      const el = thumbWrapRefs.current[index]
+      const clipEl = thumbClipRefs.current[index]
+      const innerEl = thumbInnerRefs.current[index]
+
+      if (!el || !clipEl || !innerEl) {
         transitioningRef.current = false
         return
       }
 
-      lenis.stop()
+      setIsRouteTransitioning(true)
+
       gsap.killTweensOf(el)
       transitionTweenRef.current?.kill()
       transitionTweenRef.current = null
 
-      const rect = el.getBoundingClientRect()
+      const doTransition = async () => {
+        let previousInlineTransition = ""
+        try {
+          if (signal.aborted) return
 
-      el.style.setProperty("--tw-translate-x", "0px")
-      el.style.setProperty("--tw-translate-y", "0px")
+          lenis.stop()
+          previousInlineTransition = innerEl.style.transition
 
-      gsap.set(clipEl, { clipPath: "none" })
+          /*
+            Ensure route transition starts from unscaled media to match destination hero.
+            We temporarily disable CSS transition so scale reset happens immediately.
+          */
+          innerEl.style.transition = "none"
+          gsap.killTweensOf(innerEl)
+          gsap.set(innerEl, { scale: 1, overwrite: true })
+          innerEl.getBoundingClientRect()
 
-      gsap.set(el, {
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        zIndex: 100,
-        overwrite: true,
-      })
+          const rect = el.getBoundingClientRect()
 
-      try {
-        await new Promise<void>((resolve) => {
-          transitionTweenRef.current = gsap.to(el, {
-            top: 0,
-            left: 0,
-            width: "100%",
+          el.style.setProperty("--tw-translate-x", "0px")
+          el.style.setProperty("--tw-translate-y", "0px")
+
+          gsap.set(clipEl, { clipPath: "none" })
+
+          gsap.set(el, {
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            zIndex: 100,
             overwrite: true,
-            duration: 1,
-            ease: "expo.out",
-            onComplete: resolve,
           })
-        })
 
-        if (!signal.aborted) {
-          router.push(`/projects/${slug}`)
+          try {
+            await new Promise<void>((resolve) => {
+              transitionTweenRef.current = gsap.to(el, {
+                top: 0,
+                left: 0,
+                width: "100%",
+                overwrite: true,
+                duration: 1.5,
+                ease: "power3.out",
+                onComplete: resolve,
+              })
+            })
+
+            if (!signal.aborted) {
+              router.push(url)
+            }
+          } finally {
+            innerEl.style.transition = previousInlineTransition
+            transitionTweenRef.current = null
+          }
+        } finally {
+          setIsRouteTransitioning(false)
         }
-      } finally {
-        transitionTweenRef.current = null
+      }
+
+      if (!isSnappedRef.current && wrapRef.current) {
+        const targetY = wrapRef.current.offsetTop + index * window.innerHeight
+        lenis.scrollTo(targetY, {
+          duration: 0.3,
+          onComplete: () => doTransition(),
+        })
+      } else {
+        doTransition()
       }
     },
     [lenis, router, isDesktop],
@@ -330,6 +382,23 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
       const syncFromProgress = () => {
         const nextIndex = getActiveIndexFromProgress()
+        activeSectionIndexRef.current = nextIndex
+
+        for (let i = 0; i < projects.length; i++) {
+          const group = copyGroupRefs.current[i]
+          if (group) {
+            group.style.zIndex = i === nextIndex ? "30" : "0"
+          }
+
+          const thumbWrap = thumbWrapRefs.current[i]
+          if (thumbWrap) {
+            const isActive = i === nextIndex
+            thumbWrap.setAttribute("data-active", isActive ? "true" : "false")
+            thumbWrap.tabIndex = isActive ? 0 : -1
+            thumbWrap.setAttribute("aria-hidden", isActive ? "false" : "true")
+          }
+        }
+
         const baseProgress = clamp(sectionProgresses[nextIndex] ?? 0)
 
         /*
@@ -435,11 +504,35 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       abortRef.current = null
       transitionTweenRef.current?.kill()
       transitionTweenRef.current = null
+      setIsRouteTransitioning(false)
 
       ctx.revert()
       lenis?.start()
     }
   }, [breakpoint, isTouch, projects, lenis])
+
+  /* isSnappedRef: true when scroll is fully at rest (user + snap animation) */
+  useEffect(() => {
+    if (!lenis) return
+
+    const handleScroll = () => {
+      isSnappedRef.current = false
+      if (scrollDebounceRef.current) {
+        clearTimeout(scrollDebounceRef.current)
+      }
+      scrollDebounceRef.current = setTimeout(() => {
+        isSnappedRef.current = true
+      }, 50)
+    }
+
+    lenis.on("scroll", handleScroll)
+    return () => {
+      lenis.off("scroll", handleScroll)
+      if (scrollDebounceRef.current) {
+        clearTimeout(scrollDebounceRef.current)
+      }
+    }
+  }, [lenis])
 
   /* Initialize first background image */
   useEffect(() => {
@@ -461,23 +554,28 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       className={cn(
         "max-md:overflow-x-clip max-md:touch-pan-y",
         "transition-opacity duration-500 ease-out",
-        !show && "opacity-0 pointer-events-none",
+        !show && "opacity-0",
+        !show && "pointer-events-none",
       )}
     >
       {/* BACKGROUNDS */}
       <div className="relative z-10">
         {projects.map((p, i) => (
-          <section
+          <div
             key={p._id}
             className="relative w-full h-lvh shrink-0"
             ref={(el) => {
               sectionsRefs.current[i] = el
             }}
             style={{ zIndex: i + 10 }}
+            aria-labelledby={projectTitleId(p)}
           >
             <Link
               href={`/projects/${p.slug?.current ?? ""}`}
-              onClick={(e) => handleProjectClick(e, i, p.slug?.current ?? "")}
+              onClick={(e) => {
+                e.preventDefault()
+                handleProjectClick(i, `/projects/${p.slug?.current ?? ""}`)
+              }}
             >
               <div
                 ref={(el) => {
@@ -493,22 +591,40 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                 }}
               />
             </Link>
-          </section>
+          </div>
         ))}
       </div>
 
-      {/* THUMBS + TITLES + YEARS */}
       <div className="fixed top-0 left-0 w-full h-lvh z-20 pointer-events-none">
-        {projects.map((p, i) => (
-          <div key={`overlay-${p._id}`}>
-            {/* THUMB */}
+        {/* THUMBS */}
+        <div className="absolute inset-0 z-0 isolate pointer-events-none">
+          {projects.map((p, i) => (
             <div
+              key={`thumb-${p._id}`}
+              role="button"
+              tabIndex={-1}
+              aria-label={
+                p.title ? `Apri progetto ${p.title}` : "Apri progetto"
+              }
               className={cn(
-                "absolute top-1/2 left-1/2 md:left-[7vw] -translate-y-1/2 -translate-x-1/2 md:translate-x-0",
+                "group absolute top-1/2 left-1/2 md:left-[7vw] -translate-y-1/2 -translate-x-1/2 md:translate-x-0",
                 "w-[70vw] max-md:landscape:w-[50vw] md:w-[50vw] lg:w-[35vw]",
+                "pointer-events-none cursor-pointer outline-none",
+                "data-[active=true]:pointer-events-auto",
               )}
               ref={(el) => {
                 thumbWrapRefs.current[i] = el
+              }}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                handleProjectClick(i, `/projects/${p.slug?.current ?? ""}`)
+              }}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter" && e.key !== " ") return
+                e.preventDefault()
+                e.stopPropagation()
+                handleProjectClick(i, `/projects/${p.slug?.current ?? ""}`)
               }}
             >
               <div
@@ -518,50 +634,99 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                 className="relative aspect-4/3 overflow-hidden w-full"
                 style={{ willChange: "clip-path" }}
               >
-                <Image
-                  image={p.coverDetail}
-                  resizeId="cover-detail"
-                  fill
-                  fit="cover"
-                  priority={i < 2}
-                  onLoad={i === 0 ? () => setFirstThumbReady(true) : undefined}
-                />
+                <div
+                  ref={(el) => {
+                    thumbInnerRefs.current[i] = el
+                  }}
+                  className={cn(
+                    "absolute inset-0 origin-center",
+                    "transition-transform duration-500 ease-out motion-reduce:transition-none",
+                    "group-hover:scale-110 group-focus-visible:scale-110",
+                  )}
+                >
+                  <Image
+                    image={p.coverDetail}
+                    resizeId="cover-detail"
+                    fill
+                    fit="cover"
+                    priority={i < 2}
+                    onLoad={
+                      i === 0 ? () => setFirstThumbReady(true) : undefined
+                    }
+                  />
+                </div>
               </div>
             </div>
+          ))}
+        </div>
 
-            {/* TITLE */}
-            <div className="absolute overflow-hidden top-1/2 -translate-y-1/2 left-[14px] md:left-[calc(50%)] z-20">
-              <h1>
-                {(p.title ?? "").split("").map((char, j) => (
+        {/* TITLES + YEARS */}
+        <div className="absolute inset-0 z-10 pointer-events-none">
+          {projects.map((p, i) => (
+            <div
+              key={`copy-${p._id}`}
+              ref={(el) => {
+                copyGroupRefs.current[i] = el
+              }}
+              className="absolute inset-0 pointer-events-none"
+              style={{ zIndex: 0 }}
+              role="group"
+              aria-label={p.title ?? undefined}
+            >
+              <div
+                className="title-hover text-white absolute top-1/2 -translate-y-[calc(50%-4px)] md:-translate-y-[calc(50%-6px)] left-[14px] md:left-[calc(50%)] pointer-events-auto cursor-pointer"
+                id={projectTitleId(p)}
+                data-route-transitioning={
+                  isRouteTransitioning ? "true" : undefined
+                }
+                onMouseEnter={(e) => {
+                  if (isRouteTransitioning) return
+                  e.currentTarget.dataset.line = "in"
+                }}
+                onMouseLeave={(e) => {
+                  if (isRouteTransitioning) return
+                  e.currentTarget.dataset.line = "out"
+                }}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const idx = activeSectionIndexRef.current
+                  const slug = projects[idx]?.slug?.current ?? ""
+                  handleProjectClick(idx, `/projects/${slug}`)
+                }}
+              >
+                <h1 className="overflow-hidden">
+                  {(p.title ?? "").split("").map((char, j) => (
+                    <span
+                      key={`${p._id}-${j}`}
+                      className="inline-block type-h1 leading-none text-white"
+                      ref={(el) => {
+                        if (!wordsRefs.current[i]) wordsRefs.current[i] = []
+                        wordsRefs.current[i][j] = el
+                      }}
+                    >
+                      {char === " " ? "\u00A0" : char}
+                    </span>
+                  ))}
+                </h1>
+                <span className="link-underline-bar" />
+              </div>
+
+              <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] pointer-events-none">
+                <span className="flex overflow-hidden">
                   <span
-                    key={`${p._id}-${j}`}
-                    className="inline-block type-h1 leading-none text-white"
+                    className="type-caption text-white"
                     ref={(el) => {
-                      if (!wordsRefs.current[i]) wordsRefs.current[i] = []
-                      wordsRefs.current[i][j] = el
+                      yearsRefs.current[i] = el
                     }}
                   >
-                    {char === " " ? "\u00A0" : char}
+                    {p.year}
                   </span>
-                ))}
-              </h1>
-            </div>
-
-            {/* YEAR */}
-            <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-20">
-              <span className="flex overflow-hidden">
-                <span
-                  className="type-caption text-white"
-                  ref={(el) => {
-                    yearsRefs.current[i] = el
-                  }}
-                >
-                  {p.year}
                 </span>
-              </span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* SCROLL INDICATOR */}

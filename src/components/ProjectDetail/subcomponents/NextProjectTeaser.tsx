@@ -118,8 +118,8 @@ export default function NextProjectTeaser({
       left: 0,
       width: "100%",
       overwrite: true,
-      duration: 1,
-      ease: "expo.out",
+      duration: 1.5,
+      ease: "power3.out",
     })
 
     /* Navigate to the next project */
@@ -298,6 +298,7 @@ export default function NextProjectTeaser({
           className={cn(
             "absolute",
             "top-1/2 -translate-y-1/2 left-[14px] md:left-[calc(50%)]",
+            "-translate-y-[calc(50%-4px)] md:-translate-y-[calc(50%-6px)]",
           )}
         >
           <div className="type-h1 leading-none text-white opacity-[0.35]">

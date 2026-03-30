@@ -36,6 +36,7 @@ export default function Hero({ cover, title, year }: HeroProps) {
             className={cn(
               "sticky overflow-hidden pointer-events-auto",
               "top-[50vh] -translate-y-1/2 ml-[14px] md:ml-[calc(50%)]",
+              "-translate-y-[calc(50%-4px)] md:-translate-y-[calc(50%-6px)]",
             )}
           >
             <h1>
