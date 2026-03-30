@@ -3,7 +3,9 @@
 @theme {
   --color-primary: #ffffff;
   --color-secondary: #afafaf;
+  --color-tertiary: #b7b7b7;
   --color-accent: #000000;
+  --color-active-link: #878787;
 
   /* Fonts (CSS vars from layout.tsx) */
   --font-sans: var(--font-helvetica), Helvetica, Arial, sans-serif;
@@ -258,4 +260,18 @@
 
 .link-underline[data-line="out"] .link-underline-bar {
   animation: link-line-out 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+}
+
+.corner-border {
+  background:
+    linear-gradient(to right, currentColor 2px, transparent 2px) 0 0,
+    linear-gradient(to right, currentColor 2px, transparent 2px) 0 100%,
+    linear-gradient(to left, currentColor 2px, transparent 2px) 100% 0,
+    linear-gradient(to left, currentColor 2px, transparent 2px) 100% 100%,
+    linear-gradient(to bottom, currentColor 2px, transparent 2px) 0 0,
+    linear-gradient(to bottom, currentColor 2px, transparent 2px) 100% 0,
+    linear-gradient(to top, currentColor 2px, transparent 2px) 0 100%,
+    linear-gradient(to top, currentColor 2px, transparent 2px) 100% 100%;
+  background-repeat: no-repeat;
+  background-size: 8px 8px;
 }

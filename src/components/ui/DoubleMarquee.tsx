@@ -2,12 +2,17 @@
 
 import { useLayoutEffect, useRef } from "react"
 import gsap from "gsap"
+import { cn } from "@/utils/classNames"
 
 interface DoubleMarqueeProps {
   duration?: number
+  className?: string
 }
 
-export default function DoubleMarquee({ duration = 18 }: DoubleMarqueeProps) {
+export default function DoubleMarquee({
+  duration = 18,
+  className,
+}: DoubleMarqueeProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const topTrackRef = useRef<HTMLDivElement>(null)
   const bottomTrackRef = useRef<HTMLDivElement>(null)
@@ -86,22 +91,24 @@ export default function DoubleMarquee({ duration = 18 }: DoubleMarqueeProps) {
   )
 
   return (
-    <div ref={containerRef} className="overflow-x-hidden w-full">
-      {/* Top row: right to left */}
-      <div
-        ref={topTrackRef}
-        className="inline-flex whitespace-nowrap pt-[0.3em]"
-      >
-        {item(0)}
-        {item(1)}
-        {item(2)}
-      </div>
+    <div className={cn("w-full py-24", className)}>
+      <div ref={containerRef} className="overflow-x-hidden w-full">
+        {/* Top row: right to left */}
+        <div
+          ref={topTrackRef}
+          className="inline-flex whitespace-nowrap pt-[0.3em]"
+        >
+          {item(0)}
+          {item(1)}
+          {item(2)}
+        </div>
 
-      {/* Bottom row: left to right */}
-      <div ref={bottomTrackRef} className="inline-flex whitespace-nowrap">
-        {item(3)}
-        {item(4)}
-        {item(5)}
+        {/* Bottom row: left to right */}
+        <div ref={bottomTrackRef} className="inline-flex whitespace-nowrap">
+          {item(3)}
+          {item(4)}
+          {item(5)}
+        </div>
       </div>
     </div>
   )
