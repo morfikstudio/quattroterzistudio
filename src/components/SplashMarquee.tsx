@@ -1,6 +1,13 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import Link from "next/link"
 import gsap from "gsap"
 
@@ -8,7 +15,7 @@ import { cn } from "@/utils/classNames"
 import { useCursorStore } from "@/stores/cursorStore"
 import { useIsTouch } from "@/hooks/useIsTouch"
 
-const MARQUEE_X_OFFSET = -0.25
+const MARQUEE_X_OFFSET = -0.75
 
 type SplashProps = {
   title: string
@@ -20,122 +27,119 @@ export default function Splash({ title, ctaText }: SplashProps) {
   const isTouch = useIsTouch()
   const [show, setShow] = useState(false)
 
+  const wrapRef = useRef<HTMLDivElement>(null)
   const rectRef = useRef<HTMLDivElement>(null)
   const marqueeRef = useRef<HTMLDivElement>(null)
-  const tl = useRef<GSAPTimeline>(null)
   const centerXRef = useRef(0)
 
-  const marqueeX = () => centerXRef.current * (1 + MARQUEE_X_OFFSET)
+  const renderTitleWords = useCallback(
+    (prefix: string) => {
+      const titleWords = title.trim().split(/\s+/).filter(Boolean)
 
-  const titleWords = useMemo(
-    () => title.trim().split(/\s+/).filter(Boolean),
+      return (
+        <div className="inline-block px-[0.25em] font-[Helvetica] uppercase text-[clamp(3rem,15vw,10rem)] leading-none font-medium">
+          {titleWords.map((word, wordIndex) => (
+            <span
+              key={`${prefix}-word-${wordIndex}`}
+              className="inline-block align-bottom"
+            >
+              {word.split("").map((letter, letterIndex) => (
+                <span
+                  key={`${prefix}-${wordIndex}-${letterIndex}`}
+                  className="inline-block overflow-hidden align-bottom"
+                >
+                  <span className="inline-block" data-splash-letter>
+                    {letter}
+                  </span>
+                </span>
+              ))}
+              {wordIndex < titleWords.length - 1 ? (
+                <span className="inline-block overflow-hidden align-bottom">
+                  <span className="inline-block" data-splash-letter>
+                    {"\u00A0"}
+                  </span>
+                </span>
+              ) : null}
+            </span>
+          ))}
+        </div>
+      )
+    },
     [title],
   )
 
-  const renderTitleWords = (prefix: string) => (
-    <div className="inline-block px-[0.25em] font-[Helvetica] uppercase text-[clamp(3rem,15vw,10rem)] leading-none font-medium">
-      {titleWords.map((word, wordIndex) => (
-        <span
-          key={`${prefix}-word-${wordIndex}`}
-          className="inline-block align-bottom"
-        >
-          {word.split("").map((letter, letterIndex) => (
-            <span
-              key={`${prefix}-${wordIndex}-${letterIndex}`}
-              className="inline-block overflow-hidden align-bottom"
-            >
-              <span className="inline-block" data-splash-letter>
-                {letter}
-              </span>
-            </span>
-          ))}
-          {wordIndex < titleWords.length - 1 ? (
-            <span className="inline-block overflow-hidden align-bottom">
-              <span className="inline-block" data-splash-letter>
-                {"\u00A0"}
-              </span>
-            </span>
-          ) : null}
-        </span>
-      ))}
-    </div>
-  )
+  const marqueeX = useCallback(() => {
+    return centerXRef.current * (1 + MARQUEE_X_OFFSET)
+  }, [])
 
   /**
    * Initialize marquee animation
    */
   useLayoutEffect(() => {
-    const letters = Array.from(
-      marqueeRef.current?.querySelectorAll<HTMLElement>(
-        "[data-splash-letter]",
-      ) || [],
-    ).filter(Boolean)
+    const ctx = gsap.context(() => {
+      if (!wrapRef.current || !marqueeRef.current) return
 
-    const marqueeEl = marqueeRef.current
-    centerXRef.current = window.innerWidth / 2
-    const marqueeLoopTime = title.length * 0.3
+      const marqueeEl = marqueeRef.current
+      const letters = Array.from(
+        marqueeEl.querySelectorAll<HTMLElement>("[data-splash-letter]"),
+      ).filter(Boolean)
+      centerXRef.current = window.innerWidth / 2
+      const marqueeLoopTime = title.length * 0.7
 
-    tl.current = gsap
-      .timeline({
-        onStart: () => setShow(true),
-        delay: 0.5,
-      })
-      .set(marqueeEl, { xPercent: 0, x: marqueeX(), force3D: false }, 0)
-      .from(
-        rectRef.current,
-        {
-          scale: 0.25,
-          opacity: 0,
-          duration: 1,
-          ease: "expo.out",
-        },
-        0,
-      )
-      .from(
-        letters,
-        {
-          yPercent: 100,
-          stagger: 0.05,
-          duration: 0.9,
-          delay: 0.2,
-          ease: "expo.out",
-          force3D: false,
-        },
-        0,
-      )
-      .to(
-        marqueeEl,
-        {
-          xPercent: -(100 / 3),
-          duration: marqueeLoopTime,
-          ease: "none",
-          force3D: false,
-        },
-        0,
-      )
-      .fromTo(
-        marqueeEl,
-        { xPercent: -(100 / 3), x: marqueeX },
-        {
-          xPercent: -(200 / 3),
-          x: marqueeX,
-          duration: marqueeLoopTime,
-          ease: "none",
-          repeat: -1,
-          force3D: false,
-        },
-      )
+      gsap
+        .timeline({
+          onStart: () => setShow(true),
+          delay: 0.5,
+        })
+        .set(marqueeEl, { xPercent: 0, x: marqueeX(), force3D: false }, 0)
+        .from(
+          rectRef.current,
+          {
+            scale: 0.25,
+            opacity: 0,
+            duration: 1,
+            ease: "expo.out",
+          },
+          0,
+        )
+        .from(
+          letters,
+          {
+            yPercent: 100,
+            stagger: 0.05,
+            duration: 0.9,
+            delay: 0.2,
+            ease: "expo.out",
+            force3D: false,
+          },
+          0,
+        )
+        .to(
+          marqueeEl,
+          {
+            xPercent: -(100 / 3),
+            duration: marqueeLoopTime,
+            ease: "none",
+          },
+          0,
+        )
+        .fromTo(
+          marqueeEl,
+          { xPercent: -(100 / 3), x: marqueeX },
+          {
+            xPercent: -(200 / 3),
+            x: marqueeX,
+            duration: marqueeLoopTime,
+            ease: "none",
+            repeat: -1,
+          },
+        )
+    }, wrapRef)
 
     return () => {
-      if (tl.current) {
-        tl.current.kill()
-        // clear styles
-        gsap.set([marqueeEl, rectRef.current, ...letters].filter(Boolean), {
-          clearProps: "all",
-        })
-      }
+      ctx?.revert()
     }
-  }, [])
+  }, [title, marqueeX])
 
   /**
    * Update marquee x position when window is resized
@@ -162,6 +166,7 @@ export default function Splash({ title, ctaText }: SplashProps) {
   return (
     <Link href="/projects" className="cursor-none">
       <div
+        ref={wrapRef}
         className={cn(
           "relative w-full h-svh overflow-hidden isolation-isolate",
           !show ? "invisible opacity-0 pointer-events-none" : "",
@@ -184,9 +189,12 @@ export default function Splash({ title, ctaText }: SplashProps) {
             ref={marqueeRef}
             className="inline-flex whitespace-nowrap text-white"
           >
-            {renderTitleWords("title-1")}
-            {renderTitleWords("title-2")}
-            {renderTitleWords("title-3")}
+            {/* 0.5em/1em -> center letters vertically to compensate for the Helvetica line height */}
+            <div className="flex translate-y-[0.5em] lg:translate-y-[1em]">
+              {renderTitleWords("title-1")}
+              {renderTitleWords("title-2")}
+              {renderTitleWords("title-3")}
+            </div>
           </div>
         </div>
 

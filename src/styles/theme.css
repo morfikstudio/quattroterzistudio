@@ -262,6 +262,23 @@
   animation: link-line-out 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
 }
 
+.title-hover[data-line="in"] .link-underline-bar {
+  animation: link-line-in 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+}
+
+.title-hover[data-line="out"] .link-underline-bar {
+  animation: link-line-out 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+}
+
+.title-hover[data-route-transitioning="true"] {
+  pointer-events: none;
+}
+
+.title-hover[data-route-transitioning="true"] .link-underline-bar {
+  clip-path: inset(0 100% 0 0);
+  animation: none;
+}
+
 .corner-border {
   background:
     linear-gradient(to right, currentColor 2px, transparent 2px) 0 0,
