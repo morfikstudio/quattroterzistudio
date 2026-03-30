@@ -565,7 +565,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       {/* BACKGROUNDS */}
       <div className="relative z-10">
         {projects.map((p, i) => (
-          <div
+          <section
             key={p._id}
             className="relative w-full h-lvh shrink-0"
             ref={(el) => {
@@ -595,7 +595,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                 }}
               />
             </Link>
-          </div>
+          </section>
         ))}
       </div>
 
@@ -738,6 +738,76 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
         <ScrollIndicator />
       </div>
+
+      {/* LIST CTA */}
+      <div className="fixed bottom-6 left-6 z-30">
+        <ListCTA />
+      </div>
     </div>
+  )
+}
+
+function ListCTA() {
+  const Icons = useCallback(() => {
+    return (
+      <div className="flex flex-col items-center gap-[3px]">
+        <span className={cn("flex w-[4px] h-[4px] bg-white")} />
+        <span className={cn("flex w-[4px] h-[4px] bg-white")} />
+      </div>
+    )
+  }, [])
+
+  return (
+    <Link href="/archive">
+      <div
+        className={cn(
+          "group",
+          "relative",
+          "h-[40px] w-[120px]",
+          "border border-white",
+          "flex items-center justify-center",
+          "px-4",
+        )}
+      >
+        <div
+          className={cn(
+            "relative",
+            "h-full w-full",
+            "flex items-center justify-center",
+            "overflow-hidden",
+          )}
+        >
+          <div
+            className={cn(
+              "absolute top-1/2 left-0 -translate-y-1/2 translate-x-0",
+              "group-hover:-translate-x-1",
+              "transition-transform duration-200 ease-in-out",
+            )}
+          >
+            <Icons />
+          </div>
+
+          <div
+            className={cn(
+              "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+              "group-hover:-translate-x-[calc(50%+14px)]",
+              "transition-transform duration-400 ease-out",
+            )}
+          >
+            <span className="type-caption uppercase text-white">Archive</span>
+          </div>
+
+          <div
+            className={cn(
+              "absolute top-1/2 right-0 -translate-y-1/2 translate-x-1",
+              "group-hover:translate-x-0",
+              "transition-transform duration-200 ease-in-out",
+            )}
+          >
+            <Icons />
+          </div>
+        </div>
+      </div>
+    </Link>
   )
 }
