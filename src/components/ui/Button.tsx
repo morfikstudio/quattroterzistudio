@@ -31,7 +31,7 @@ export default function Button({
   const paddingClass = {
     default: "",
     l: "px-4 py-2",
-    xl: "md:px-7 md:py-5 px-6 py-4",
+    xl: "md:p-9 p-7",
   }[size]
 
   const sharedClassName = cn(
@@ -53,7 +53,7 @@ export default function Button({
         <span
           className={cn(
             "absolute inset-0 inline-flex items-center justify-center",
-            "transition-transform duration-900 ease-in-out group-hover:translate-x-full",
+            "transition-transform duration-[900ms] ease-in-out group-hover:translate-x-full",
           )}
         >
           {icon}
@@ -62,7 +62,7 @@ export default function Button({
         <span
           className={cn(
             "absolute inset-0 inline-flex items-center justify-center",
-            "transition-transform duration-900 ease-in-out -translate-x-full group-hover:translate-x-0",
+            "transition-transform duration-[900ms] ease-in-out -translate-x-full group-hover:translate-x-0",
           )}
         >
           {icon}
@@ -70,7 +70,7 @@ export default function Button({
       </span>
       <span
         className={cn(
-          "transition-transform duration-900 ease-out group-hover:translate-x-1",
+          "transition-transform duration-[900ms] ease-out group-hover:translate-x-1",
           sizeClass,
         )}
       >
