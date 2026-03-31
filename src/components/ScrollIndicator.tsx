@@ -83,7 +83,7 @@ export default function ScrollIndicator({
       `}</style>
       <div
         className={cn(
-          "relative w-[3px] h-[38px]",
+          "relative w-[3px] h-[40px]",
           "overflow-hidden pointer-events-none",
           variant === "dark" ? "bg-black/20" : "bg-white/20",
           "transition-opacity duration-500 ease-out",

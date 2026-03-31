@@ -173,11 +173,11 @@ export default function NextProjectTeaser({
 
     gsap.killTweensOf(thumbRef.current)
     killTween(thumbTween.current)
-    gsap.set(thumbRef.current, { opacity: 0.1 })
+    gsap.set(thumbRef.current, { opacity: 0 })
 
     thumbTween.current = gsap.to(thumbRef.current, {
       opacity: 1,
-      duration: 2.5,
+      duration: 2,
       ease: "power3.out",
     })
   }, [scrollTransition])
@@ -205,7 +205,7 @@ export default function NextProjectTeaser({
     killTween(thumbTween.current)
 
     thumbTween.current = gsap.to(thumbRef.current, {
-      opacity: 0.1,
+      opacity: 0,
       duration: 0.4,
       ease: "power2.in",
     })
@@ -282,7 +282,7 @@ export default function NextProjectTeaser({
             "-translate-y-1/2 -translate-x-1/2 md:translate-x-0",
             "w-[70vw] max-md:landscape:w-[50vw] md:w-[50vw] lg:w-[35vw]",
             "aspect-4/3 overflow-hidden",
-            "opacity-10",
+            "opacity-0",
           )}
         >
           <Image
