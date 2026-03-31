@@ -735,7 +735,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       </div>
 
       {/* SCROLL INDICATOR */}
-      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
         <ScrollIndicator />
       </div>
 
@@ -774,14 +774,13 @@ function ListCTA() {
             "relative",
             "h-full w-full",
             "flex items-center justify-center",
-            "overflow-hidden",
           )}
         >
           <div
             className={cn(
               "absolute top-1/2 left-0 -translate-y-1/2 translate-x-0",
-              "group-hover:-translate-x-1",
-              "transition-transform duration-200 ease-in-out",
+              "group-hover:-translate-x-1 group-hover:opacity-0",
+              "transition-all duration-200 ease-in-out",
             )}
           >
             <Icons />
@@ -794,14 +793,15 @@ function ListCTA() {
               "transition-transform duration-400 ease-out",
             )}
           >
-            <span className="type-caption uppercase text-white">Archive</span>
+            <span className="type-button-m uppercase text-white">Archive</span>
           </div>
 
           <div
             className={cn(
               "absolute top-1/2 right-0 -translate-y-1/2 translate-x-1",
-              "group-hover:translate-x-0",
-              "transition-transform duration-200 ease-in-out",
+              "opacity-0",
+              "group-hover:translate-x-0 group-hover:opacity-100",
+              "transition-all duration-200 ease-in-out",
             )}
           >
             <Icons />
