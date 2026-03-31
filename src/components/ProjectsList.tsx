@@ -69,42 +69,48 @@ export default function ProjectsList({ projects }: Props) {
     return () => mq.removeEventListener("change", (e) => update(e.matches))
   }, [])
 
-  // Track the velocity from the delta between successive frames of onSetTranslate,
-  // start the scale loop and manage the isScrolling flag.
+  // Track velocity from successive translate frames, start the scale loop,
+  // and manage the isScrolling flag.
   const handleSetTranslate = useCallback(
     (_swiper: SwiperType, translate: number) => {
       if (prevTranslateRef.current !== null) {
-        velocityRef.current = translate - prevTranslateRef.current
-        startScaleLoop()
+        const delta = translate - prevTranslateRef.current
 
-        if (!isScrollingRef.current) {
-          isScrollingRef.current = true
-          setIsScrolling(true)
-        }
+        // Only feed velocity for intentional user scroll (delta > 3px/frame).
+        // Snap animation produces small deltas (1-3px/frame) that would reset
+        // the naturally-decaying velocity and cause a scale jerk at snap time.
+        if (Math.abs(delta) > 3) {
+          velocityRef.current = delta
+          startScaleLoop()
 
-        cancelAnimationFrame(scrollCheckRef.current)
-        const check = () => {
-          if (Math.abs(velocityRef.current) > 0.5) {
-            scrollCheckRef.current = requestAnimationFrame(check)
-          } else {
-            isScrollingRef.current = false
-            setIsScrolling(false)
+          if (!isScrollingRef.current) {
+            isScrollingRef.current = true
+            setIsScrolling(true)
           }
+
+          cancelAnimationFrame(scrollCheckRef.current)
+          const check = () => {
+            if (Math.abs(velocityRef.current) > 0.5) {
+              scrollCheckRef.current = requestAnimationFrame(check)
+            } else {
+              isScrollingRef.current = false
+              setIsScrolling(false)
+            }
+          }
+          scrollCheckRef.current = requestAnimationFrame(check)
         }
-        scrollCheckRef.current = requestAnimationFrame(check)
       }
       prevTranslateRef.current = translate
     },
     [startScaleLoop],
   )
 
-  // During scroll the image follows the active element;
-  // only at rest it follows the hover.
-  const displayIndex = isScrolling
-    ? activeIndex
-    : hoverIndex !== null
-      ? hoverIndex
-      : activeIndex
+  // Hover always wins: if hovering an item show its image regardless of scroll.
+  // Only when there's no hover does the scroll-active item drive the image.
+  const displayIndex = hoverIndex !== null ? hoverIndex : activeIndex
+
+  // Whether the hover is driving the display (vs scroll or idle active)
+  const isHovering = !isScrolling && hoverIndex !== null
 
   return (
     <>
@@ -113,17 +119,45 @@ export default function ProjectsList({ projects }: Props) {
           aspect-ratio: 4 / 3;
           transform-origin: center;
         }
+
+        /* Image slides: very short opacity transition removes the instant-switch jerk */
+        .pl-img-slide {
+          position: absolute;
+          inset: 0;
+          opacity: 0;
+          transition: opacity 0.15s ease-out;
+        }
+        .pl-img-slide[data-active="true"] {
+          opacity: 1;
+        }
+
+        /* All items start dimmed; active/hovered item is full opacity */
         .pl-item-link {
           font-size: clamp(40px, 5.5vw, 70px);
-          transition: color 0.45s cubic-bezier(0.6, 0, 0.2, 1);
-          @media (max-width: 767px) {
-            opacity: 0.5;
+          opacity: 0.5;
+          transition:
+            color 0.45s cubic-bezier(0.6, 0, 0.2, 1),
+            opacity 0.45s cubic-bezier(0.6, 0, 0.2, 1);
+        }
+        .pl-item-link[data-active="true"] {
+          color: #000;
+          opacity: 1;
+        }
+
+        /* While any item is hovered, further dim all non-active items */
+        .pl-list[data-hovering="true"] .pl-item-link:not([data-active="true"]) {
+          opacity: 0.2;
+        }
+
+        @media (max-width: 767px) {
+          .pl-item-link[data-active="true"] {
+            color: #fff;
+            mix-blend-mode: difference;
+            opacity: 1;
           }
         }
-        .pl-item-link[data-active="true"] { color: #000; }
-        @media (max-width: 767px) {
-          .pl-item-link[data-active="true"] { color: #fff; mix-blend-mode: difference; opacity: 1; }
-        }
+
+        /* Underline clip-path animation */
         .pl-underline {
           clip-path: inset(0 100% 0 0);
         }
@@ -141,12 +175,14 @@ export default function ProjectsList({ projects }: Props) {
         .pl-item-link[data-line="out"] .pl-underline {
           animation: pl-line-out 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
         }
+
         .pl-fade-top {
           background: linear-gradient(to bottom, #fff 20%, transparent 100%);
         }
         .pl-fade-bottom {
           background: linear-gradient(to top, #fff 20%, transparent 100%);
         }
+
         @media (max-width: 767px) {
           .pl-swiper-blend { mix-blend-mode: difference; }
         }
@@ -164,8 +200,8 @@ export default function ProjectsList({ projects }: Props) {
                 ? PLACEHOLDER_PROJECTS.map((p, i) => (
                     <div
                       key={p.id}
-                      className="absolute inset-0"
-                      style={{ display: displayIndex === i ? "block" : "none" }}
+                      className="pl-img-slide"
+                      data-active={displayIndex === i ? "true" : "false"}
                     >
                       <NextImage
                         src={`https://picsum.photos/seed/${p.id}/800/600`}
@@ -179,8 +215,8 @@ export default function ProjectsList({ projects }: Props) {
                 : projects!.map((p, i) => (
                     <div
                       key={p._id}
-                      className="absolute inset-0"
-                      style={{ display: displayIndex === i ? "block" : "none" }}
+                      className="pl-img-slide"
+                      data-active={displayIndex === i ? "true" : "false"}
                     >
                       <Image
                         image={p.coverDetail}
@@ -206,8 +242,8 @@ export default function ProjectsList({ projects }: Props) {
                 ? PLACEHOLDER_PROJECTS.map((p, i) => (
                     <div
                       key={p.id}
-                      className="absolute inset-0"
-                      style={{ display: displayIndex === i ? "block" : "none" }}
+                      className="pl-img-slide"
+                      data-active={displayIndex === i ? "true" : "false"}
                     >
                       <NextImage
                         src={`https://picsum.photos/seed/${p.id}/800/600`}
@@ -221,8 +257,8 @@ export default function ProjectsList({ projects }: Props) {
                 : projects!.map((p, i) => (
                     <div
                       key={p._id}
-                      className="absolute inset-0"
-                      style={{ display: displayIndex === i ? "block" : "none" }}
+                      className="pl-img-slide"
+                      data-active={displayIndex === i ? "true" : "false"}
                     >
                       <Image
                         image={p.coverDetail}
@@ -243,28 +279,25 @@ export default function ProjectsList({ projects }: Props) {
           role="region"
           aria-label="Lista progetti"
         >
-          <div className={cn("pl-swiper-blend h-full", "group")}>
+          <div
+            className={cn("pl-swiper-blend pl-list h-full", "group")}
+            data-hovering={isHovering ? "true" : "false"}
+          >
             <Swiper
               direction="vertical"
               loop
               centeredSlides
               slidesPerView={SLIDES_PER_VIEW}
-              speed={600}
+              speed={900}
               freeMode={{
                 enabled: true,
                 momentum: true,
-                momentumRatio: 2,
-                momentumVelocityRatio: 1.5,
-                minimumVelocity: 0.02,
+                momentumRatio: 0.4,
+                momentumVelocityRatio: 0.3,
+                momentumBounce: false,
+                minimumVelocity: 0.15,
                 sticky: true,
               }}
-              // breakpoints={{
-              //   1024: {
-              //     freeMode: {
-              //       sticky: false,
-              //     },
-              //   },
-              // }}
               mousewheel={{ sensitivity: 1, thresholdDelta: 10 }}
               modules={[FreeMode, Mousewheel]}
               onRealIndexChange={(swiper) => {
@@ -280,13 +313,21 @@ export default function ProjectsList({ projects }: Props) {
               {(usePlaceholder ? PLACEHOLDER_PROJECTS : projects!).map(
                 (p, i) => (
                   <SwiperSlide key={"id" in p ? p.id : p._id} role="listitem">
-                    <div className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10">
+                    {/* Hover area covers the full slide height for forgiving interaction */}
+                    <div
+                      className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10"
+                      onMouseEnter={() => {
+                        interactedItemsRef.current.add(i)
+                        setHoverIndex(i)
+                      }}
+                      onMouseLeave={() => setHoverIndex(null)}
+                    >
                       <a
                         href="#"
                         className={cn(
                           "pl-item-link",
-                          "type-h1  text-secondary no-underline focus-visible:outline-none",
-                          "relative inline-block leading-tight cursor-pointer  ",
+                          "type-h1 text-secondary no-underline focus-visible:outline-none",
+                          "relative inline-block leading-tight cursor-pointer",
                         )}
                         data-active={
                           hoverIndex === i || activeIndex === i
@@ -300,11 +341,6 @@ export default function ProjectsList({ projects }: Props) {
                               ? "out"
                               : undefined
                         }
-                        onMouseEnter={() => {
-                          interactedItemsRef.current.add(i)
-                          setHoverIndex(i)
-                        }}
-                        onMouseLeave={() => setHoverIndex(null)}
                         onFocus={() => setHoverIndex(i)}
                         onBlur={() => setHoverIndex(null)}
                         onClick={(e) => e.preventDefault()}
@@ -315,7 +351,6 @@ export default function ProjectsList({ projects }: Props) {
                           className={cn(
                             "pl-underline",
                             "absolute left-0 w-full h-0.5 bg-current bottom-[0.1em]",
-                            "transition-transform duration-300 ease-out group-hover:translate-x-1",
                           )}
                         />
                       </a>
@@ -332,7 +367,6 @@ export default function ProjectsList({ projects }: Props) {
             className={cn(
               "pl-fade-top",
               "md:hidden absolute left-0 right-0 top-0 h-[30%] pointer-events-none z-[2]",
-              "transition-transform duration-300 ease-out group-hover:translate-x-1",
             )}
           />
           <div
@@ -340,7 +374,6 @@ export default function ProjectsList({ projects }: Props) {
             className={cn(
               "pl-fade-bottom",
               "md:hidden absolute left-0 right-0 bottom-0 h-[30%] pointer-events-none z-[2]",
-              "transition-transform duration-300 ease-out group-hover:translate-x-1",
             )}
           />
         </div>

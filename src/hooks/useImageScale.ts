@@ -1,8 +1,10 @@
 import { useCallback, useRef, type MutableRefObject } from "react"
 
-const MAX_VEL = 35
-const MIN_SCALE = 0.92
-const LERP = 0.2
+const MAX_VEL = 40
+const MIN_SCALE = 0.94 // subtler compression
+const LERP = 0.08 // slower lerp = no snap feeling
+const VEL_DEAD_ZONE = 2 // fine-tune dead zone (coarse filter is in handleSetTranslate)
+const VEL_DECAY = 0.82 // slower decay = smoother return to scale 1
 
 interface Options {
   velocityRef: MutableRefObject<number>
@@ -21,7 +23,9 @@ export function useImageScale({ velocityRef }: Options): UseImageScaleReturn {
   const scaleRafRef = useRef<number>(0)
 
   const applyImageScale = useCallback((scale: number) => {
-    const t = `scale(${scale})`
+    // scale3d + translateZ forces a GPU compositing layer, preventing
+    // subpixel rendering artifacts at the edges of the scaled element
+    const t = `scale3d(${scale}, ${scale}, 1) translateZ(0)`
     if (mobileImgRef.current) mobileImgRef.current.style.transform = t
     if (desktopImgRef.current) desktopImgRef.current.style.transform = t
     imageScaleRef.current = scale
@@ -30,15 +34,20 @@ export function useImageScale({ velocityRef }: Options): UseImageScaleReturn {
   const startScaleLoop = useCallback(() => {
     cancelAnimationFrame(scaleRafRef.current)
     const tick = () => {
-      // Decadimento naturale: se handleSetTranslate non aggiorna più la velocity
-      // (scroll fermo), decade verso 0 così il loop può terminare
-      velocityRef.current *= 0.7
+      velocityRef.current *= VEL_DECAY
       const vel = Math.abs(velocityRef.current)
-      const target = Math.max(MIN_SCALE, 1 - (vel / MAX_VEL) * (1 - MIN_SCALE))
+
+      // Dead zone: velocities below threshold map to scale 1 (no visible effect)
+      const effectiveVel = Math.max(0, vel - VEL_DEAD_ZONE)
+      const target =
+        effectiveVel === 0
+          ? 1
+          : Math.max(MIN_SCALE, 1 - (effectiveVel / MAX_VEL) * (1 - MIN_SCALE))
+
       const next =
         imageScaleRef.current + (target - imageScaleRef.current) * LERP
       applyImageScale(next)
-      if (Math.abs(next - 1) > 0.001 || vel > 0.5) {
+      if (Math.abs(next - 1) > 0.0005 || vel > 0.5) {
         scaleRafRef.current = requestAnimationFrame(tick)
       } else {
         applyImageScale(1)
