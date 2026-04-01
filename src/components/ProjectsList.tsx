@@ -133,8 +133,8 @@ export default function ProjectsList({ projects }: Props) {
           font-size: clamp(40px, 5.5vw, 70px);
           opacity: 0.5;
           transition:
-            color 0.45s cubic-bezier(0.6, 0, 0.2, 1),
-            opacity 0.45s cubic-bezier(0.6, 0, 0.2, 1);
+            color 1s cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 1s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .pl-item-link[data-active="true"] {
           color: #000;
@@ -165,10 +165,19 @@ export default function ProjectsList({ projects }: Props) {
           to   { clip-path: inset(0 0% 0 100%); }
         }
         .pl-item-link[data-line="in"] .pl-underline {
-          animation: pl-line-in 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+          animation: pl-line-in 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
         .pl-item-link[data-line="out"] .pl-underline {
-          animation: pl-line-out 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+          animation: pl-line-out 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes pl-year-in {
+          from { transform: translateY(110%); opacity: 0; }
+          to   { transform: translateY(0%); opacity: 1; }
+        }
+        .pl-year-fixed {
+          opacity: 0;
+          animation: pl-year-in 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.35s forwards;
         }
 
         .pl-fade-top {
@@ -182,29 +191,19 @@ export default function ProjectsList({ projects }: Props) {
           .pl-swiper-blend { mix-blend-mode: difference; }
         }
 
-        .pl-year-inner {
-          display: block;
-          transform: translateY(110%);
-        }
-        @keyframes pl-year-in {
-          from { transform: translateY(110%); }
-          to   { transform: translateY(0%); }
-        }
-        @keyframes pl-year-out {
-          from { transform: translateY(0%); }
-          to   { transform: translateY(-110%); }
-        }
-        .pl-year[data-line="in"] .pl-year-inner {
-          animation: pl-year-in 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
-        }
-        .pl-year[data-line="out"] .pl-year-inner {
-          animation: pl-year-out 0.35s cubic-bezier(0.6, 0, 0.2, 1) forwards;
-        }
       `}</style>
 
       <div className="fixed bottom-6 left-6 z-30">
         <SelectionCTA />
       </div>
+
+      {projects[activeIndex]?.year != null && (
+        <div className="fixed top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-30 pointer-events-none overflow-hidden">
+          <span key={activeIndex} className="pl-year-fixed type-caption block">
+            {projects[activeIndex]?.year}
+          </span>
+        </div>
+      )}
 
       <div className="relative h-screen md:grid md:grid-cols-2">
         {/* Mobile image */}
@@ -286,10 +285,8 @@ export default function ProjectsList({ projects }: Props) {
               mousewheel={{ sensitivity: 1, thresholdDelta: 10 }}
               modules={[FreeMode, Mousewheel]}
               onRealIndexChange={(swiper) => {
-                if (isMobileRef.current) {
-                  interactedItemsRef.current.add(prevActiveRef.current)
-                  prevActiveRef.current = swiper.realIndex
-                }
+                interactedItemsRef.current.add(prevActiveRef.current)
+                prevActiveRef.current = swiper.realIndex
                 setActiveIndex(swiper.realIndex)
               }}
               onSetTranslate={handleSetTranslate}
@@ -316,7 +313,8 @@ export default function ProjectsList({ projects }: Props) {
                         hoverIndex === i || activeIndex === i ? "true" : "false"
                       }
                       data-line={
-                        hoverIndex === i || (isMobile && activeIndex === i)
+                        (!isScrolling && hoverIndex === i) ||
+                        (isMobile && activeIndex === i)
                           ? "in"
                           : interactedItemsRef.current.has(i)
                             ? "out"
@@ -335,22 +333,6 @@ export default function ProjectsList({ projects }: Props) {
                         )}
                       />
                     </a>
-                    {p.year != null && (
-                      <span
-                        className="pl-year ml-auto shrink-0 overflow-hidden"
-                        data-line={
-                          hoverIndex === i || activeIndex === i
-                            ? "in"
-                            : interactedItemsRef.current.has(i)
-                              ? "out"
-                              : undefined
-                        }
-                      >
-                        <span className="pl-year-inner type-caption block">
-                          {p.year}
-                        </span>
-                      </span>
-                    )}
                   </div>
                 </SwiperSlide>
               ))}
