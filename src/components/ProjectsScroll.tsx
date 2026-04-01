@@ -778,27 +778,36 @@ function ListCTA() {
         >
           <div
             className={cn(
-              "absolute top-1/2 left-0 -translate-y-1/2 translate-x-0",
-              "group-hover:-translate-x-1 group-hover:opacity-0",
-              "transition-all duration-200 ease-in-out",
-            )}
-          >
-            <Icons />
-          </div>
-
-          <div
-            className={cn(
               "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-              "group-hover:-translate-x-[calc(50%+14px)]",
-              "transition-transform duration-400 ease-out",
+              "inline-flex items-center gap-[10px]",
             )}
           >
-            <span className="type-button-m uppercase text-white">Archive</span>
+            <div
+              className={cn(
+                "translate-x-0",
+                "group-hover:-translate-x-1 group-hover:opacity-0",
+                "transition-all duration-200 ease-in-out",
+              )}
+            >
+              <Icons />
+            </div>
+
+            <div
+              className={cn(
+                "translate-x-0",
+                "group-hover:-translate-x-[19px]",
+                "transition-transform duration-400 ease-out",
+              )}
+            >
+              <span className="type-button-m uppercase text-white">
+                Archive
+              </span>
+            </div>
           </div>
 
           <div
             className={cn(
-              "absolute top-1/2 right-0 -translate-y-1/2 translate-x-1",
+              "absolute top-1/2 right-1 -translate-y-1/2 translate-x-1",
               "opacity-0",
               "group-hover:translate-x-0 group-hover:opacity-100",
               "transition-all duration-200 ease-in-out",
