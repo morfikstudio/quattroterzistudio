@@ -31,7 +31,7 @@ export default function Button({
   const paddingClass = {
     default: "",
     l: "px-4 py-2",
-    xl: "md:px-7 md:py-5 px-6 py-4",
+    xl: "md:p-9 p-7",
   }[size]
 
   const sharedClassName = cn(
@@ -43,13 +43,26 @@ export default function Button({
     <>
       <span
         className={cn(
-          "corner-border overflow-hidden inline-flex items-center justify-center",
+          "corner-border relative inline-flex items-center justify-center overflow-hidden",
+          "group-hover:animate-[icon-scale_1s_ease-out]",
+          paddingClass,
         )}
       >
+        <span className="invisible inline-flex">{icon}</span>
+        {/* Arrow 1 */}
         <span
           className={cn(
-            "inline-flex group-hover:animate-[icon-slide_0.65s_ease-in-out]",
-            paddingClass,
+            "absolute inset-0 inline-flex items-center justify-center",
+            "transition-transform duration-[900ms] ease-in-out group-hover:translate-x-full",
+          )}
+        >
+          {icon}
+        </span>
+        {/* Arrow 2 */}
+        <span
+          className={cn(
+            "absolute inset-0 inline-flex items-center justify-center",
+            "transition-transform duration-[900ms] ease-in-out -translate-x-full group-hover:translate-x-0",
           )}
         >
           {icon}
@@ -57,7 +70,7 @@ export default function Button({
       </span>
       <span
         className={cn(
-          "transition-transform duration-300 ease-out group-hover:translate-x-1",
+          "transition-transform duration-[900ms] ease-out group-hover:translate-x-1",
           sizeClass,
         )}
       >
@@ -69,21 +82,10 @@ export default function Button({
   return (
     <>
       <style>{`
-        @keyframes icon-slide {
-          0% {
-            transform: translateX(0);
-            animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
-          }
-          30% {
-            transform: translateX(120%);
-          }
-          31% {
-            transform: translateX(-120%);
-            animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
-          }
-          100% {
-            transform: translateX(0);
-          }
+        @keyframes icon-scale {
+          0%   { transform: scale(1); }
+          15%  { transform: scale(0.8); }
+          100% { transform: scale(1); }
         }
       `}</style>
       {href ? (

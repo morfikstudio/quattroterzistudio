@@ -1,8 +1,10 @@
 import { useCallback, useRef, type MutableRefObject } from "react"
 
-const MAX_VEL = 35
-const MIN_SCALE = 0.92
-const LERP = 0.2
+const MAX_VEL = 60
+const MIN_SCALE = 0.88
+const LERP = 0.025
+const VEL_DEAD_ZONE = 14
+const VEL_DECAY = 0.88
 
 interface Options {
   velocityRef: MutableRefObject<number>
@@ -12,6 +14,7 @@ export interface UseImageScaleReturn {
   mobileImgRef: MutableRefObject<HTMLDivElement | null>
   desktopImgRef: MutableRefObject<HTMLDivElement | null>
   startScaleLoop: () => void
+  resetScale: () => void
 }
 
 export function useImageScale({ velocityRef }: Options): UseImageScaleReturn {
@@ -19,33 +22,65 @@ export function useImageScale({ velocityRef }: Options): UseImageScaleReturn {
   const desktopImgRef = useRef<HTMLDivElement | null>(null)
   const imageScaleRef = useRef(1)
   const scaleRafRef = useRef<number>(0)
+  const loopRunningRef = useRef(false)
 
   const applyImageScale = useCallback((scale: number) => {
-    const t = `scale(${scale})`
+    // scale3d + translateZ forces a GPU compositing layer, preventing
+    // subpixel rendering artifacts at the edges of the scaled element
+    const t = `scale3d(${scale}, ${scale}, 1) translateZ(0)`
     if (mobileImgRef.current) mobileImgRef.current.style.transform = t
     if (desktopImgRef.current) desktopImgRef.current.style.transform = t
     imageScaleRef.current = scale
   }, [])
 
   const startScaleLoop = useCallback(() => {
-    cancelAnimationFrame(scaleRafRef.current)
+    // If the loop is already running, just let it pick up the updated velocity.
+    // Restarting it would cancel mid-frame and cause a visible jerk.
+    if (loopRunningRef.current) return
+
+    loopRunningRef.current = true
     const tick = () => {
-      // Decadimento naturale: se handleSetTranslate non aggiorna più la velocity
-      // (scroll fermo), decade verso 0 così il loop può terminare
-      velocityRef.current *= 0.7
+      velocityRef.current *= VEL_DECAY
       const vel = Math.abs(velocityRef.current)
-      const target = Math.max(MIN_SCALE, 1 - (vel / MAX_VEL) * (1 - MIN_SCALE))
+
+      // Dead zone: velocities below threshold map to scale 1 (no visible effect)
+      const effectiveVel = Math.max(0, vel - VEL_DEAD_ZONE)
+      const target =
+        effectiveVel === 0
+          ? 1
+          : Math.max(MIN_SCALE, 1 - (effectiveVel / MAX_VEL) * (1 - MIN_SCALE))
+
       const next =
         imageScaleRef.current + (target - imageScaleRef.current) * LERP
       applyImageScale(next)
-      if (Math.abs(next - 1) > 0.001 || vel > 0.5) {
+      if (Math.abs(next - 1) > 0.0005 || vel > 0.5) {
         scaleRafRef.current = requestAnimationFrame(tick)
       } else {
         applyImageScale(1)
+        loopRunningRef.current = false
       }
     }
     scaleRafRef.current = requestAnimationFrame(tick)
   }, [applyImageScale, velocityRef])
 
-  return { mobileImgRef, desktopImgRef, startScaleLoop }
+  // Called on mouseenter: cancels the scroll-driven loop and quickly returns
+  // scale to 1 so the newly shown image always appears at full size.
+  const resetScale = useCallback(() => {
+    cancelAnimationFrame(scaleRafRef.current)
+    velocityRef.current = 0
+    loopRunningRef.current = true
+    const quickReturn = () => {
+      const next = imageScaleRef.current + (1 - imageScaleRef.current) * 0.35
+      applyImageScale(next)
+      if (Math.abs(next - 1) > 0.001) {
+        scaleRafRef.current = requestAnimationFrame(quickReturn)
+      } else {
+        applyImageScale(1)
+        loopRunningRef.current = false
+      }
+    }
+    scaleRafRef.current = requestAnimationFrame(quickReturn)
+  }, [applyImageScale, velocityRef])
+
+  return { mobileImgRef, desktopImgRef, startScaleLoop, resetScale }
 }
