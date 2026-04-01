@@ -2,11 +2,13 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { FreeMode, Mousewheel } from "swiper/modules"
 import type { Swiper as SwiperType } from "swiper"
 import "swiper/css"
 
+import gsap from "gsap"
 import Image from "@/components/ui/Image"
 import { useImageScale } from "@/hooks/useImageScale"
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
@@ -14,14 +16,17 @@ import { cn } from "@/utils/classNames"
 
 const SLIDES_PER_VIEW = 7
 
-function SelectionCTA() {
+function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
   const Icons = () => (
     <div className="flex flex-col items-center gap-[3px]">
       <span className="flex w-[4px] h-[4px] bg-black max-md:bg-white" />
     </div>
   )
   return (
-    <Link href="/projects">
+    <button
+      onClick={onNavigate}
+      className="appearance-none bg-transparent p-0 border-0"
+    >
       <div className="group relative h-[40px] w-[120px] border border-black max-md:bg-black flex items-center justify-center px-4">
         <div className="relative h-full w-full flex items-center justify-center overflow-hidden">
           <div className="absolute top-1/2 left-0 -translate-y-1/2 group-hover:-translate-x-1 group-hover:opacity-0 transition-all duration-200 ease-in-out">
@@ -37,13 +42,71 @@ function SelectionCTA() {
           </div>
         </div>
       </div>
-    </Link>
+    </button>
   )
 }
 
 type Props = { projects: PROJECTS_QUERY_RESULT }
 
 export default function ProjectsList({ projects }: Props) {
+  const router = useRouter()
+  const [clipState, setClipState] = useState<"enter" | "exiting">("enter")
+  const isExitingRef = useRef(false)
+  const listContainerRef = useRef<HTMLDivElement | null>(null)
+  const wordSpansRef = useRef<HTMLElement[]>([])
+  const yearSpanRef = useRef<HTMLSpanElement | null>(null)
+  // Mobile enter: unlock underline only when word is almost done (0.4s delay + ~0.9s into anim)
+  const [pageEnterDone, setPageEnterDone] = useState(false)
+  // Mobile exit: force active underline to "out" before words animate away
+  const [underlineExiting, setUnderlineExiting] = useState(false)
+
+  const allAnimTargets = useCallback(
+    () => [
+      ...wordSpansRef.current,
+      ...(yearSpanRef.current ? [yearSpanRef.current] : []),
+    ],
+    [],
+  )
+
+  const navigate = useCallback(
+    (url: string) => {
+      if (isExitingRef.current) return
+      isExitingRef.current = true
+      setClipState("exiting")
+      const startWords = () =>
+        gsap.to(allAnimTargets(), {
+          y: "-110%",
+          duration: 0.7,
+          ease: "power3.in",
+          overwrite: true,
+          onComplete: () => router.push(url),
+        })
+      if (isMobileRef.current) {
+        setUnderlineExiting(true)
+        setTimeout(startWords, 400)
+      } else {
+        startWords()
+      }
+    },
+    [router, allAnimTargets],
+  )
+
+  // Unlock mobile underline when word is almost fully visible
+  useEffect(() => {
+    const t = setTimeout(() => setPageEnterDone(true), 1300)
+    return () => clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
+    const handlePopstate = () => {
+      if (isExitingRef.current) return
+      isExitingRef.current = true
+      setClipState("exiting")
+    }
+    window.addEventListener("popstate", handlePopstate)
+    return () => window.removeEventListener("popstate", handlePopstate)
+  }, [])
+
   const [activeIndex, setActiveIndex] = useState(0)
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
   const [isScrolling, setIsScrolling] = useState(false)
@@ -125,6 +188,22 @@ export default function ProjectsList({ projects }: Props) {
   return (
     <>
       <style>{`
+        @keyframes pl-clip-enter {
+          from { clip-path: inset(100% 0 0 0); }
+          to   { clip-path: inset(0% 0 0 0); }
+        }
+        @keyframes pl-clip-exit {
+          from { clip-path: inset(0% 0 0 0); }
+          to   { clip-path: inset(100% 0 0 0); }
+        }
+        .pl-img-clip[data-clip="enter"] {
+          clip-path: inset(100% 0 0 0);
+          animation: pl-clip-enter 1.35s cubic-bezier(0.22, 1, 0.36, 1) .75s forwards;
+        }
+        .pl-img-clip[data-clip="exiting"] {
+          animation: pl-clip-exit 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
         .pl-img-slide {
           display: none;
           position: absolute;
@@ -176,13 +255,9 @@ export default function ProjectsList({ projects }: Props) {
           animation: pl-line-out 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
 
-        @keyframes pl-year-in {
-          from { transform: translateY(110%); opacity: 0; }
-          to   { transform: translateY(0%); opacity: 1; }
-        }
-        .pl-year-fixed {
-          opacity: 0;
-          animation: pl-year-in 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.35s forwards;
+        .pl-year-span {
+          transform: translateY(110%);
+          display: block;
         }
 
         .pl-fade-top {
@@ -196,24 +271,30 @@ export default function ProjectsList({ projects }: Props) {
           .pl-swiper-blend { mix-blend-mode: difference; }
         }
 
+        .pl-word-inner {
+          transform: translateY(110%);
+          display: inline-block;
+        }
+
       `}</style>
 
       <div className="fixed bottom-6 left-6 z-30">
-        <SelectionCTA />
+        <SelectionCTA onNavigate={() => navigate("/projects")} />
       </div>
 
-      {projects[activeIndex]?.year != null && (
-        <div className="fixed top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-30 pointer-events-none overflow-hidden">
-          <span key={activeIndex} className="pl-year-fixed type-caption block">
-            {projects[activeIndex]?.year}
-          </span>
-        </div>
-      )}
+      <div className="fixed top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-30 pointer-events-none overflow-hidden">
+        <span ref={yearSpanRef} className="pl-year-span type-caption">
+          {projects[activeIndex]?.year ?? ""}
+        </span>
+      </div>
 
       <div className="relative h-screen md:grid md:grid-cols-2">
         {/* Mobile image */}
         <div className="md:hidden absolute inset-0">
-          <div className="absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw]">
+          <div
+            className="pl-img-clip absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw]"
+            data-clip={clipState}
+          >
             <div
               ref={mobileImgRef}
               className="relative aspect-4/3 overflow-hidden w-full"
@@ -239,7 +320,10 @@ export default function ProjectsList({ projects }: Props) {
 
         {/* Desktop image */}
         <div className="hidden md:block relative h-screen">
-          <div className="absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] lg:w-[35vw]">
+          <div
+            className="pl-img-clip absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] lg:w-[35vw]"
+            data-clip={clipState}
+          >
             <div
               ref={desktopImgRef}
               className="relative aspect-4/3 overflow-hidden w-full"
@@ -270,6 +354,7 @@ export default function ProjectsList({ projects }: Props) {
           aria-label="Lista progetti"
         >
           <div
+            ref={listContainerRef}
             className={cn("pl-swiper-blend pl-list h-full", "group")}
             data-hovering={isHovering ? "true" : "false"}
           >
@@ -296,6 +381,24 @@ export default function ProjectsList({ projects }: Props) {
               }}
               onAfterInit={() => {
                 swiperReadyRef.current = true
+                setTimeout(() => {
+                  if (!listContainerRef.current) return
+                  const spans = Array.from(
+                    listContainerRef.current.querySelectorAll<HTMLElement>(
+                      ".pl-word-inner",
+                    ),
+                  ).filter((s) => !s.closest(".swiper-slide-duplicate"))
+                  if (!spans.length) return
+                  wordSpansRef.current = spans
+                  gsap.fromTo(
+                    [
+                      ...spans,
+                      ...(yearSpanRef.current ? [yearSpanRef.current] : []),
+                    ],
+                    { y: "110%" },
+                    { y: "0%", duration: 1.2, ease: "power3.out", delay: 0.4 },
+                  )
+                }, 0)
               }}
               onSetTranslate={handleSetTranslate}
               className="h-full"
@@ -322,9 +425,15 @@ export default function ProjectsList({ projects }: Props) {
                       }
                       data-line={
                         (!isScrolling && hoverIndex === i) ||
-                        (isMobile && activeIndex === i)
+                        (isMobile &&
+                          pageEnterDone &&
+                          !underlineExiting &&
+                          activeIndex === i)
                           ? "in"
-                          : interactedItemsRef.current.has(i)
+                          : interactedItemsRef.current.has(i) ||
+                              (isMobile &&
+                                underlineExiting &&
+                                activeIndex === i)
                             ? "out"
                             : undefined
                       }
@@ -333,7 +442,17 @@ export default function ProjectsList({ projects }: Props) {
                       onClick={(e) => e.preventDefault()}
                       aria-label={p.title ?? undefined}
                     >
-                      {p.title}
+                      {(p.title ?? "").split(" ").map((word, j, arr) => (
+                        <span
+                          key={j}
+                          className="overflow-hidden inline-block align-bottom"
+                        >
+                          <span className="pl-word-inner">
+                            {word}
+                            {j < arr.length - 1 ? "\u00A0" : ""}
+                          </span>
+                        </span>
+                      ))}
                       <span
                         className={cn(
                           "pl-underline",
