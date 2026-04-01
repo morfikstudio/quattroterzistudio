@@ -7,7 +7,6 @@ import { FreeMode, Mousewheel } from "swiper/modules"
 import type { Swiper as SwiperType } from "swiper"
 import "swiper/css"
 
-import NextImage from "next/image"
 import Image from "@/components/ui/Image"
 import { useImageScale } from "@/hooks/useImageScale"
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
@@ -15,37 +14,21 @@ import { cn } from "@/utils/classNames"
 
 const SLIDES_PER_VIEW = 7
 
-// Placeholder — sostituire con dati reali Sanity quando disponibili
-type PlaceholderProject = { id: string; title: string; code: string }
-const PLACEHOLDER_PROJECTS: PlaceholderProject[] = [
-  { id: "10", title: "Casa sul Lago", code: "M288NV4" },
-  { id: "20", title: "Residenza Borghese", code: "K471RP9" },
-  { id: "30", title: "Loft Industriale", code: "B302XL7" },
-  { id: "40", title: "Villa Moderna", code: "G815TQ2" },
-  { id: "50", title: "Appartamento Minimal", code: "H093JY6" },
-  { id: "60", title: "Studio Creativo", code: "N567WC8" },
-  { id: "70", title: "Penthouse Milano", code: "R124KD5" },
-  { id: "80", title: "Cascina Ristrutturata", code: "F690SE3" },
-  { id: "90", title: "Atelier Fotografico", code: "D743MZ1" },
-  { id: "100", title: "Showroom Design", code: "A856HB0" },
-  { id: "110", title: "Penthouse Roma", code: "T219UF8" },
-]
-
 function SelectionCTA() {
   const Icons = () => (
     <div className="flex flex-col items-center gap-[3px]">
-      <span className="flex w-[4px] h-[4px] bg-black" />
+      <span className="flex w-[4px] h-[4px] bg-black max-md:bg-white" />
     </div>
   )
   return (
     <Link href="/projects">
-      <div className="group relative h-[40px] w-[120px] border border-black flex items-center justify-center px-4">
+      <div className="group relative h-[40px] w-[120px] border border-black max-md:bg-black flex items-center justify-center px-4">
         <div className="relative h-full w-full flex items-center justify-center overflow-hidden">
           <div className="absolute top-1/2 left-0 -translate-y-1/2 group-hover:-translate-x-1 group-hover:opacity-0 transition-all duration-200 ease-in-out">
             <Icons />
           </div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 group-hover:-translate-x-[calc(50%+14px)] transition-transform duration-400 ease-out">
-            <span className="type-button-m uppercase text-black">
+            <span className="type-button-m uppercase text-black max-md:text-white">
               selection
             </span>
           </div>
@@ -58,10 +41,9 @@ function SelectionCTA() {
   )
 }
 
-type Props = { projects?: PROJECTS_QUERY_RESULT }
+type Props = { projects: PROJECTS_QUERY_RESULT }
 
 export default function ProjectsList({ projects }: Props) {
-  const usePlaceholder = !projects || projects.length === 0
   const [activeIndex, setActiveIndex] = useState(0)
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
   const [isScrolling, setIsScrolling] = useState(false)
@@ -81,12 +63,10 @@ export default function ProjectsList({ projects }: Props) {
     velocityRef,
   })
 
-  // Cleanup requestAnimationFrame on unmount
   useEffect(() => {
     return () => cancelAnimationFrame(scrollCheckRef.current)
   }, [])
 
-  // Detect mobile to drive the underline on activeIndex only on mobile
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)")
     const update = (matches: boolean) => {
@@ -98,8 +78,6 @@ export default function ProjectsList({ projects }: Props) {
     return () => mq.removeEventListener("change", (e) => update(e.matches))
   }, [])
 
-  // Track velocity from successive translate frames, start the scale loop,
-  // and manage the isScrolling flag.
   const handleSetTranslate = useCallback(
     (_swiper: SwiperType, translate: number) => {
       if (prevTranslateRef.current !== null) {
@@ -109,8 +87,6 @@ export default function ProjectsList({ projects }: Props) {
           velocityRef.current = delta
           startScaleLoop()
 
-          // Clear hover on every scroll frame to prevent mouseenter events fired
-          // by moving slides from leaving hoverIndex stuck during scroll.
           if (hoverIndexRef.current !== null) {
             hoverIndexRef.current = null
             setHoverIndex(null)
@@ -138,21 +114,12 @@ export default function ProjectsList({ projects }: Props) {
     [startScaleLoop],
   )
 
-  // Hover always wins: if hovering an item show its image regardless of scroll.
-  // Only when there's no hover does the scroll-active item drive the image.
   const displayIndex = hoverIndex !== null ? hoverIndex : activeIndex
-
-  // Whether the hover is driving the display (vs scroll or idle active)
   const isHovering = !isScrolling && hoverIndex !== null
 
   return (
     <>
       <style>{`
-        .pl-img-wrapper {
-          aspect-ratio: 4 / 3;
-          transform-origin: center;
-        }
-
         .pl-img-slide {
           display: none;
           position: absolute;
@@ -162,7 +129,6 @@ export default function ProjectsList({ projects }: Props) {
           display: block;
         }
 
-        /* All items start dimmed; active/hovered item is full opacity */
         .pl-item-link {
           font-size: clamp(40px, 5.5vw, 70px);
           opacity: 0.5;
@@ -175,7 +141,6 @@ export default function ProjectsList({ projects }: Props) {
           opacity: 1;
         }
 
-        /* While any item is hovered, further dim all non-active items */
         .pl-list[data-hovering="true"] .pl-item-link:not([data-active="true"]) {
           opacity: 0.2;
         }
@@ -188,7 +153,6 @@ export default function ProjectsList({ projects }: Props) {
           }
         }
 
-        /* Underline clip-path animation */
         .pl-underline {
           clip-path: inset(0 100% 0 0);
         }
@@ -217,6 +181,25 @@ export default function ProjectsList({ projects }: Props) {
         @media (max-width: 767px) {
           .pl-swiper-blend { mix-blend-mode: difference; }
         }
+
+        .pl-year-inner {
+          display: block;
+          transform: translateY(110%);
+        }
+        @keyframes pl-year-in {
+          from { transform: translateY(110%); }
+          to   { transform: translateY(0%); }
+        }
+        @keyframes pl-year-out {
+          from { transform: translateY(0%); }
+          to   { transform: translateY(-110%); }
+        }
+        .pl-year[data-line="in"] .pl-year-inner {
+          animation: pl-year-in 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+        }
+        .pl-year[data-line="out"] .pl-year-inner {
+          animation: pl-year-out 0.35s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+        }
       `}</style>
 
       <div className="fixed bottom-6 left-6 z-30">
@@ -231,37 +214,21 @@ export default function ProjectsList({ projects }: Props) {
               ref={mobileImgRef}
               className="relative aspect-4/3 overflow-hidden w-full"
             >
-              {usePlaceholder
-                ? PLACEHOLDER_PROJECTS.map((p, i) => (
-                    <div
-                      key={p.id}
-                      className="pl-img-slide"
-                      data-active={displayIndex === i ? "true" : "false"}
-                    >
-                      <NextImage
-                        src={`https://picsum.photos/seed/${p.id}/800/600`}
-                        fill
-                        alt={p.title}
-                        className="object-cover"
-                        priority={i === 0}
-                      />
-                    </div>
-                  ))
-                : projects!.map((p, i) => (
-                    <div
-                      key={p._id}
-                      className="pl-img-slide"
-                      data-active={displayIndex === i ? "true" : "false"}
-                    >
-                      <Image
-                        image={p.coverDetail}
-                        resizeId="cover-detail"
-                        fill
-                        fit="cover"
-                        priority={i < 2}
-                      />
-                    </div>
-                  ))}
+              {projects.map((p, i) => (
+                <div
+                  key={p._id}
+                  className="pl-img-slide"
+                  data-active={displayIndex === i ? "true" : "false"}
+                >
+                  <Image
+                    image={p.coverDetail}
+                    resizeId="cover-detail"
+                    fill
+                    fit="cover"
+                    priority={i < 2}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -273,37 +240,21 @@ export default function ProjectsList({ projects }: Props) {
               ref={desktopImgRef}
               className="relative aspect-4/3 overflow-hidden w-full"
             >
-              {usePlaceholder
-                ? PLACEHOLDER_PROJECTS.map((p, i) => (
-                    <div
-                      key={p.id}
-                      className="pl-img-slide"
-                      data-active={displayIndex === i ? "true" : "false"}
-                    >
-                      <NextImage
-                        src={`https://picsum.photos/seed/${p.id}/800/600`}
-                        fill
-                        alt={p.title}
-                        className="object-cover"
-                        priority={i === 0}
-                      />
-                    </div>
-                  ))
-                : projects!.map((p, i) => (
-                    <div
-                      key={p._id}
-                      className="pl-img-slide"
-                      data-active={displayIndex === i ? "true" : "false"}
-                    >
-                      <Image
-                        image={p.coverDetail}
-                        resizeId="cover-detail"
-                        fill
-                        fit="cover"
-                        priority={i < 2}
-                      />
-                    </div>
-                  ))}
+              {projects.map((p, i) => (
+                <div
+                  key={p._id}
+                  className="pl-img-slide"
+                  data-active={displayIndex === i ? "true" : "false"}
+                >
+                  <Image
+                    image={p.coverDetail}
+                    resizeId="cover-detail"
+                    fill
+                    fit="cover"
+                    priority={i < 2}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -344,54 +295,65 @@ export default function ProjectsList({ projects }: Props) {
               onSetTranslate={handleSetTranslate}
               className="h-full"
             >
-              {(usePlaceholder ? PLACEHOLDER_PROJECTS : projects!).map(
-                (p, i) => (
-                  <SwiperSlide key={"id" in p ? p.id : p._id} role="listitem">
-                    {/* Hover area covers the full slide height for forgiving interaction */}
-                    <div
-                      className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10"
-                      onMouseEnter={() => {
-                        interactedItemsRef.current.add(i)
-                        setHoverIndex(i)
-                      }}
-                      onMouseLeave={() => setHoverIndex(null)}
+              {projects.map((p, i) => (
+                <SwiperSlide key={p._id} role="listitem">
+                  <div
+                    className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10"
+                    onMouseEnter={() => {
+                      interactedItemsRef.current.add(i)
+                      setHoverIndex(i)
+                    }}
+                    onMouseLeave={() => setHoverIndex(null)}
+                  >
+                    <a
+                      href="#"
+                      className={cn(
+                        "pl-item-link",
+                        "type-h1 text-secondary no-underline focus-visible:outline-none",
+                        "relative inline-block leading-tight cursor-pointer",
+                      )}
+                      data-active={
+                        hoverIndex === i || activeIndex === i ? "true" : "false"
+                      }
+                      data-line={
+                        hoverIndex === i || (isMobile && activeIndex === i)
+                          ? "in"
+                          : interactedItemsRef.current.has(i)
+                            ? "out"
+                            : undefined
+                      }
+                      onFocus={() => setHoverIndex(i)}
+                      onBlur={() => setHoverIndex(null)}
+                      onClick={(e) => e.preventDefault()}
+                      aria-label={p.title ?? undefined}
                     >
-                      <a
-                        href="#"
+                      {p.title}
+                      <span
                         className={cn(
-                          "pl-item-link",
-                          "type-h1 text-secondary no-underline focus-visible:outline-none",
-                          "relative inline-block leading-tight cursor-pointer",
+                          "pl-underline",
+                          "absolute left-0 w-full h-0.5 bg-current bottom-[0.1em]",
                         )}
-                        data-active={
-                          hoverIndex === i || activeIndex === i
-                            ? "true"
-                            : "false"
-                        }
+                      />
+                    </a>
+                    {p.year != null && (
+                      <span
+                        className="pl-year ml-auto shrink-0 overflow-hidden"
                         data-line={
-                          hoverIndex === i || (isMobile && activeIndex === i)
+                          hoverIndex === i || activeIndex === i
                             ? "in"
                             : interactedItemsRef.current.has(i)
                               ? "out"
                               : undefined
                         }
-                        onFocus={() => setHoverIndex(i)}
-                        onBlur={() => setHoverIndex(null)}
-                        onClick={(e) => e.preventDefault()}
-                        aria-label={`${p.title}, ${"code" in p ? p.code : String(i + 1).padStart(3, "0")}`}
                       >
-                        {"code" in p ? p.code : String(i + 1).padStart(3, "0")}
-                        <span
-                          className={cn(
-                            "pl-underline",
-                            "absolute left-0 w-full h-0.5 bg-current bottom-[0.1em]",
-                          )}
-                        />
-                      </a>
-                    </div>
-                  </SwiperSlide>
-                ),
-              )}
+                        <span className="pl-year-inner type-caption block">
+                          {p.year}
+                        </span>
+                      </span>
+                    )}
+                  </div>
+                </SwiperSlide>
+              ))}
             </Swiper>
           </div>
 
