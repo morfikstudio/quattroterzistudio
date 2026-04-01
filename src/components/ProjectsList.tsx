@@ -84,7 +84,7 @@ export default function ProjectsList({ projects }: Props) {
   const listContainerRef = useRef<HTMLDivElement | null>(null)
   const wordSpansRef = useRef<HTMLElement[]>([])
   const yearSpanRef = useRef<HTMLSpanElement | null>(null)
-  // Mobile enter: unlock underline only when word is almost done (0.4s delay + ~0.9s into anim)
+  // Mobile enter: unlock underline only when word is almost done
   const [pageEnterDone, setPageEnterDone] = useState(false)
   // Mobile exit: force active underline to "out" before words animate away
   const [underlineExiting, setUnderlineExiting] = useState(false)
