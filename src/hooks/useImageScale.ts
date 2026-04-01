@@ -1,10 +1,10 @@
 import { useCallback, useRef, type MutableRefObject } from "react"
 
 const MAX_VEL = 40
-const MIN_SCALE = 0.94 // subtler compression
-const LERP = 0.08 // slower lerp = no snap feeling
-const VEL_DEAD_ZONE = 2 // fine-tune dead zone (coarse filter is in handleSetTranslate)
-const VEL_DECAY = 0.82 // slower decay = smoother return to scale 1
+const MIN_SCALE = 0.82
+const LERP = 0.04
+const VEL_DEAD_ZONE = 8
+const VEL_DECAY = 0.82
 
 interface Options {
   velocityRef: MutableRefObject<number>
@@ -14,6 +14,7 @@ export interface UseImageScaleReturn {
   mobileImgRef: MutableRefObject<HTMLDivElement | null>
   desktopImgRef: MutableRefObject<HTMLDivElement | null>
   startScaleLoop: () => void
+  resetScale: () => void
 }
 
 export function useImageScale({ velocityRef }: Options): UseImageScaleReturn {
@@ -21,6 +22,7 @@ export function useImageScale({ velocityRef }: Options): UseImageScaleReturn {
   const desktopImgRef = useRef<HTMLDivElement | null>(null)
   const imageScaleRef = useRef(1)
   const scaleRafRef = useRef<number>(0)
+  const loopRunningRef = useRef(false)
 
   const applyImageScale = useCallback((scale: number) => {
     // scale3d + translateZ forces a GPU compositing layer, preventing
@@ -32,7 +34,11 @@ export function useImageScale({ velocityRef }: Options): UseImageScaleReturn {
   }, [])
 
   const startScaleLoop = useCallback(() => {
-    cancelAnimationFrame(scaleRafRef.current)
+    // If the loop is already running, just let it pick up the updated velocity.
+    // Restarting it would cancel mid-frame and cause a visible jerk.
+    if (loopRunningRef.current) return
+
+    loopRunningRef.current = true
     const tick = () => {
       velocityRef.current *= VEL_DECAY
       const vel = Math.abs(velocityRef.current)
@@ -51,10 +57,30 @@ export function useImageScale({ velocityRef }: Options): UseImageScaleReturn {
         scaleRafRef.current = requestAnimationFrame(tick)
       } else {
         applyImageScale(1)
+        loopRunningRef.current = false
       }
     }
     scaleRafRef.current = requestAnimationFrame(tick)
   }, [applyImageScale, velocityRef])
 
-  return { mobileImgRef, desktopImgRef, startScaleLoop }
+  // Called on mouseenter: cancels the scroll-driven loop and quickly returns
+  // scale to 1 so the newly shown image always appears at full size.
+  const resetScale = useCallback(() => {
+    cancelAnimationFrame(scaleRafRef.current)
+    velocityRef.current = 0
+    loopRunningRef.current = true
+    const quickReturn = () => {
+      const next = imageScaleRef.current + (1 - imageScaleRef.current) * 0.35
+      applyImageScale(next)
+      if (Math.abs(next - 1) > 0.001) {
+        scaleRafRef.current = requestAnimationFrame(quickReturn)
+      } else {
+        applyImageScale(1)
+        loopRunningRef.current = false
+      }
+    }
+    scaleRafRef.current = requestAnimationFrame(quickReturn)
+  }, [applyImageScale, velocityRef])
+
+  return { mobileImgRef, desktopImgRef, startScaleLoop, resetScale }
 }

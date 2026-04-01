@@ -47,6 +47,7 @@ export default function ProjectsList({ projects }: Props) {
   const prevTranslateRef = useRef<number | null>(null)
   const isScrollingRef = useRef(false)
   const scrollCheckRef = useRef<number>(0)
+  const hoverIndexRef = useRef<number | null>(null)
 
   const { mobileImgRef, desktopImgRef, startScaleLoop } = useImageScale({
     velocityRef,
@@ -76,12 +77,16 @@ export default function ProjectsList({ projects }: Props) {
       if (prevTranslateRef.current !== null) {
         const delta = translate - prevTranslateRef.current
 
-        // Only feed velocity for intentional user scroll (delta > 3px/frame).
-        // Snap animation produces small deltas (1-3px/frame) that would reset
-        // the naturally-decaying velocity and cause a scale jerk at snap time.
-        if (Math.abs(delta) > 3) {
+        if (delta !== 0) {
           velocityRef.current = delta
           startScaleLoop()
+
+          // Clear hover on every scroll frame to prevent mouseenter events fired
+          // by moving slides from leaving hoverIndex stuck during scroll.
+          if (hoverIndexRef.current !== null) {
+            hoverIndexRef.current = null
+            setHoverIndex(null)
+          }
 
           if (!isScrollingRef.current) {
             isScrollingRef.current = true
@@ -120,15 +125,13 @@ export default function ProjectsList({ projects }: Props) {
           transform-origin: center;
         }
 
-        /* Image slides: very short opacity transition removes the instant-switch jerk */
         .pl-img-slide {
+          display: none;
           position: absolute;
           inset: 0;
-          opacity: 0;
-          transition: opacity 0.15s ease-out;
         }
         .pl-img-slide[data-active="true"] {
-          opacity: 1;
+          display: block;
         }
 
         /* All items start dimmed; active/hovered item is full opacity */
@@ -296,7 +299,6 @@ export default function ProjectsList({ projects }: Props) {
                 momentumVelocityRatio: 0.3,
                 momentumBounce: false,
                 minimumVelocity: 0.15,
-                sticky: true,
               }}
               mousewheel={{ sensitivity: 1, thresholdDelta: 10 }}
               modules={[FreeMode, Mousewheel]}
