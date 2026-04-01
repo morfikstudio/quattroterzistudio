@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useCallback, useEffect, useRef, useState } from "react"
+import Link from "next/link"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { FreeMode, Mousewheel } from "swiper/modules"
 import type { Swiper as SwiperType } from "swiper"
@@ -29,6 +30,33 @@ const PLACEHOLDER_PROJECTS: PlaceholderProject[] = [
   { id: "100", title: "Showroom Design", code: "A856HB0" },
   { id: "110", title: "Penthouse Roma", code: "T219UF8" },
 ]
+
+function SelectionCTA() {
+  const Icons = () => (
+    <div className="flex flex-col items-center gap-[3px]">
+      <span className="flex w-[4px] h-[4px] bg-black" />
+    </div>
+  )
+  return (
+    <Link href="/projects">
+      <div className="group relative h-[40px] w-[120px] border border-black flex items-center justify-center px-4">
+        <div className="relative h-full w-full flex items-center justify-center overflow-hidden">
+          <div className="absolute top-1/2 left-0 -translate-y-1/2 group-hover:-translate-x-1 group-hover:opacity-0 transition-all duration-200 ease-in-out">
+            <Icons />
+          </div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 group-hover:-translate-x-[calc(50%+14px)] transition-transform duration-400 ease-out">
+            <span className="type-button-m uppercase text-black">
+              selection
+            </span>
+          </div>
+          <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200 ease-in-out">
+            <Icons />
+          </div>
+        </div>
+      </div>
+    </Link>
+  )
+}
 
 type Props = { projects?: PROJECTS_QUERY_RESULT }
 
@@ -190,6 +218,10 @@ export default function ProjectsList({ projects }: Props) {
           .pl-swiper-blend { mix-blend-mode: difference; }
         }
       `}</style>
+
+      <div className="fixed bottom-6 left-6 z-30">
+        <SelectionCTA />
+      </div>
 
       <div className="relative h-screen md:grid md:grid-cols-2">
         {/* Mobile image */}

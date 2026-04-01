@@ -1,10 +1,10 @@
 import { useCallback, useRef, type MutableRefObject } from "react"
 
-const MAX_VEL = 40
-const MIN_SCALE = 0.82
-const LERP = 0.04
-const VEL_DEAD_ZONE = 8
-const VEL_DECAY = 0.82
+const MAX_VEL = 60
+const MIN_SCALE = 0.88
+const LERP = 0.025
+const VEL_DEAD_ZONE = 14
+const VEL_DECAY = 0.88
 
 interface Options {
   velocityRef: MutableRefObject<number>
