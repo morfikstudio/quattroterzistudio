@@ -37,7 +37,12 @@ export default function Splash({ title, ctaText }: SplashProps) {
       const titleWords = title.trim().split(/\s+/).filter(Boolean)
 
       return (
-        <div className="inline-block px-[0.25em] font-[Helvetica] uppercase text-[clamp(3rem,15vw,10rem)] leading-none font-medium">
+        <div
+          className={cn(
+            "inline-block px-[0.25em]",
+            "font-[Helvetica] text-[clamp(3rem,15vw,10rem)] font-medium uppercase leading-none",
+          )}
+        >
           {titleWords.map((word, wordIndex) => (
             <span
               key={`${prefix}-word-${wordIndex}`}
@@ -48,7 +53,10 @@ export default function Splash({ title, ctaText }: SplashProps) {
                   key={`${prefix}-${wordIndex}-${letterIndex}`}
                   className="inline-block overflow-hidden align-bottom"
                 >
-                  <span className="inline-block" data-splash-letter>
+                  <span
+                    className="inline-block -mx-[0.01em]"
+                    data-splash-letter
+                  >
                     {letter}
                   </span>
                 </span>
