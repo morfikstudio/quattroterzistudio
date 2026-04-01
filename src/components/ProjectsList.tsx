@@ -58,6 +58,7 @@ export default function ProjectsList({ projects }: Props) {
   const isScrollingRef = useRef(false)
   const scrollCheckRef = useRef<number>(0)
   const hoverIndexRef = useRef<number | null>(null)
+  const swiperReadyRef = useRef(false)
 
   const { mobileImgRef, desktopImgRef, startScaleLoop } = useImageScale({
     velocityRef,
@@ -80,6 +81,10 @@ export default function ProjectsList({ projects }: Props) {
 
   const handleSetTranslate = useCallback(
     (_swiper: SwiperType, translate: number) => {
+      if (!swiperReadyRef.current) {
+        prevTranslateRef.current = translate
+        return
+      }
       if (prevTranslateRef.current !== null) {
         const delta = translate - prevTranslateRef.current
 
@@ -288,6 +293,9 @@ export default function ProjectsList({ projects }: Props) {
                 interactedItemsRef.current.add(prevActiveRef.current)
                 prevActiveRef.current = swiper.realIndex
                 setActiveIndex(swiper.realIndex)
+              }}
+              onAfterInit={() => {
+                swiperReadyRef.current = true
               }}
               onSetTranslate={handleSetTranslate}
               className="h-full"
