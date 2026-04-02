@@ -25,13 +25,13 @@ export default function HoverListDesktop({
   const animateIn = (panelIndex: number) => {
     const split = splitInstances.current[panelIndex]
     if (!split) return
-    const lines = split.lines
-    gsap.to(lines, {
+    gsap.to(split.lines, {
       yPercent: 0,
       duration: 0.85,
       ease: "power3.out",
       stagger: 0.035,
       overwrite: true,
+      force3D: true,
     })
   }
 
@@ -39,7 +39,12 @@ export default function HoverListDesktop({
   const snapHide = (panelIndex: number) => {
     const split = splitInstances.current[panelIndex]
     if (!split) return
-    gsap.to(split.lines, { yPercent: 110, duration: 0, overwrite: true })
+    gsap.to(split.lines, {
+      yPercent: 110,
+      duration: 0,
+      overwrite: true,
+      force3D: true,
+    })
   }
 
   /* ── Viewport-enter: animate titles + show first item ───────────────── */
@@ -64,12 +69,13 @@ export default function HoverListDesktop({
       )
       const titleLines = titleSplits.flatMap((s) => s.lines)
 
-      gsap.set(titleLines, { yPercent: 110 })
+      gsap.set(titleLines, { yPercent: 110, force3D: true })
       gsap.to(titleLines, {
         yPercent: 0,
         duration: 1.25,
         ease: "power3.out",
         stagger: 0.05,
+        force3D: true,
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top 85%",
@@ -113,7 +119,7 @@ export default function HoverListDesktop({
   return (
     <div
       ref={containerRef}
-      className={cn("hover-list px-4 md:px-24 my-12 md:my-24", className)}
+      className={cn("hover-list")}
       onMouseLeave={handleListLeave}
     >
       {label && (

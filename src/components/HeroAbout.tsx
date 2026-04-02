@@ -6,13 +6,7 @@ import { SplitText } from "gsap/SplitText"
 import { cn } from "@/utils/classNames"
 import ScrollIndicator from "@/components/ScrollIndicator"
 
-interface HeroAboutProps {
-  title?: string
-  pretitle?: string
-  label?: string
-}
-
-export default function HeroAbout({ title, pretitle, label }: HeroAboutProps) {
+export default function HeroAbout() {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
@@ -33,10 +27,11 @@ export default function HeroAbout({ title, pretitle, label }: HeroAboutProps) {
 
       gsap.set(lines, { yPercent: 110 })
       gsap.to(lines, {
-        yPercent: 10,
+        yPercent: 0,
+        y: 3,
         duration: 1.25,
         ease: "power3.out",
-        stagger: 0.03,
+        stagger: 0.08,
         delay: 0.15,
       })
 
@@ -68,7 +63,7 @@ export default function HeroAbout({ title, pretitle, label }: HeroAboutProps) {
           <div
             className={cn(
               "hero-about-title-container type-display-l",
-              "flex flex-col mb-[50px] ",
+              "flex flex-col mb-[50px]",
               "md:mb-0",
             )}
           >
@@ -86,8 +81,8 @@ export default function HeroAbout({ title, pretitle, label }: HeroAboutProps) {
             </span>
           </div>
           <span
-            className={cn("label-right type-caption", "text-right")}
             data-split
+            className={cn("label-right type-caption", "text-right")}
           >
             Images creators
             <br />& Shadows lovers

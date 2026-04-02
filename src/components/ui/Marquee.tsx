@@ -36,7 +36,7 @@ export default function Marquee({ duration = 18 }: MarqueeProps) {
     <span
       key={key}
       style={{
-        fontSize: "15.42vw",
+        fontSize: "clamp(7.625rem, 15.42vw, 13rem)",
         letterSpacing: "-0.06em",
         lineHeight: 1,
         textTransform: "uppercase",

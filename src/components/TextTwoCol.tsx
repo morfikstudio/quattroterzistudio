@@ -65,10 +65,7 @@ export default function TextTwoCol({
   return (
     <div
       ref={containerRef}
-      className={cn(
-        "text-two-col my-12 md:my-24 px-4 md:px-24",
-        "flex flex-col md:flex-row",
-      )}
+      className={cn("text-two-col", "flex flex-col md:flex-row")}
     >
       <span
         data-split

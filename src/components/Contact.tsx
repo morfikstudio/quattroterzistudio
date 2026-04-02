@@ -103,7 +103,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
       )}
     >
       {/* Header interno */}
-      <div className="flex justify-between items-center p-3 md:p-7">
+      <div className="flex justify-between items-center px-3 pt-6 md:px-6">
         <div className={cn("copyright md:block hidden")}>
           <span data-split className="text-[16px]">
             Copyright © quattroterzi 2026
@@ -120,7 +120,13 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
       </div>
 
       {/* Contenuto */}
-      <div className="flex-1 flex flex-col justify-end px-3 pb-3 md:px-7 md:pb-12">
+      <div
+        className={cn(
+          "flex-1 flex flex-col justify-start",
+          "px-3 pb-3 pt-14",
+          "md:justify-end  md:pt-0 md:px-7 md:pb-12",
+        )}
+      >
         <div className="flex flex-col md:flex-row md:items-start">
           <div className={cn("title", "md:flex-1 md:min-w-0")}>
             <h2
@@ -209,7 +215,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                 <span className={cn("link-underline-bar")} />
               </a>
             </div>
-            <div className="flex flex-col uppercase">
+            <div className="flex-col uppercase hidden md:flex">
               <span data-split className="type-caption text-secondary mb-2">
                 legal
               </span>
