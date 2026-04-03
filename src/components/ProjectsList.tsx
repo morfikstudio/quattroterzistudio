@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useCallback, useEffect, useRef, useState } from "react"
-import Link from "next/link"
+import NextImage from "next/image"
 import { useRouter } from "next/navigation"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { FreeMode, Mousewheel } from "swiper/modules"
@@ -16,6 +16,27 @@ import { cn } from "@/utils/classNames"
 
 const SLIDES_PER_VIEW = 7
 
+// Placeholder — sostituire con dati reali Sanity quando disponibili
+type PlaceholderProject = {
+  id: string
+  title: string
+  code: string
+  year: string
+}
+const PLACEHOLDER_PROJECTS: PlaceholderProject[] = [
+  { id: "10", title: "Casa sul Lago", code: "M288NV4", year: "2023" },
+  { id: "20", title: "Residenza Borghese", code: "K471RP9", year: "2022" },
+  { id: "30", title: "Loft Industriale", code: "B302XL7", year: "2023" },
+  { id: "40", title: "Villa Moderna", code: "G815TQ2", year: "2021" },
+  { id: "50", title: "Appartamento Minimal", code: "H093JY6", year: "2024" },
+  { id: "60", title: "Studio Creativo", code: "N567WC8", year: "2022" },
+  { id: "70", title: "Penthouse Milano", code: "R124KD5", year: "2024" },
+  { id: "80", title: "Cascina Ristrutturata", code: "F690SE3", year: "2021" },
+  { id: "90", title: "Atelier Fotografico", code: "D743MZ1", year: "2023" },
+  { id: "100", title: "Showroom Design", code: "A856HB0", year: "2022" },
+  { id: "110", title: "Penthouse Roma", code: "T219UF8", year: "2024" },
+]
+
 function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
   const Icons = () => (
     <div className="flex flex-col items-center gap-[3px]">
@@ -27,46 +48,17 @@ function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
       onClick={onNavigate}
       className="appearance-none bg-transparent p-0 border-0"
     >
-      <div
-        className={cn(
-          "group",
-          "relative h-[40px] w-[120px] flex items-center justify-center px-4",
-          "border border-black max-md:bg-black ",
-        )}
-      >
-        <div
-          className={cn(
-            "relative h-full w-full",
-            "flex items-center justify-center overflow-hidden",
-          )}
-        >
-          <div
-            className={cn(
-              "absolute top-1/2 left-0",
-              "-translate-y-1/2 group-hover:-translate-x-1 group-hover:opacity-0",
-              "transition-all duration-200 ease-in-out",
-            )}
-          >
+      <div className="group relative h-[40px] w-[120px] border border-black max-md:bg-black flex items-center justify-center px-4">
+        <div className="relative h-full w-full flex items-center justify-center overflow-hidden">
+          <div className="absolute top-1/2 left-0 -translate-y-1/2 group-hover:-translate-x-1 group-hover:opacity-0 transition-all duration-200 ease-in-out">
             <Icons />
           </div>
-          <div
-            className={cn(
-              "absolute top-1/2 left-1/2",
-              "-translate-x-1/2 -translate-y-1/2 group-hover:-translate-x-[calc(50%+14px)]",
-              "transition-transform duration-400 ease-out",
-            )}
-          >
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 group-hover:-translate-x-[calc(50%+14px)] transition-transform duration-400 ease-out">
             <span className="type-button-m uppercase text-black max-md:text-white">
               selection
             </span>
           </div>
-          <div
-            className={cn(
-              "absolute top-1/2 right-0",
-              " -translate-y-1/2 translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100",
-              "transition-all duration-200 ease-in-out",
-            )}
-          >
+          <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200 ease-in-out">
             <Icons />
           </div>
         </div>
@@ -75,16 +67,19 @@ function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
   )
 }
 
-type Props = { projects: PROJECTS_QUERY_RESULT }
+type Props = { projects?: PROJECTS_QUERY_RESULT }
 
 export default function ProjectsList({ projects }: Props) {
+  const usePlaceholder = !projects || projects.length === 0
+  const items = usePlaceholder ? PLACEHOLDER_PROJECTS : projects!
+
   const router = useRouter()
   const [clipState, setClipState] = useState<"enter" | "exiting">("enter")
   const isExitingRef = useRef(false)
   const listContainerRef = useRef<HTMLDivElement | null>(null)
   const wordSpansRef = useRef<HTMLElement[]>([])
   const yearSpanRef = useRef<HTMLSpanElement | null>(null)
-  // Mobile enter: unlock underline only when word is almost done
+  // Mobile enter: unlock underline only when word is almost done (0.4s delay + ~0.9s into anim)
   const [pageEnterDone, setPageEnterDone] = useState(false)
   // Mobile exit: force active underline to "out" before words animate away
   const [underlineExiting, setUnderlineExiting] = useState(false)
@@ -214,6 +209,20 @@ export default function ProjectsList({ projects }: Props) {
   const displayIndex = hoverIndex !== null ? hoverIndex : activeIndex
   const isHovering = !isScrolling && hoverIndex !== null
 
+  const activeItem = items[activeIndex]
+  const activeYear = activeItem
+    ? "year" in activeItem
+      ? (activeItem as PlaceholderProject).year
+      : ((activeItem as PROJECTS_QUERY_RESULT[number]).year ?? "")
+    : ""
+
+  const getLabel = (
+    item: PlaceholderProject | PROJECTS_QUERY_RESULT[number],
+  ) => ("code" in item ? item.code : (item.title ?? ""))
+
+  const getKey = (item: PlaceholderProject | PROJECTS_QUERY_RESULT[number]) =>
+    "id" in item ? item.id : item._id
+
   return (
     <>
       <style>{`
@@ -304,16 +313,15 @@ export default function ProjectsList({ projects }: Props) {
           transform: translateY(110%);
           display: inline-block;
         }
-
       `}</style>
 
-      <div className="fixed bottom-6 left-6 z-30">
+      <div className="fixed bottom-5 left-6 z-30">
         <SelectionCTA onNavigate={() => navigate("/projects")} />
       </div>
 
       <div className="fixed top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-30 pointer-events-none overflow-hidden">
         <span ref={yearSpanRef} className="pl-year-span type-caption">
-          {projects[activeIndex]?.year ?? ""}
+          {activeYear}
         </span>
       </div>
 
@@ -328,21 +336,37 @@ export default function ProjectsList({ projects }: Props) {
               ref={mobileImgRef}
               className="relative aspect-4/3 overflow-hidden w-full"
             >
-              {projects.map((p, i) => (
-                <div
-                  key={p._id}
-                  className="pl-img-slide"
-                  data-active={displayIndex === i ? "true" : "false"}
-                >
-                  <Image
-                    image={p.coverDetail}
-                    resizeId="cover-detail"
-                    fill
-                    fit="cover"
-                    priority={i < 2}
-                  />
-                </div>
-              ))}
+              {usePlaceholder
+                ? PLACEHOLDER_PROJECTS.map((p, i) => (
+                    <div
+                      key={p.id}
+                      className="pl-img-slide"
+                      data-active={displayIndex === i ? "true" : "false"}
+                    >
+                      <NextImage
+                        src={`https://picsum.photos/seed/${p.id}/800/600`}
+                        fill
+                        alt={p.title}
+                        className="object-cover"
+                        priority={i < 2}
+                      />
+                    </div>
+                  ))
+                : projects!.map((p, i) => (
+                    <div
+                      key={`${p._id}-${i}`}
+                      className="pl-img-slide"
+                      data-active={displayIndex === i ? "true" : "false"}
+                    >
+                      <Image
+                        image={p.coverDetail}
+                        resizeId="cover-detail"
+                        fill
+                        fit="cover"
+                        priority={i < 2}
+                      />
+                    </div>
+                  ))}
             </div>
           </div>
         </div>
@@ -357,21 +381,37 @@ export default function ProjectsList({ projects }: Props) {
               ref={desktopImgRef}
               className="relative aspect-4/3 overflow-hidden w-full"
             >
-              {projects.map((p, i) => (
-                <div
-                  key={p._id}
-                  className="pl-img-slide"
-                  data-active={displayIndex === i ? "true" : "false"}
-                >
-                  <Image
-                    image={p.coverDetail}
-                    resizeId="cover-detail"
-                    fill
-                    fit="cover"
-                    priority={i < 2}
-                  />
-                </div>
-              ))}
+              {usePlaceholder
+                ? PLACEHOLDER_PROJECTS.map((p, i) => (
+                    <div
+                      key={p.id}
+                      className="pl-img-slide"
+                      data-active={displayIndex === i ? "true" : "false"}
+                    >
+                      <NextImage
+                        src={`https://picsum.photos/seed/${p.id}/800/600`}
+                        fill
+                        alt={p.title}
+                        className="object-cover"
+                        priority={i < 2}
+                      />
+                    </div>
+                  ))
+                : projects!.map((p, i) => (
+                    <div
+                      key={`${p._id}-${i}`}
+                      className="pl-img-slide"
+                      data-active={displayIndex === i ? "true" : "false"}
+                    >
+                      <Image
+                        image={p.coverDetail}
+                        resizeId="cover-detail"
+                        fill
+                        fit="cover"
+                        priority={i < 2}
+                      />
+                    </div>
+                  ))}
             </div>
           </div>
         </div>
@@ -432,8 +472,8 @@ export default function ProjectsList({ projects }: Props) {
               onSetTranslate={handleSetTranslate}
               className="h-full"
             >
-              {projects.map((p, i) => (
-                <SwiperSlide key={p._id} role="listitem">
+              {items.map((p, i) => (
+                <SwiperSlide key={getKey(p)} role="listitem">
                   <div
                     className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10"
                     onMouseEnter={() => {
@@ -455,6 +495,7 @@ export default function ProjectsList({ projects }: Props) {
                       data-line={
                         (!isScrolling && hoverIndex === i) ||
                         (isMobile &&
+                          !isScrolling &&
                           pageEnterDone &&
                           !underlineExiting &&
                           activeIndex === i)
@@ -469,19 +510,21 @@ export default function ProjectsList({ projects }: Props) {
                       onFocus={() => setHoverIndex(i)}
                       onBlur={() => setHoverIndex(null)}
                       onClick={(e) => e.preventDefault()}
-                      aria-label={p.title ?? undefined}
+                      aria-label={getLabel(p)}
                     >
-                      {(p.title ?? "").split(" ").map((word, j, arr) => (
-                        <span
-                          key={j}
-                          className="overflow-hidden inline-block align-bottom"
-                        >
-                          <span className="pl-word-inner">
-                            {word}
-                            {j < arr.length - 1 ? "\u00A0" : ""}
+                      {getLabel(p)
+                        .split(" ")
+                        .map((word, j, arr) => (
+                          <span
+                            key={j}
+                            className="overflow-hidden inline-block align-bottom"
+                          >
+                            <span className="pl-word-inner">
+                              {word}
+                              {j < arr.length - 1 ? "\u00A0" : ""}
+                            </span>
                           </span>
-                        </span>
-                      ))}
+                        ))}
                       <span
                         className={cn(
                           "pl-underline",

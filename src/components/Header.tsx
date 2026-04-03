@@ -14,6 +14,8 @@ const navUnderlineClass = cn("link-underline-bar")
 export default function Header() {
   const [isContactOpen, setIsContactOpen] = useState(false)
   const pathname = usePathname()
+  if (pathname === "/") return null
+
   const isProjectsActive =
     pathname === "/projects" || pathname.startsWith("/projects/")
   const isAboutActive = pathname === "/about" || pathname.startsWith("/about/")
@@ -30,7 +32,7 @@ export default function Header() {
         <div
           className={cn(
             "flex justify-between items-center",
-            "mx-auto p-3 md:p-4",
+            "mx-auto p-3 md:px-6 md:py-4",
           )}
         >
           <Link href="/" className="block text-white">
@@ -45,7 +47,7 @@ export default function Header() {
                   className={cn(
                     "rect-inner bg-current",
                     "absolute top-0 left-0 w-full h-full",
-                    "[clip-path:polygon(0_0,_100%_0%,_100%_100%,_0%_100%)] transition-[clip-path] duration-700 ease-out group-hover:[clip-path:polygon(100%_0,_100%_0%,_100%_100%,_100%_100%)]",
+                    "[clip-path:polygon(0_0,_100%_0%,_100%_100%,_0%_100%)] transition-[clip-path] duration-900 ease-out group-hover:[clip-path:polygon(100%_0,_100%_0%,_100%_100%,_100%_100%)]",
                   )}
                 ></div>
               </div>
@@ -59,7 +61,8 @@ export default function Header() {
                   className={cn(
                     "text-1",
                     "uppercase text-[14px] font-medium",
-                    "h-[16px] -translate-x-[120px] transition-transform duration-700 ease-out group-hover:translate-x-0",
+                    "h-[16px] -translate-x-[120px] group-hover:translate-x-0",
+                    "transition-transform duration-1500 delay-100 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
                   )}
                 >
                   quattroterzi
@@ -68,7 +71,8 @@ export default function Header() {
                   className={cn(
                     "text-2",
                     "uppercase text-[14px] font-medium",
-                    "h-[16px] -translate-x-[120px] transition-transform duration-700 ease-out group-hover:translate-x-0",
+                    "h-[16px] -translate-x-[120px] group-hover:translate-x-0",
+                    "transition-transform duration-1500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
                   )}
                 >
                   studio
@@ -83,13 +87,13 @@ export default function Header() {
                 href={item.href}
                 className={cn(
                   navLinkClass,
-                  item.isActive && "text-active-link",
+                  item.isActive && "text-active-link pointer-events-none",
                 )}
                 onMouseEnter={(e) => {
-                  e.currentTarget.dataset.line = "in"
+                  if (!item.isActive) e.currentTarget.dataset.line = "in"
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.dataset.line = "out"
+                  if (!item.isActive) e.currentTarget.dataset.line = "out"
                 }}
               >
                 {item.label}
