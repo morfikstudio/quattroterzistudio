@@ -70,7 +70,7 @@ export default function ScrollMarquee({
       <div
         ref={topTrackRef}
         className="type-display-l uppercase whitespace-nowrap"
-        style={{ fontWeight: 600, willChange: "transform" }}
+        style={{ willChange: "transform" }}
       >
         {topText}
       </div>
@@ -79,7 +79,7 @@ export default function ScrollMarquee({
       <div
         ref={bottomTrackRef}
         className="type-display-l uppercase whitespace-nowrap pt-[0.3em]"
-        style={{ fontWeight: 600, willChange: "transform", textAlign: "right" }}
+        style={{ willChange: "transform", textAlign: "right" }}
       >
         {bottomText}
       </div>

@@ -62,22 +62,22 @@ export default function HeroAbout() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div
             className={cn(
-              "hero-about-title-container type-display-l",
+              "hero-about-title-container type-display-l max-md:text-[42px]",
               "flex flex-col mb-[50px]",
               "md:mb-0",
             )}
           >
             <span data-split className="block pt-[0.08em]">
-              lorem ipsum
+              we make
             </span>
             <span
               data-split
               className="block pt-[0.08em] ml-[30px] md:ml-[100px]"
             >
-              dolor{" "}
+              the unseen
             </span>
             <span data-split className="block pt-[0.08em]">
-              iscing elit
+              fell unknown
             </span>
           </div>
           <span

@@ -1,5 +1,7 @@
+"use client"
+
 import Link from "next/link"
-import { ReactNode } from "react"
+import { ReactNode, useState } from "react"
 
 import { cn } from "@/utils/classNames"
 
@@ -22,16 +24,23 @@ export default function Button({
   className,
   onClick,
 }: ButtonProps) {
+  const [scaleAnim, setScaleAnim] = useState<"a" | "b" | null>(null)
+
+  const handleMouseEnter = () =>
+    setScaleAnim((prev) => (prev === "a" ? "b" : "a"))
+  const handleMouseLeave = () =>
+    setScaleAnim((prev) => (prev === "a" ? "b" : "a"))
+
   const sizeClass = {
     default: "type-button-m",
     l: "type-button-l",
-    xl: "type-button-xl ",
+    xl: "type-button-xl translate-y-[6px]",
   }[size]
 
   const paddingClass = {
     default: "",
-    l: "px-4 py-2",
-    xl: "md:p-9 p-7",
+    l: "md:px-[12px] md:py-[8px] px-[10px] py-[6px]",
+    xl: "md:px-[32px] md:py-[18px] px-[16px] py-[10px]",
   }[size]
 
   const sharedClassName = cn(
@@ -39,21 +48,35 @@ export default function Button({
     className,
   )
 
+  const hoverHandlers = {
+    onMouseEnter: handleMouseEnter,
+    onMouseLeave: handleMouseLeave,
+  }
+
   const content = (
     <>
-      <span
-        className={cn(
-          "corner-border relative inline-flex items-center justify-center overflow-hidden",
-          "group-hover:animate-[icon-scale_1s_ease-out]",
-          paddingClass,
-        )}
-      >
-        <span className="invisible inline-flex">{icon}</span>
+      <span className="relative inline-flex items-center justify-center overflow-hidden">
+        {/* Scaled layer: corners + sizing only; arrows live in sibling overlay so they stay scale(1) */}
+        <span
+          className={cn(
+            "corner-border inline-flex items-center justify-center",
+            scaleAnim === "a" && "animate-[icon-scale-a_900ms_ease-in-out]",
+            scaleAnim === "b" && "animate-[icon-scale-b_900ms_ease-in-out]",
+            paddingClass,
+          )}
+        >
+          <span
+            className="inline-flex opacity-0 pointer-events-none"
+            aria-hidden
+          >
+            {icon}
+          </span>
+        </span>
         {/* Arrow 1 */}
         <span
           className={cn(
-            "absolute inset-0 inline-flex items-center justify-center",
-            "transition-transform duration-[900ms] ease-in-out group-hover:translate-x-full",
+            "pointer-events-none absolute inset-0 inline-flex items-center justify-center",
+            "transition-transform duration-[700ms] ease-in-out group-hover:translate-x-full",
           )}
         >
           {icon}
@@ -61,8 +84,8 @@ export default function Button({
         {/* Arrow 2 */}
         <span
           className={cn(
-            "absolute inset-0 inline-flex items-center justify-center",
-            "transition-transform duration-[900ms] ease-in-out -translate-x-full group-hover:translate-x-0",
+            "pointer-events-none absolute inset-0 inline-flex items-center justify-center",
+            "transition-transform duration-[700ms] ease-in-out -translate-x-full group-hover:translate-x-0",
           )}
         >
           {icon}
@@ -70,7 +93,7 @@ export default function Button({
       </span>
       <span
         className={cn(
-          "transition-transform duration-[900ms] ease-out group-hover:translate-x-1",
+          "transition-transform duration-[700ms] ease-in-out group-hover:translate-x-1.5",
           sizeClass,
         )}
       >
@@ -82,18 +105,28 @@ export default function Button({
   return (
     <>
       <style>{`
-        @keyframes icon-scale {
+        @keyframes icon-scale-a {
           0%   { transform: scale(1); }
-          15%  { transform: scale(0.8); }
+          10%  { transform: scale(0.8); }
+          100% { transform: scale(1); }
+        }
+        @keyframes icon-scale-b {
+          0%   { transform: scale(1); }
+          10%  { transform: scale(0.8); }
           100% { transform: scale(1); }
         }
       `}</style>
       {href ? (
-        <Link href={href} className={sharedClassName}>
+        <Link href={href} className={sharedClassName} {...hoverHandlers}>
           {content}
         </Link>
       ) : (
-        <button type="button" onClick={onClick} className={sharedClassName}>
+        <button
+          type="button"
+          onClick={onClick}
+          className={sharedClassName}
+          {...hoverHandlers}
+        >
           {content}
         </button>
       )}

@@ -329,7 +329,7 @@ export default function ProjectsList({ projects }: Props) {
         {/* Mobile image */}
         <div className="md:hidden absolute inset-0">
           <div
-            className="pl-img-clip absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw]"
+            className="pl-img-clip absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[60vw]"
             data-clip={clipState}
           >
             <div
