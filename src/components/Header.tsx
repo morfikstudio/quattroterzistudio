@@ -17,7 +17,10 @@ export default function Header() {
   if (pathname === "/") return null
 
   const isProjectsActive =
-    pathname === "/projects" || pathname.startsWith("/projects/")
+    pathname === "/projects" ||
+    pathname.startsWith("/projects/") ||
+    pathname === "/archive" ||
+    pathname.startsWith("/archive/")
   const isAboutActive = pathname === "/about" || pathname.startsWith("/about/")
   const navItems = [
     { href: "/projects", label: "Works,", isActive: isProjectsActive },
@@ -97,7 +100,7 @@ export default function Header() {
                 }}
               >
                 {item.label}
-                <span className={navUnderlineClass} />
+                {!item.isActive ? <span className={navUnderlineClass} /> : null}
               </Link>
             ))}
             <button

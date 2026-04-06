@@ -10,7 +10,7 @@ interface ButtonProps {
   label: string
   href?: string
   size?: "default" | "l" | "xl"
-  variant?: "default" | "boxed"
+  variant?: "default" | "close" | "arrow-reverse"
   className?: string
   onClick?: () => void
 }
@@ -43,6 +43,12 @@ export default function Button({
     xl: "md:px-[32px] md:py-[18px] px-[16px] py-[10px]",
   }[size]
 
+  const cornerStyle = {
+    default: {},
+    l: { "--corner-size": "10px" },
+    xl: { "--corner-size": "14px", "--corner-line": "3px" },
+  }[size] as React.CSSProperties
+
   const sharedClassName = cn(
     "group inline-flex items-center gap-4 cursor-pointer",
     className,
@@ -53,11 +59,26 @@ export default function Button({
     onMouseLeave: handleMouseLeave,
   }
 
+  const arrowOneClass = {
+    default:
+      "transition-transform duration-[700ms] ease-in-out group-hover:translate-x-full",
+    close: "",
+    "arrow-reverse":
+      "transition-transform duration-[700ms] ease-in-out group-hover:-translate-x-full",
+  }[variant]
+
+  const arrowTwoClass = {
+    default: "-translate-x-full group-hover:translate-x-0",
+    close: "hidden",
+    "arrow-reverse": "translate-x-full group-hover:translate-x-0",
+  }[variant]
+
   const content = (
     <>
       <span className="relative inline-flex items-center justify-center overflow-hidden">
         {/* Scaled layer: corners + sizing only; arrows live in sibling overlay so they stay scale(1) */}
         <span
+          style={cornerStyle}
           className={cn(
             "corner-border inline-flex items-center justify-center",
             scaleAnim === "a" && "animate-[icon-scale-a_900ms_ease-in-out]",
@@ -76,7 +97,7 @@ export default function Button({
         <span
           className={cn(
             "pointer-events-none absolute inset-0 inline-flex items-center justify-center",
-            "transition-transform duration-[700ms] ease-in-out group-hover:translate-x-full",
+            arrowOneClass,
           )}
         >
           {icon}
@@ -85,7 +106,8 @@ export default function Button({
         <span
           className={cn(
             "pointer-events-none absolute inset-0 inline-flex items-center justify-center",
-            "transition-transform duration-[700ms] ease-in-out -translate-x-full group-hover:translate-x-0",
+            "transition-transform duration-[700ms] ease-in-out",
+            arrowTwoClass,
           )}
         >
           {icon}
@@ -93,7 +115,7 @@ export default function Button({
       </span>
       <span
         className={cn(
-          "transition-transform duration-[700ms] ease-in-out group-hover:translate-x-1.5",
+          "transition-transform duration-[400ms] ease-in-out group-hover:translate-x-1.5",
           sizeClass,
         )}
       >

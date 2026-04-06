@@ -206,8 +206,20 @@ export default function ProjectsList({ projects }: Props) {
     [startScaleLoop],
   )
 
+  const getItemHref = (
+    item: PlaceholderProject | PROJECTS_QUERY_RESULT[number],
+  ): string => {
+    if ("slug" in item && item.slug?.current) {
+      return `/projects/${item.slug.current}`
+    }
+    return "#"
+  }
+
   const displayIndex = hoverIndex !== null ? hoverIndex : activeIndex
   const isHovering = !isScrolling && hoverIndex !== null
+
+  const displayedItem = items[displayIndex]
+  const imageHref = getItemHref(displayedItem)
 
   const activeItem = items[activeIndex]
   const activeYear = activeItem
@@ -328,92 +340,136 @@ export default function ProjectsList({ projects }: Props) {
       <div className="relative h-screen md:grid md:grid-cols-2">
         {/* Mobile image */}
         <div className="md:hidden absolute inset-0">
-          <div
-            className="pl-img-clip absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[60vw]"
+          <a
+            href={imageHref}
+            className={cn(
+              "pl-img-clip group absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[60vw]",
+              "block cursor-pointer no-underline text-inherit focus-visible:outline-none",
+            )}
             data-clip={clipState}
+            aria-label={`Open project: ${getLabel(displayedItem)}`}
+            onClick={(e) => {
+              if (imageHref === "#") {
+                e.preventDefault()
+                return
+              }
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+              e.preventDefault()
+              navigate(imageHref)
+            }}
           >
             <div
               ref={mobileImgRef}
               className="relative aspect-4/3 overflow-hidden w-full"
             >
-              {usePlaceholder
-                ? PLACEHOLDER_PROJECTS.map((p, i) => (
-                    <div
-                      key={p.id}
-                      className="pl-img-slide"
-                      data-active={displayIndex === i ? "true" : "false"}
-                    >
-                      <NextImage
-                        src={`https://picsum.photos/seed/${p.id}/800/600`}
-                        fill
-                        alt={p.title}
-                        className="object-cover"
-                        priority={i < 2}
-                      />
-                    </div>
-                  ))
-                : projects!.map((p, i) => (
-                    <div
-                      key={`${p._id}-${i}`}
-                      className="pl-img-slide"
-                      data-active={displayIndex === i ? "true" : "false"}
-                    >
-                      <Image
-                        image={p.coverDetail}
-                        resizeId="cover-detail"
-                        fill
-                        fit="cover"
-                        priority={i < 2}
-                      />
-                    </div>
-                  ))}
+              <div
+                className={cn(
+                  "absolute inset-0 origin-center",
+                  "transition-transform duration-500 ease-out",
+                  "group-hover:scale-110",
+                )}
+              >
+                {usePlaceholder
+                  ? PLACEHOLDER_PROJECTS.map((p, i) => (
+                      <div
+                        key={p.id}
+                        className="pl-img-slide"
+                        data-active={displayIndex === i ? "true" : "false"}
+                      >
+                        <NextImage
+                          src={`https://picsum.photos/seed/${p.id}/800/600`}
+                          fill
+                          alt={p.title}
+                          className="object-cover"
+                          priority={i < 2}
+                        />
+                      </div>
+                    ))
+                  : projects!.map((p, i) => (
+                      <div
+                        key={`${p._id}-${i}`}
+                        className="pl-img-slide"
+                        data-active={displayIndex === i ? "true" : "false"}
+                      >
+                        <Image
+                          image={p.coverDetail}
+                          resizeId="cover-detail"
+                          fill
+                          fit="cover"
+                          priority={i < 2}
+                        />
+                      </div>
+                    ))}
+              </div>
             </div>
-          </div>
+          </a>
         </div>
 
-        {/* Desktop image */}
-        <div className="hidden md:block relative h-screen">
-          <div
-            className="pl-img-clip absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] lg:w-[35vw]"
+        {/* Desktop: sopra lo swiper per vedere lo scale; solo il box immagine ha pointer-events per hover */}
+        <div className="hidden md:block relative h-screen z-20 pointer-events-none">
+          <a
+            href={imageHref}
+            className={cn(
+              "pl-img-clip group pointer-events-auto absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] lg:w-[35vw]",
+              "block cursor-pointer no-underline text-inherit focus-visible:outline-none",
+            )}
             data-clip={clipState}
+            aria-label={`Open project: ${getLabel(displayedItem)}`}
+            onClick={(e) => {
+              if (imageHref === "#") {
+                e.preventDefault()
+                return
+              }
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+              e.preventDefault()
+              navigate(imageHref)
+            }}
           >
             <div
               ref={desktopImgRef}
               className="relative aspect-4/3 overflow-hidden w-full"
             >
-              {usePlaceholder
-                ? PLACEHOLDER_PROJECTS.map((p, i) => (
-                    <div
-                      key={p.id}
-                      className="pl-img-slide"
-                      data-active={displayIndex === i ? "true" : "false"}
-                    >
-                      <NextImage
-                        src={`https://picsum.photos/seed/${p.id}/800/600`}
-                        fill
-                        alt={p.title}
-                        className="object-cover"
-                        priority={i < 2}
-                      />
-                    </div>
-                  ))
-                : projects!.map((p, i) => (
-                    <div
-                      key={`${p._id}-${i}`}
-                      className="pl-img-slide"
-                      data-active={displayIndex === i ? "true" : "false"}
-                    >
-                      <Image
-                        image={p.coverDetail}
-                        resizeId="cover-detail"
-                        fill
-                        fit="cover"
-                        priority={i < 2}
-                      />
-                    </div>
-                  ))}
+              <div
+                className={cn(
+                  "absolute inset-0 origin-center",
+                  "transition-transform duration-500 ease-out",
+                  "group-hover:scale-110",
+                )}
+              >
+                {usePlaceholder
+                  ? PLACEHOLDER_PROJECTS.map((p, i) => (
+                      <div
+                        key={p.id}
+                        className="pl-img-slide"
+                        data-active={displayIndex === i ? "true" : "false"}
+                      >
+                        <NextImage
+                          src={`https://picsum.photos/seed/${p.id}/800/600`}
+                          fill
+                          alt={p.title}
+                          className="object-cover"
+                          priority={i < 2}
+                        />
+                      </div>
+                    ))
+                  : projects!.map((p, i) => (
+                      <div
+                        key={`${p._id}-${i}`}
+                        className="pl-img-slide"
+                        data-active={displayIndex === i ? "true" : "false"}
+                      >
+                        <Image
+                          image={p.coverDetail}
+                          resizeId="cover-detail"
+                          fill
+                          fit="cover"
+                          priority={i < 2}
+                        />
+                      </div>
+                    ))}
+              </div>
             </div>
-          </div>
+          </a>
         </div>
 
         {/* Lista */}
@@ -474,14 +530,7 @@ export default function ProjectsList({ projects }: Props) {
             >
               {items.map((p, i) => (
                 <SwiperSlide key={getKey(p)} role="listitem">
-                  <div
-                    className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10"
-                    onMouseEnter={() => {
-                      interactedItemsRef.current.add(i)
-                      setHoverIndex(i)
-                    }}
-                    onMouseLeave={() => setHoverIndex(null)}
-                  >
+                  <div className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10">
                     <a
                       href="#"
                       className={cn(
@@ -507,6 +556,11 @@ export default function ProjectsList({ projects }: Props) {
                             ? "out"
                             : undefined
                       }
+                      onMouseEnter={() => {
+                        interactedItemsRef.current.add(i)
+                        setHoverIndex(i)
+                      }}
+                      onMouseLeave={() => setHoverIndex(null)}
                       onFocus={() => setHoverIndex(i)}
                       onBlur={() => setHoverIndex(null)}
                       onClick={(e) => e.preventDefault()}

@@ -280,15 +280,57 @@
 }
 
 .corner-border {
+  --corner-size: 8px;
+  --corner-line: 2px;
   background:
-    linear-gradient(to right, currentColor 2px, transparent 2px) 0 0,
-    linear-gradient(to right, currentColor 2px, transparent 2px) 0 100%,
-    linear-gradient(to left, currentColor 2px, transparent 2px) 100% 0,
-    linear-gradient(to left, currentColor 2px, transparent 2px) 100% 100%,
-    linear-gradient(to bottom, currentColor 2px, transparent 2px) 0 0,
-    linear-gradient(to bottom, currentColor 2px, transparent 2px) 100% 0,
-    linear-gradient(to top, currentColor 2px, transparent 2px) 0 100%,
-    linear-gradient(to top, currentColor 2px, transparent 2px) 100% 100%;
+    linear-gradient(
+        to right,
+        currentColor var(--corner-line),
+        transparent var(--corner-line)
+      )
+      0 0,
+    linear-gradient(
+        to right,
+        currentColor var(--corner-line),
+        transparent var(--corner-line)
+      )
+      0 100%,
+    linear-gradient(
+        to left,
+        currentColor var(--corner-line),
+        transparent var(--corner-line)
+      )
+      100% 0,
+    linear-gradient(
+        to left,
+        currentColor var(--corner-line),
+        transparent var(--corner-line)
+      )
+      100% 100%,
+    linear-gradient(
+        to bottom,
+        currentColor var(--corner-line),
+        transparent var(--corner-line)
+      )
+      0 0,
+    linear-gradient(
+        to bottom,
+        currentColor var(--corner-line),
+        transparent var(--corner-line)
+      )
+      100% 0,
+    linear-gradient(
+        to top,
+        currentColor var(--corner-line),
+        transparent var(--corner-line)
+      )
+      0 100%,
+    linear-gradient(
+        to top,
+        currentColor var(--corner-line),
+        transparent var(--corner-line)
+      )
+      100% 100%;
   background-repeat: no-repeat;
-  background-size: 8px 8px;
+  background-size: var(--corner-size) var(--corner-size);
 }
