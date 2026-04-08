@@ -538,6 +538,61 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     }
   }, [lenis])
 
+  /* Splash reveal: scala lo sfondo dal lontano e rivela il thumbnail con clip-path */
+  useEffect(() => {
+    const handleReveal = () => {
+      const firstBg = bgRefs.current[0]
+      const firstThumbClip = thumbClipRefs.current[0]
+      const firstLetters = wordsRefs.current[0]?.filter(Boolean) ?? []
+      const firstYear = yearsRefs.current[0]
+
+      if (firstBg) {
+        gsap.fromTo(
+          firstBg,
+          { scale: 1.5 },
+          { scale: 1, duration: 2.8, ease: "expo.out" },
+        )
+      }
+
+      if (firstThumbClip) {
+        gsap.set(firstThumbClip, { clipPath: "inset(100% 0% 0% 0%)" })
+        gsap.to(firstThumbClip, {
+          clipPath: "inset(0% 0% 0% 0%)",
+          duration: 1.35,
+          ease: "cubic-bezier(0.22, 1, 0.36, 1)",
+          delay: 0.5,
+        })
+      }
+
+      // Stessa animazione "lettersIn" dello scroll — parte a metà del clip-path
+      if (firstLetters.length) {
+        gsap.set(firstLetters, { y: "110%" })
+        gsap.to(firstLetters, {
+          y: "0%",
+          duration: 0.45,
+          ease: "expo.out",
+          stagger: 0.02,
+          delay: 0.9,
+          overwrite: "auto",
+        })
+      }
+
+      if (firstYear) {
+        gsap.set(firstYear, { y: "110%" })
+        gsap.to(firstYear, {
+          y: "0%",
+          duration: 0.7,
+          ease: "expo.out",
+          delay: 1.2,
+          overwrite: "auto",
+        })
+      }
+    }
+
+    window.addEventListener("splash:reveal", handleReveal)
+    return () => window.removeEventListener("splash:reveal", handleReveal)
+  }, [])
+
   /* Initialize first background image */
   useEffect(() => {
     if (!projects[0]) return

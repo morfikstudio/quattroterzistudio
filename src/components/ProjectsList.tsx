@@ -13,6 +13,7 @@ import Image from "@/components/ui/Image"
 import { useImageScale } from "@/hooks/useImageScale"
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
+import { useNavigationStore } from "@/stores/navigationStore"
 
 const SLIDES_PER_VIEW = 7
 
@@ -74,6 +75,7 @@ export default function ProjectsList({ projects }: Props) {
   const items = usePlaceholder ? PLACEHOLDER_PROJECTS : projects!
 
   const router = useRouter()
+  const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
   const [clipState, setClipState] = useState<"enter" | "exiting">("enter")
   const isExitingRef = useRef(false)
   const listContainerRef = useRef<HTMLDivElement | null>(null)
@@ -96,6 +98,9 @@ export default function ProjectsList({ projects }: Props) {
     (url: string) => {
       if (isExitingRef.current) return
       isExitingRef.current = true
+      // Set previousPath BEFORE router.push so SplashMarquee can read it
+      // synchronously during its first render on the destination page.
+      setPreviousPath(window.location.pathname)
       setClipState("exiting")
       const startWords = () =>
         gsap.to(allAnimTargets(), {
@@ -112,7 +117,7 @@ export default function ProjectsList({ projects }: Props) {
         startWords()
       }
     },
-    [router, allAnimTargets],
+    [router, allAnimTargets, setPreviousPath],
   )
 
   // Unlock mobile underline when word is almost fully visible

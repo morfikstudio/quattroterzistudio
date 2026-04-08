@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation"
 
 import { cn } from "@/utils/classNames"
 import Contact from "@/components/Contact"
+import { useNavigationStore } from "@/stores/navigationStore"
 
 const navLinkClass = cn("link-underline")
 const navUnderlineClass = cn("link-underline-bar")
@@ -14,6 +15,7 @@ const navUnderlineClass = cn("link-underline-bar")
 export default function Header() {
   const [isContactOpen, setIsContactOpen] = useState(false)
   const pathname = usePathname()
+  const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
   if (pathname === "/") return null
 
   const isProjectsActive =
@@ -38,7 +40,11 @@ export default function Header() {
             "mx-auto p-3 md:px-6 md:py-4",
           )}
         >
-          <Link href="/" className="block text-white">
+          <Link
+            href="/"
+            className="block text-white"
+            onClick={() => setPreviousPath("/")}
+          >
             <div className={cn("logo", "group flex items-center")}>
               <div
                 className={cn(
