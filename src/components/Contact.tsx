@@ -45,29 +45,35 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
       const tl = gsap.timeline()
       tlRef.current = tl
 
-      tl.to(el, {
-        clipPath: "inset(0% 0% 0% 0%)",
-        duration: 1,
-        ease: "power3.inOut",
-      })
-        .to(
-          lines,
-          {
-            yPercent: 0,
-            duration: 1,
-            ease: "power3.out",
-          },
-          "-=0.4",
-        )
-        .to(
+      // Marquee e apertura pannello partono subito; le righe di testo dopo, così il marquee anticipa.
+      if (marqueeEl) {
+        tl.to(
           marqueeEl,
           {
             yPercent: 0,
             duration: 0.9,
             ease: "power3.out",
           },
-          "-=0.8",
+          0,
         )
+      }
+      tl.to(
+        el,
+        {
+          clipPath: "inset(0% 0% 0% 0%)",
+          duration: 1,
+          ease: "power3.inOut",
+        },
+        0,
+      ).to(
+        lines,
+        {
+          yPercent: 0,
+          duration: 1,
+          ease: "power3.out",
+        },
+        0.35,
+      )
 
       return () => {
         splits.forEach((s) => s.revert())
@@ -115,6 +121,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
             label="Close"
             onClick={onClose}
             size="l"
+            variant="close"
           />
         </div>
       </div>
