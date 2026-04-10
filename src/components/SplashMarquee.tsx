@@ -19,19 +19,44 @@ const MARQUEE_X_OFFSET = -0.75
 type SplashProps = {
   title: string
   ctaText: string
+  /** True when the server detected a direct "/" navigation (via middleware cookie). */
+  forceShow?: boolean
 }
 
-export default function Splash({ title, ctaText }: SplashProps) {
+export default function Splash({
+  title,
+  ctaText,
+  forceShow = false,
+}: SplashProps) {
   const setCursor = useCursorStore((s) => s.setCursor)
   const isTouch = useIsTouch()
 
-  // Show splash only when coming from "/" (logo click) or on initial load (null).
+  // Show splash when:
+  //  - forceShow: server read the middleware cookie (direct "/" URL visit)
+  //  - previousPath === "/": logo click
   // The previousPath must be set BEFORE router.push in click handlers so it's
   // readable here during the very first render (useState initializer runs once).
   const [visible, setVisible] = useState(() => {
+    if (forceShow) return true
     const prev = useNavigationStore.getState().previousPath
-    return prev === null || prev === "/"
+    return prev === "/"
   })
+
+  // Clear the middleware cookie on the client as soon as the splash is shown.
+  useEffect(() => {
+    if (visible) {
+      document.cookie = "show_splash=; max-age=0; path=/"
+    }
+  }, [visible])
+
+  // React to logo clicks when already on /projects (no remount → useState doesn't re-run).
+  const previousPath = useNavigationStore((s) => s.previousPath)
+  useEffect(() => {
+    if (previousPath === "/") {
+      isLeavingRef.current = false
+      setVisible(true)
+    }
+  }, [previousPath])
 
   const wrapRef = useRef<HTMLDivElement>(null)
   const rectRef = useRef<HTMLDivElement>(null)
@@ -187,6 +212,10 @@ export default function Splash({ title, ctaText }: SplashProps) {
   const handleEnter = useCallback(() => {
     if (isLeavingRef.current || !rectRef.current || !wrapRef.current) return
     isLeavingRef.current = true
+
+    // Reset previousPath so the useEffect above doesn't re-trigger the splash
+    // when visible goes false at the end of the exit animation.
+    useNavigationStore.getState().setPreviousPath(window.location.pathname)
 
     const el = rectRef.current
     const box = el.getBoundingClientRect()

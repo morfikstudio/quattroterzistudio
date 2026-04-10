@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
@@ -16,6 +16,14 @@ export default function Header() {
   const [isContactOpen, setIsContactOpen] = useState(false)
   const pathname = usePathname()
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
+  const navRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    navRef.current
+      ?.querySelectorAll<HTMLElement>(".link-underline")
+      .forEach((el) => delete el.dataset.line)
+  }, [pathname])
+
   if (pathname === "/") return null
 
   const isProjectsActive =
@@ -89,7 +97,10 @@ export default function Header() {
               </div>
             </div>
           </Link>
-          <div className={cn("flex gap-2", "type-menu text-white")}>
+          <div
+            ref={navRef}
+            className={cn("flex gap-2", "type-menu text-white")}
+          >
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -98,6 +109,7 @@ export default function Header() {
                   navLinkClass,
                   item.isActive && "text-active-link pointer-events-none",
                 )}
+                onClick={() => setPreviousPath(pathname)}
                 onMouseEnter={(e) => {
                   if (!item.isActive) e.currentTarget.dataset.line = "in"
                 }}

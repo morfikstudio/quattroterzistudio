@@ -6,9 +6,9 @@ import { create } from "zustand"
  * so that components can read it synchronously during their first render.
  *
  * Rules for SplashMarquee visibility:
- *   null  → initial page load       → show splash
- *   "/"   → logo click              → show splash
- *   other → internal navigation     → skip splash
+ *   null  → initial page load / direct navigation → skip splash
+ *   "/"   → logo click                            → show splash
+ *   other → internal navigation                   → skip splash
  */
 type NavigationStore = {
   previousPath: string | null

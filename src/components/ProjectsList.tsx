@@ -68,9 +68,9 @@ function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
   )
 }
 
-type Props = { projects?: PROJECTS_QUERY_RESULT }
+type Props = { projects?: PROJECTS_QUERY_RESULT; onSelectionClick?: () => void }
 
-export default function ProjectsList({ projects }: Props) {
+export default function ProjectsList({ projects, onSelectionClick }: Props) {
   const usePlaceholder = !projects || projects.length === 0
   const items = usePlaceholder ? PLACEHOLDER_PROJECTS : projects!
 
@@ -94,13 +94,10 @@ export default function ProjectsList({ projects }: Props) {
     [],
   )
 
-  const navigate = useCallback(
-    (url: string) => {
+  const exitWithCallback = useCallback(
+    (onComplete: () => void) => {
       if (isExitingRef.current) return
       isExitingRef.current = true
-      // Set previousPath BEFORE router.push so SplashMarquee can read it
-      // synchronously during its first render on the destination page.
-      setPreviousPath(window.location.pathname)
       setClipState("exiting")
       const startWords = () =>
         gsap.to(allAnimTargets(), {
@@ -108,7 +105,7 @@ export default function ProjectsList({ projects }: Props) {
           duration: 0.7,
           ease: "power3.in",
           overwrite: true,
-          onComplete: () => router.push(url),
+          onComplete,
         })
       if (isMobileRef.current) {
         setUnderlineExiting(true)
@@ -117,7 +114,17 @@ export default function ProjectsList({ projects }: Props) {
         startWords()
       }
     },
-    [router, allAnimTargets, setPreviousPath],
+    [allAnimTargets],
+  )
+
+  const navigate = useCallback(
+    (url: string) => {
+      // Set previousPath BEFORE router.push so SplashMarquee can read it
+      // synchronously during its first render on the destination page.
+      setPreviousPath(window.location.pathname)
+      exitWithCallback(() => router.push(url))
+    },
+    [router, exitWithCallback, setPreviousPath],
   )
 
   // Unlock mobile underline when word is almost fully visible
@@ -253,7 +260,7 @@ export default function ProjectsList({ projects }: Props) {
         }
         .pl-img-clip[data-clip="enter"] {
           clip-path: inset(100% 0 0 0);
-          animation: pl-clip-enter 1.35s cubic-bezier(0.22, 1, 0.36, 1) .75s forwards;
+          animation: pl-clip-enter 1.35s cubic-bezier(0.22, 1, 0.36, 1) .25s forwards;
         }
         .pl-img-clip[data-clip="exiting"] {
           animation: pl-clip-exit 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
@@ -333,7 +340,13 @@ export default function ProjectsList({ projects }: Props) {
       `}</style>
 
       <div className="fixed bottom-5 left-6 z-30">
-        <SelectionCTA onNavigate={() => navigate("/projects")} />
+        <SelectionCTA
+          onNavigate={
+            onSelectionClick
+              ? () => exitWithCallback(onSelectionClick)
+              : () => navigate("/projects")
+          }
+        />
       </div>
 
       <div className="fixed top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-30 pointer-events-none overflow-hidden">
@@ -526,7 +539,7 @@ export default function ProjectsList({ projects }: Props) {
                       ...(yearSpanRef.current ? [yearSpanRef.current] : []),
                     ],
                     { y: "110%" },
-                    { y: "0%", duration: 1.2, ease: "power3.out", delay: 0.4 },
+                    { y: "0%", duration: 1.2, ease: "power3.out", delay: 0.1 },
                   )
                 }, 0)
               }}
