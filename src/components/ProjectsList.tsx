@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useCallback, useEffect, useRef, useState } from "react"
-import NextImage from "next/image"
 import { useRouter } from "next/navigation"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { FreeMode, Mousewheel } from "swiper/modules"
@@ -16,27 +15,6 @@ import { cn } from "@/utils/classNames"
 import { useNavigationStore } from "@/stores/navigationStore"
 
 const SLIDES_PER_VIEW = 7
-
-// Placeholder — sostituire con dati reali Sanity quando disponibili
-type PlaceholderProject = {
-  id: string
-  title: string
-  code: string
-  year: string
-}
-const PLACEHOLDER_PROJECTS: PlaceholderProject[] = [
-  { id: "10", title: "Casa sul Lago", code: "M288NV4", year: "2023" },
-  { id: "20", title: "Residenza Borghese", code: "K471RP9", year: "2022" },
-  { id: "30", title: "Loft Industriale", code: "B302XL7", year: "2023" },
-  { id: "40", title: "Villa Moderna", code: "G815TQ2", year: "2021" },
-  { id: "50", title: "Appartamento Minimal", code: "H093JY6", year: "2024" },
-  { id: "60", title: "Studio Creativo", code: "N567WC8", year: "2022" },
-  { id: "70", title: "Penthouse Milano", code: "R124KD5", year: "2024" },
-  { id: "80", title: "Cascina Ristrutturata", code: "F690SE3", year: "2021" },
-  { id: "90", title: "Atelier Fotografico", code: "D743MZ1", year: "2023" },
-  { id: "100", title: "Showroom Design", code: "A856HB0", year: "2022" },
-  { id: "110", title: "Penthouse Roma", code: "T219UF8", year: "2024" },
-]
 
 function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
   const Icons = () => (
@@ -71,8 +49,7 @@ function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
 type Props = { projects?: PROJECTS_QUERY_RESULT; onSelectionClick?: () => void }
 
 export default function ProjectsList({ projects, onSelectionClick }: Props) {
-  const usePlaceholder = !projects || projects.length === 0
-  const items = usePlaceholder ? PLACEHOLDER_PROJECTS : projects!
+  const items = projects ?? []
 
   const router = useRouter()
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
@@ -219,13 +196,8 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
   )
 
   const getItemHref = (
-    item: PlaceholderProject | PROJECTS_QUERY_RESULT[number],
-  ): string => {
-    if ("slug" in item && item.slug?.current) {
-      return `/projects/${item.slug.current}`
-    }
-    return "#"
-  }
+    item: PROJECTS_QUERY_RESULT[number] | undefined,
+  ): string => (item?.slug?.current ? `/projects/${item.slug.current}` : "#")
 
   const displayIndex = hoverIndex !== null ? hoverIndex : activeIndex
   const isHovering = !isScrolling && hoverIndex !== null
@@ -234,18 +206,10 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
   const imageHref = getItemHref(displayedItem)
 
   const activeItem = items[activeIndex]
-  const activeYear = activeItem
-    ? "year" in activeItem
-      ? (activeItem as PlaceholderProject).year
-      : ((activeItem as PROJECTS_QUERY_RESULT[number]).year ?? "")
-    : ""
+  const activeYear = activeItem?.year ?? ""
 
-  const getLabel = (
-    item: PlaceholderProject | PROJECTS_QUERY_RESULT[number],
-  ) => ("code" in item ? item.code : (item.title ?? ""))
-
-  const getKey = (item: PlaceholderProject | PROJECTS_QUERY_RESULT[number]) =>
-    "id" in item ? item.id : item._id
+  const getLabel = (item: PROJECTS_QUERY_RESULT[number] | undefined) =>
+    item?.title ?? ""
 
   return (
     <>
@@ -387,37 +351,21 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
                   "group-hover:scale-110",
                 )}
               >
-                {usePlaceholder
-                  ? PLACEHOLDER_PROJECTS.map((p, i) => (
-                      <div
-                        key={p.id}
-                        className="pl-img-slide"
-                        data-active={displayIndex === i ? "true" : "false"}
-                      >
-                        <NextImage
-                          src={`https://picsum.photos/seed/${p.id}/800/600`}
-                          fill
-                          alt={p.title}
-                          className="object-cover"
-                          priority={i < 2}
-                        />
-                      </div>
-                    ))
-                  : projects!.map((p, i) => (
-                      <div
-                        key={`${p._id}-${i}`}
-                        className="pl-img-slide"
-                        data-active={displayIndex === i ? "true" : "false"}
-                      >
-                        <Image
-                          image={p.coverDetail}
-                          resizeId="cover-detail"
-                          fill
-                          fit="cover"
-                          priority={i < 2}
-                        />
-                      </div>
-                    ))}
+                {items.map((p, i) => (
+                  <div
+                    key={`${p._id}-${i}`}
+                    className="pl-img-slide"
+                    data-active={displayIndex === i ? "true" : "false"}
+                  >
+                    <Image
+                      image={p.coverDetail}
+                      resizeId="cover-detail"
+                      fill
+                      fit="cover"
+                      priority={i < 2}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           </a>
@@ -454,37 +402,21 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
                   "group-hover:scale-110",
                 )}
               >
-                {usePlaceholder
-                  ? PLACEHOLDER_PROJECTS.map((p, i) => (
-                      <div
-                        key={p.id}
-                        className="pl-img-slide"
-                        data-active={displayIndex === i ? "true" : "false"}
-                      >
-                        <NextImage
-                          src={`https://picsum.photos/seed/${p.id}/800/600`}
-                          fill
-                          alt={p.title}
-                          className="object-cover"
-                          priority={i < 2}
-                        />
-                      </div>
-                    ))
-                  : projects!.map((p, i) => (
-                      <div
-                        key={`${p._id}-${i}`}
-                        className="pl-img-slide"
-                        data-active={displayIndex === i ? "true" : "false"}
-                      >
-                        <Image
-                          image={p.coverDetail}
-                          resizeId="cover-detail"
-                          fill
-                          fit="cover"
-                          priority={i < 2}
-                        />
-                      </div>
-                    ))}
+                {items.map((p, i) => (
+                  <div
+                    key={`${p._id}-${i}`}
+                    className="pl-img-slide"
+                    data-active={displayIndex === i ? "true" : "false"}
+                  >
+                    <Image
+                      image={p.coverDetail}
+                      resizeId="cover-detail"
+                      fill
+                      fit="cover"
+                      priority={i < 2}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           </a>
@@ -547,7 +479,7 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
               className="h-full"
             >
               {items.map((p, i) => (
-                <SwiperSlide key={getKey(p)} role="listitem">
+                <SwiperSlide key={p._id} role="listitem">
                   <div className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10">
                     <a
                       href="#"

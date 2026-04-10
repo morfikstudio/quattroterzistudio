@@ -45,6 +45,25 @@ function projectTitleId(project: PROJECTS_QUERY_RESULT[number]) {
   return `project-${project._id}-title`
 }
 
+/**
+ * Computes polygon clip-path values for wrapRef in element-percentage coordinates
+ * but adjusted to the current viewport position, so the wipe animation is always
+ * viewport-aligned regardless of how far the user has scrolled.
+ *
+ * wrapFrom = polygon covering exactly the visible viewport area of the element
+ * wrapTo   = polygon collapsed to the top edge of that visible area (wipe-up exit)
+ *            or use { wrapFrom: wrapTo, wrapTo: wrapFrom } for a wipe-down reveal
+ */
+function getViewportClip(el: HTMLElement) {
+  const rect = el.getBoundingClientRect()
+  const h = el.offsetHeight || 1
+  const topPct = Math.max(0, (-rect.top / h) * 100)
+  const botPct = Math.min(100, ((-rect.top + window.innerHeight) / h) * 100)
+  const wrapFrom = `polygon(0% ${topPct}%, 100% ${topPct}%, 100% ${botPct}%, 0% ${botPct}%)`
+  const wrapTo = `polygon(0% ${topPct}%, 100% ${topPct}%, 100% ${topPct}%, 0% ${topPct}%)`
+  return { wrapFrom, wrapTo }
+}
+
 const ProjectsScroll = forwardRef<ProjectsScrollHandle, ProjectsScrollProps>(
   function ProjectsScroll({ projects, onArchiveClick, isHidden }, ref) {
     const router = useRouter()
@@ -619,7 +638,6 @@ const ProjectsScroll = forwardRef<ProjectsScrollHandle, ProjectsScrollProps>(
     const allClipTargets = useCallback(
       () =>
         [
-          wrapRef.current,
           fixedLayerRef.current,
           scrollIndicatorWrapRef.current,
           listCTAWrapRef.current,
@@ -637,19 +655,36 @@ const ProjectsScroll = forwardRef<ProjectsScrollHandle, ProjectsScrollProps>(
         gsap.set(targets, { clipPath: collapsed })
 
         const base = [
-          wrapRef.current,
           scrollIndicatorWrapRef.current,
           listCTAWrapRef.current,
         ].filter(Boolean) as HTMLElement[]
 
-        gsap.to(base, { clipPath: full, duration: 1.5, ease: "power3.inOut" })
+        gsap.to(base, { clipPath: full, duration: 1.35, ease: "power3.inOut" })
 
         if (fixedLayerRef.current) {
           gsap.to(fixedLayerRef.current, {
             clipPath: full,
-            duration: 1.5,
+            duration: 1.35,
             ease: "power3.inOut",
             delay: 0.12,
+          })
+        }
+
+        // Reveal wrapRef with viewport-relative polygon (wipe down).
+        // Clear the inline clip-path when done so scroll works normally.
+        if (wrapRef.current) {
+          const { wrapFrom, wrapTo } = getViewportClip(wrapRef.current)
+          gsap.killTweensOf(wrapRef.current)
+          gsap.set(wrapRef.current, { clipPath: wrapTo })
+          gsap.to(wrapRef.current, {
+            clipPath: wrapFrom,
+            duration: 1.35,
+            ease: "power3.inOut",
+            onComplete: () => {
+              if (wrapRef.current) {
+                gsap.set(wrapRef.current, { clearProps: "clipPath" })
+              }
+            },
           })
         }
       },
@@ -673,7 +708,6 @@ const ProjectsScroll = forwardRef<ProjectsScrollHandle, ProjectsScrollProps>(
         gsap.set(targets, { clipPath: from })
 
         const baseTargets = [
-          wrapRef.current,
           scrollIndicatorWrapRef.current,
           listCTAWrapRef.current,
         ].filter(Boolean) as HTMLElement[]
@@ -688,9 +722,22 @@ const ProjectsScroll = forwardRef<ProjectsScrollHandle, ProjectsScrollProps>(
         if (fixedLayerRef.current) {
           gsap.to(fixedLayerRef.current, {
             clipPath: to,
-            duration: 0.5,
+            duration: 1.6,
             ease: "power3.inOut",
-            delay: 1,
+            delay: 0.1,
+          })
+        }
+
+        // Animate wrapRef with viewport-relative polygon so the clip-path
+        // works correctly regardless of current scroll position.
+        if (wrapRef.current) {
+          const { wrapFrom, wrapTo } = getViewportClip(wrapRef.current)
+          gsap.killTweensOf(wrapRef.current)
+          gsap.set(wrapRef.current, { clipPath: wrapFrom })
+          gsap.to(wrapRef.current, {
+            clipPath: wrapTo,
+            duration: 1.8,
+            ease: "power3.inOut",
           })
         }
       },

@@ -36,7 +36,10 @@ export default function ProjectsView({ projects }: Props) {
       />
       {view === "list" && (
         <div className="fixed inset-0 z-40 bg-white">
-          <ProjectsList onSelectionClick={handleSwitchToScroll} />
+          <ProjectsList
+            projects={projects}
+            onSelectionClick={handleSwitchToScroll}
+          />
         </div>
       )}
     </>
