@@ -3,7 +3,7 @@ import { cookies } from "next/headers"
 import { sanityFetch } from "@/sanity/lib/client"
 import { PROJECTS_QUERY } from "@/sanity/lib/queries"
 
-import ProjectsView from "@/components/ProjectsView"
+import ProjectsScroll from "@/components/ProjectsScroll"
 import SplashMarquee from "@/components/SplashMarquee"
 
 export default async function Page() {
@@ -18,7 +18,7 @@ export default async function Page() {
         ctaText="Click anywhere to enter"
         forceShow={forceShow}
       />
-      <ProjectsView projects={projects} />
+      <ProjectsScroll projects={projects} />
     </main>
   )
 }

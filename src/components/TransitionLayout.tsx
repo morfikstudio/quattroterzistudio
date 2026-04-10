@@ -45,6 +45,7 @@ export default function TransitionLayout({
   const incomingRef = useRef<HTMLDivElement>(null)
 
   useIsomorphicLayoutEffect(() => {
+    console.log(pathname, currentPath)
     if (pathname === currentPath) return
 
     const outgoing = outgoingRef.current
@@ -61,10 +62,6 @@ export default function TransitionLayout({
       }
 
       // ─── /projects → /archive ────────────────────────────────────────────────
-      // Outgoing (projects) si richiude verso l'alto con clip-path.
-      // Fix scroll: il contenuto della pagina va traslato di -scrollY in modo
-      // che il wipe parta dalla posizione viewport corrente, non dalla cima del
-      // documento (che potrebbe essere sopra il fold quando si è scrollati).
       if (currentPath === "/projects" && pathname === "/archive") {
         const scrollY = window.scrollY
 
@@ -78,7 +75,7 @@ export default function TransitionLayout({
 
         gsap.to(outgoing, {
           clipPath: CLIP_TOP,
-          duration: 0.85,
+          duration: 1.8,
           ease: "power3.inOut",
           onComplete: done,
         })
@@ -86,14 +83,13 @@ export default function TransitionLayout({
       }
 
       // ─── /archive → /projects ────────────────────────────────────────────────
-      // Incoming (projects) si apre dall'alto verso il basso con clip-path.
       if (currentPath === "/archive" && pathname === "/projects") {
         gsap.set(incoming, { clipPath: CLIP_TOP, zIndex: 2 })
         gsap.set(outgoing, { zIndex: 1 })
 
         gsap.to(incoming, {
           clipPath: CLIP_FULL,
-          duration: 0.85,
+          duration: 1.8,
           ease: "power3.inOut",
           onComplete: done,
         })
@@ -101,15 +97,15 @@ export default function TransitionLayout({
       }
 
       // ─── Default: cross-fade ─────────────────────────────────────────────────
-      gsap
-        .timeline({ onComplete: done })
-        .to(outgoing, { opacity: 0, duration: 0.5, ease: "power2.out" }, 0)
-        .fromTo(
-          incoming,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.55, ease: "power2.in" },
-          0.65,
-        )
+      // gsap
+      //   .timeline({ onComplete: done })
+      //   .to(outgoing, { opacity: 0, duration: 0.5, ease: "power2.out" }, 0)
+      //   .fromTo(
+      //     incoming,
+      //     { opacity: 0 },
+      //     { opacity: 1, duration: 0.55, ease: "power2.in" },
+      //     0.65,
+      //   )
     }, wrapRef)
 
     return () => ctx.kill()
