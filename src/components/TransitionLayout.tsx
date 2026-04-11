@@ -45,7 +45,6 @@ export default function TransitionLayout({
   const incomingRef = useRef<HTMLDivElement>(null)
 
   useIsomorphicLayoutEffect(() => {
-    console.log(pathname, currentPath)
     if (pathname === currentPath) return
 
     const outgoing = outgoingRef.current
@@ -62,50 +61,21 @@ export default function TransitionLayout({
       }
 
       // ─── /projects → /archive ────────────────────────────────────────────────
+      // Exit animation is handled by ProjectsScroll before navigation
       if (currentPath === "/projects" && pathname === "/archive") {
-        const scrollY = window.scrollY
-
-        const pageContent = outgoing.firstElementChild as HTMLElement | null
-        if (pageContent) {
-          gsap.set(pageContent, { y: -scrollY })
-        }
-
-        gsap.set(outgoing, { clipPath: CLIP_FULL, zIndex: 2 })
-        gsap.set(incoming, { zIndex: 1 })
-
-        gsap.to(outgoing, {
-          clipPath: CLIP_TOP,
-          duration: 1.8,
-          ease: "power3.inOut",
-          onComplete: done,
-        })
+        done()
         return
       }
 
       // ─── /archive → /projects ────────────────────────────────────────────────
+      // Entrance animation is handled by ProjectsScroll on mount
       if (currentPath === "/archive" && pathname === "/projects") {
-        gsap.set(incoming, { clipPath: CLIP_TOP, zIndex: 2 })
-        gsap.set(outgoing, { zIndex: 1 })
-
-        gsap.to(incoming, {
-          clipPath: CLIP_FULL,
-          duration: 1.8,
-          ease: "power3.inOut",
-          onComplete: done,
-        })
+        done()
         return
       }
 
-      // ─── Default: cross-fade ─────────────────────────────────────────────────
-      // gsap
-      //   .timeline({ onComplete: done })
-      //   .to(outgoing, { opacity: 0, duration: 0.5, ease: "power2.out" }, 0)
-      //   .fromTo(
-      //     incoming,
-      //     { opacity: 0 },
-      //     { opacity: 1, duration: 0.55, ease: "power2.in" },
-      //     0.65,
-      //   )
+      // ─── Default: swap immediato ─────────────────────────────────────────────
+      done()
     }, wrapRef)
 
     return () => ctx.kill()
@@ -123,7 +93,7 @@ export default function TransitionLayout({
       </div>
 
       {isTransitioning && (
-        <div ref={incomingRef} style={TRANSITION_STYLE}>
+        <div ref={incomingRef} style={{ ...TRANSITION_STYLE, opacity: 0 }}>
           {children}
         </div>
       )}

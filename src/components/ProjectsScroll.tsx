@@ -1,6 +1,13 @@
 "use client"
 
-import { useEffect, useRef, useCallback, useState, useMemo } from "react"
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+  useState,
+  useMemo,
+} from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import gsap from "gsap"
@@ -11,6 +18,7 @@ import { getImageUrl } from "@/utils/media"
 import { cn } from "@/utils/classNames"
 
 import { useBreakpoint } from "@/stores/breakpointStore"
+import { useNavigationStore } from "@/stores/navigationStore"
 import { useIsTouch } from "@/hooks/useIsTouch"
 
 import { useLenis } from "@/components/LenisProvider"
@@ -22,6 +30,9 @@ type ProjectsScrollProps = {
 }
 
 gsap.registerPlugin(ScrollTrigger)
+
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect
 
 function clamp(value: number) {
   return Math.min(1, Math.max(0, value))
@@ -36,6 +47,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const lenis = useLenis()
   const { current: breakpoint } = useBreakpoint()
   const isTouch = useIsTouch()
+  const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
 
   const [firstBgReady, setFirstBgReady] = useState(false)
   const [firstThumbReady, setFirstThumbReady] = useState(false)
@@ -60,6 +72,10 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const transitionTweenRef = useRef<gsap.core.Tween | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const isSnappedRef = useRef(true) // true when scroll is fully at rest (user + snap animation)
+  const fromArchiveRef = useRef(
+    typeof window !== "undefined" &&
+      useNavigationStore.getState().previousPath === "/archive",
+  )
 
   const raf = useRef<number | null>(null)
   const lastWidth = useRef<number>(
@@ -208,6 +224,24 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     () => firstBgReady && firstThumbReady,
     [firstBgReady, firstThumbReady],
   )
+
+  /* Clip-path entrance when coming from /archive — hide before first paint */
+  useIsomorphicLayoutEffect(() => {
+    if (!fromArchiveRef.current || !wrapRef.current) return
+    gsap.set(wrapRef.current, { clipPath: "inset(0% 0% 100% 0%)" })
+  }, [])
+
+  /* Clip-path entrance when coming from /archive — animate in */
+  useEffect(() => {
+    if (!fromArchiveRef.current || !wrapRef.current) return
+    fromArchiveRef.current = false
+
+    gsap.to(wrapRef.current, {
+      clipPath: "inset(0% 0% 0% 0%)",
+      duration: 1.2,
+      ease: "power3.inOut",
+    })
+  }, [])
 
   useEffect(() => {
     if (!breakpoint || projects.length === 0 || !wrapRef.current) return
@@ -599,9 +633,65 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const handleArchiveClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault()
-      router.push("/archive")
+      if (transitioningRef.current || !lenis) return
+      transitioningRef.current = true
+      setIsRouteTransitioning(true)
+      lenis.stop()
+
+      const wrap = wrapRef.current
+      if (!wrap) {
+        setPreviousPath(window.location.pathname)
+        router.push("/archive")
+        return
+      }
+
+      /*
+        Disable every ScrollTrigger BEFORE changing the layout.
+        Switching wrapRef to position:fixed shrinks the scroll height;
+        if ScrollTrigger is still active it recalculates progress and
+        the component "breaks" visually.
+      */
+      ScrollTrigger.getAll().forEach((st) => st.disable(false))
+
+      const scrollY = window.scrollY
+
+      /*
+        Freeze the wrapper to the viewport and create a containing block
+        via transform so that all fixed-positioned children (thumbs, titles,
+        scroll indicator, CTA) are clipped together.
+      */
+      gsap.set(wrap, {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100lvh",
+        overflow: "hidden",
+        transform: "translate3d(0,0,0)",
+        zIndex: 40,
+      })
+
+      // Offset background sections to preserve visual scroll position
+      const bgContainer = wrap.children[0] as HTMLElement | null
+      if (bgContainer && scrollY > 0) {
+        gsap.set(bgContainer, { y: -scrollY })
+      }
+
+      gsap.fromTo(
+        wrap,
+        { clipPath: "inset(0% 0% 0% 0%)" },
+        {
+          clipPath: "inset(0% 0% 100% 0%)",
+          duration: 1.2,
+          ease: "power3.inOut",
+          onComplete: () => {
+            setPreviousPath(window.location.pathname)
+            router.push("/archive")
+          },
+        },
+      )
     },
-    [router],
+    [router, lenis, setPreviousPath],
   )
 
   /* Initialize first background image */

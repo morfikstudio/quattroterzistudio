@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/utils/classNames"
 import Contact from "@/components/Contact"
 import { useNavigationStore } from "@/stores/navigationStore"
+import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
 
 const navLinkClass = cn("link-underline")
 const navUnderlineClass = cn("link-underline-bar")
@@ -101,26 +102,40 @@ export default function Header() {
             ref={navRef}
             className={cn("flex gap-2", "type-menu text-white")}
           >
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  navLinkClass,
-                  item.isActive && "text-active-link pointer-events-none",
-                )}
-                onClick={() => setPreviousPath(pathname)}
-                onMouseEnter={(e) => {
-                  if (!item.isActive) e.currentTarget.dataset.line = "in"
-                }}
-                onMouseLeave={(e) => {
-                  if (!item.isActive) e.currentTarget.dataset.line = "out"
-                }}
-              >
-                {item.label}
-                {!item.isActive ? <span className={navUnderlineClass} /> : null}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const needsCurtain =
+                item.href === "/about" || pathname === "/about"
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    navLinkClass,
+                    item.isActive && "text-active-link pointer-events-none",
+                  )}
+                  onClick={(e) => {
+                    if (needsCurtain && !item.isActive) {
+                      e.preventDefault()
+                      setPreviousPath(pathname)
+                      dispatchCurtainNavigate(item.href)
+                    } else {
+                      setPreviousPath(pathname)
+                    }
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!item.isActive) e.currentTarget.dataset.line = "in"
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!item.isActive) e.currentTarget.dataset.line = "out"
+                  }}
+                >
+                  {item.label}
+                  {!item.isActive ? (
+                    <span className={navUnderlineClass} />
+                  ) : null}
+                </Link>
+              )
+            })}
             <button
               onClick={() => setIsContactOpen(true)}
               className={cn(navLinkClass, "cursor-pointer")}
