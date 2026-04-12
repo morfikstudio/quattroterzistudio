@@ -62,6 +62,8 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
   const [pageEnterDone, setPageEnterDone] = useState(false)
   // Mobile exit: force active underline to "out" before words animate away
   const [underlineExiting, setUnderlineExiting] = useState(false)
+  const mobileWrapRef = useRef<HTMLAnchorElement | null>(null)
+  const desktopWrapRef = useRef<HTMLAnchorElement | null>(null)
 
   const allAnimTargets = useCallback(
     () => [
@@ -102,6 +104,59 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
       exitWithCallback(() => router.push(url))
     },
     [router, exitWithCallback, setPreviousPath],
+  )
+
+  const navigateWithTransition = useCallback(
+    (url: string) => {
+      if (isExitingRef.current) return
+      isExitingRef.current = true
+
+      setPreviousPath(window.location.pathname)
+
+      const isMob = isMobileRef.current
+      const wrapEl = isMob ? mobileWrapRef.current : desktopWrapRef.current
+      const imgEl = isMob ? mobileImgRef.current : desktopImgRef.current
+
+      if (!wrapEl) {
+        router.push(url)
+        return
+      }
+
+      // Reset hover scale on the inner image layer
+      if (imgEl) {
+        const scaleChild = imgEl.firstElementChild as HTMLElement | null
+        if (scaleChild) {
+          scaleChild.style.transition = "none"
+          gsap.set(scaleChild, { scale: 1, overwrite: true })
+        }
+      }
+
+      const rect = wrapEl.getBoundingClientRect()
+
+      // Cancel CSS keyframe animation so it doesn't fight inline styles
+      wrapEl.style.animation = "none"
+
+      gsap.set(wrapEl, {
+        position: "fixed",
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        transform: "none",
+        clipPath: "none",
+        zIndex: 100,
+      })
+
+      // Image expansion, then navigate (letters-in happens on the project page Hero)
+      gsap.to(wrapEl, {
+        top: 0,
+        left: 0,
+        width: "100%",
+        duration: 1.5,
+        ease: "power3.out",
+        onComplete: () => router.push(url),
+      })
+    },
+    [router, setPreviousPath],
   )
 
   // Unlock mobile underline when word is almost fully visible
@@ -323,6 +378,7 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
         {/* Mobile image */}
         <div className="md:hidden absolute inset-0">
           <a
+            ref={mobileWrapRef}
             href={imageHref}
             className={cn(
               "pl-img-clip group absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[60vw]",
@@ -337,7 +393,7 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
               }
               if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
               e.preventDefault()
-              navigate(imageHref)
+              navigateWithTransition(imageHref)
             }}
           >
             <div
@@ -374,6 +430,7 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
         {/* Desktop: sopra lo swiper per vedere lo scale; solo il box immagine ha pointer-events per hover */}
         <div className="hidden md:block relative h-screen z-20 pointer-events-none">
           <a
+            ref={desktopWrapRef}
             href={imageHref}
             className={cn(
               "pl-img-clip group pointer-events-auto absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] lg:w-[35vw]",
@@ -388,7 +445,7 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
               }
               if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
               e.preventDefault()
-              navigate(imageHref)
+              navigateWithTransition(imageHref)
             }}
           >
             <div
@@ -513,7 +570,12 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
                       onMouseLeave={() => setHoverIndex(null)}
                       onFocus={() => setHoverIndex(i)}
                       onBlur={() => setHoverIndex(null)}
-                      onClick={(e) => e.preventDefault()}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        const href = getItemHref(p)
+                        if (href === "#") return
+                        navigateWithTransition(href)
+                      }}
                       aria-label={getLabel(p)}
                     >
                       {getLabel(p)
