@@ -4,9 +4,9 @@ import { useEffect, useRef } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import gsap from "gsap"
 
-const PHASE_1_DURATION = 0.8
-const PAUSE_DURATION = 0.1
-const PHASE_2_DURATION = 1
+const PHASE_1_DURATION = 0.85
+const PAUSE_DURATION = 0.08
+const PHASE_2_DURATION = 0.85
 
 export function dispatchCurtainNavigate(url: string) {
   window.dispatchEvent(new CustomEvent("curtain:navigate", { detail: { url } }))
