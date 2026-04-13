@@ -75,14 +75,17 @@ export default function Button({
 
   const content = (
     <>
-      <span className="relative inline-flex items-center justify-center overflow-hidden">
-        {/* Scaled layer: corners + sizing only; arrows live in sibling overlay so they stay scale(1) */}
+      <span
+        className={cn(
+          "relative inline-flex items-center justify-center overflow-hidden",
+          scaleAnim === "a" && "animate-[icon-scale-a_900ms_ease-in-out]",
+          scaleAnim === "b" && "animate-[icon-scale-b_900ms_ease-in-out]",
+        )}
+      >
         <span
           style={cornerStyle}
           className={cn(
             "corner-border inline-flex items-center justify-center",
-            scaleAnim === "a" && "animate-[icon-scale-a_900ms_ease-in-out]",
-            scaleAnim === "b" && "animate-[icon-scale-b_900ms_ease-in-out]",
             paddingClass,
           )}
         >
