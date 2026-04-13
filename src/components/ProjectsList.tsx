@@ -571,7 +571,9 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
                         interactedItemsRef.current.add(i)
                         setHoverIndex(i)
                       }}
-                      onMouseLeave={() => setHoverIndex(null)}
+                      onMouseLeave={() => {
+                        if (!isExitingRef.current) setHoverIndex(null)
+                      }}
                       onFocus={() => setHoverIndex(i)}
                       onBlur={() => setHoverIndex(null)}
                       onClick={(e) => {
