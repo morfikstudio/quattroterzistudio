@@ -98,11 +98,13 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
   const [underlineExiting, setUnderlineExiting] = useState(false)
   const mobileWrapRef = useRef<HTMLAnchorElement | null>(null)
   const desktopWrapRef = useRef<HTMLAnchorElement | null>(null)
+  const counterSpanRef = useRef<HTMLSpanElement | null>(null)
 
   const allAnimTargets = useCallback(
     () => [
       ...wordSpansRef.current,
       ...(yearSpanRef.current ? [yearSpanRef.current] : []),
+      ...(counterSpanRef.current ? [counterSpanRef.current] : []),
     ],
     [],
   )
@@ -417,6 +419,13 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
         </span>
       </div>
 
+      <div className="fixed bottom-6 right-6 z-30 pointer-events-none overflow-hidden">
+        <span ref={counterSpanRef} className="pl-year-span type-caption">
+          {String(displayIndex + 1).padStart(2, "0")}-
+          {String(items.length).padStart(2, "0")}
+        </span>
+      </div>
+
       <div className="relative h-screen md:grid md:grid-cols-2">
         {/* Mobile image */}
         <div className="md:hidden absolute inset-0">
@@ -569,6 +578,9 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
                     [
                       ...spans,
                       ...(yearSpanRef.current ? [yearSpanRef.current] : []),
+                      ...(counterSpanRef.current
+                        ? [counterSpanRef.current]
+                        : []),
                     ],
                     { y: "110%" },
                     { y: "0%", duration: 1.2, ease: "power3.out", delay: 0.1 },
