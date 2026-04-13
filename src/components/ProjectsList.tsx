@@ -131,6 +131,10 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
         }
       }
 
+      // Hide year — the Hero will show it with letters-in
+      const yearContainer = yearSpanRef.current?.parentElement
+      if (yearContainer) gsap.set(yearContainer, { autoAlpha: 0 })
+
       const rect = wrapEl.getBoundingClientRect()
 
       // Cancel CSS keyframe animation so it doesn't fight inline styles

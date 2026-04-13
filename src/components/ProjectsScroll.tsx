@@ -115,6 +115,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
       if (!isDesktop) {
         setIsRouteTransitioning(true)
+        setPreviousPath(window.location.pathname)
         if (!isSnappedRef.current && wrapRef.current) {
           const targetY = wrapRef.current.offsetTop + index * window.innerHeight
           lenis.scrollTo(targetY, {
@@ -153,6 +154,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           if (signal.aborted) return
 
           lenis.stop()
+
+          // Hide title and year — the Hero will show them with letters-in
+          const copyGroup = copyGroupRefs.current[index]
+          if (copyGroup) gsap.set(copyGroup, { autoAlpha: 0 })
+
           previousInlineTransition = innerEl.style.transition
 
           /*
@@ -194,6 +200,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
             if (!signal.aborted) {
               didNavigate = true
+              setPreviousPath(window.location.pathname)
               router.push(url)
             }
           } finally {
@@ -217,7 +224,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         doTransition()
       }
     },
-    [lenis, router, isDesktop],
+    [lenis, router, isDesktop, setPreviousPath],
   )
 
   const show = useMemo(
