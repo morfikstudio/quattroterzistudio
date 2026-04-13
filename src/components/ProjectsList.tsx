@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useCallback, useEffect, useRef, useState } from "react"
-import NextImage from "next/image"
 import { useRouter } from "next/navigation"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { FreeMode, Mousewheel } from "swiper/modules"
@@ -13,29 +12,9 @@ import Image from "@/components/ui/Image"
 import { useImageScale } from "@/hooks/useImageScale"
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
+import { useNavigationStore } from "@/stores/navigationStore"
 
 const SLIDES_PER_VIEW = 7
-
-// Placeholder — sostituire con dati reali Sanity quando disponibili
-type PlaceholderProject = {
-  id: string
-  title: string
-  code: string
-  year: string
-}
-const PLACEHOLDER_PROJECTS: PlaceholderProject[] = [
-  { id: "10", title: "Casa sul Lago", code: "M288NV4", year: "2023" },
-  { id: "20", title: "Residenza Borghese", code: "K471RP9", year: "2022" },
-  { id: "30", title: "Loft Industriale", code: "B302XL7", year: "2023" },
-  { id: "40", title: "Villa Moderna", code: "G815TQ2", year: "2021" },
-  { id: "50", title: "Appartamento Minimal", code: "H093JY6", year: "2024" },
-  { id: "60", title: "Studio Creativo", code: "N567WC8", year: "2022" },
-  { id: "70", title: "Penthouse Milano", code: "R124KD5", year: "2024" },
-  { id: "80", title: "Cascina Ristrutturata", code: "F690SE3", year: "2021" },
-  { id: "90", title: "Atelier Fotografico", code: "D743MZ1", year: "2023" },
-  { id: "100", title: "Showroom Design", code: "A856HB0", year: "2022" },
-  { id: "110", title: "Penthouse Roma", code: "T219UF8", year: "2024" },
-]
 
 function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
   const Icons = () => (
@@ -67,13 +46,13 @@ function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
   )
 }
 
-type Props = { projects?: PROJECTS_QUERY_RESULT }
+type Props = { projects?: PROJECTS_QUERY_RESULT; onSelectionClick?: () => void }
 
-export default function ProjectsList({ projects }: Props) {
-  const usePlaceholder = !projects || projects.length === 0
-  const items = usePlaceholder ? PLACEHOLDER_PROJECTS : projects!
+export default function ProjectsList({ projects, onSelectionClick }: Props) {
+  const items = projects ?? []
 
   const router = useRouter()
+  const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
   const [clipState, setClipState] = useState<"enter" | "exiting">("enter")
   const isExitingRef = useRef(false)
   const listContainerRef = useRef<HTMLDivElement | null>(null)
@@ -83,6 +62,8 @@ export default function ProjectsList({ projects }: Props) {
   const [pageEnterDone, setPageEnterDone] = useState(false)
   // Mobile exit: force active underline to "out" before words animate away
   const [underlineExiting, setUnderlineExiting] = useState(false)
+  const mobileWrapRef = useRef<HTMLAnchorElement | null>(null)
+  const desktopWrapRef = useRef<HTMLAnchorElement | null>(null)
 
   const allAnimTargets = useCallback(
     () => [
@@ -92,8 +73,8 @@ export default function ProjectsList({ projects }: Props) {
     [],
   )
 
-  const navigate = useCallback(
-    (url: string) => {
+  const exitWithCallback = useCallback(
+    (onComplete: () => void) => {
       if (isExitingRef.current) return
       isExitingRef.current = true
       setClipState("exiting")
@@ -103,7 +84,7 @@ export default function ProjectsList({ projects }: Props) {
           duration: 0.7,
           ease: "power3.in",
           overwrite: true,
-          onComplete: () => router.push(url),
+          onComplete,
         })
       if (isMobileRef.current) {
         setUnderlineExiting(true)
@@ -112,7 +93,74 @@ export default function ProjectsList({ projects }: Props) {
         startWords()
       }
     },
-    [router, allAnimTargets],
+    [allAnimTargets],
+  )
+
+  const navigate = useCallback(
+    (url: string) => {
+      // Set previousPath BEFORE router.push so SplashMarquee can read it
+      // synchronously during its first render on the destination page.
+      setPreviousPath(window.location.pathname)
+      exitWithCallback(() => router.push(url))
+    },
+    [router, exitWithCallback, setPreviousPath],
+  )
+
+  const navigateWithTransition = useCallback(
+    (url: string) => {
+      if (isExitingRef.current) return
+      isExitingRef.current = true
+
+      setPreviousPath(window.location.pathname)
+
+      const isMob = isMobileRef.current
+      const wrapEl = isMob ? mobileWrapRef.current : desktopWrapRef.current
+      const imgEl = isMob ? mobileImgRef.current : desktopImgRef.current
+
+      if (!wrapEl) {
+        router.push(url)
+        return
+      }
+
+      // Reset hover scale on the inner image layer
+      if (imgEl) {
+        const scaleChild = imgEl.firstElementChild as HTMLElement | null
+        if (scaleChild) {
+          scaleChild.style.transition = "none"
+          gsap.set(scaleChild, { scale: 1, overwrite: true })
+        }
+      }
+
+      // Hide year — the Hero will show it with letters-in
+      const yearContainer = yearSpanRef.current?.parentElement
+      if (yearContainer) gsap.set(yearContainer, { autoAlpha: 0 })
+
+      const rect = wrapEl.getBoundingClientRect()
+
+      // Cancel CSS keyframe animation so it doesn't fight inline styles
+      wrapEl.style.animation = "none"
+
+      gsap.set(wrapEl, {
+        position: "fixed",
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        transform: "none",
+        clipPath: "none",
+        zIndex: 100,
+      })
+
+      // Image expansion, then navigate (letters-in happens on the project page Hero)
+      gsap.to(wrapEl, {
+        top: 0,
+        left: 0,
+        width: "100%",
+        duration: 1.5,
+        ease: "power3.out",
+        onComplete: () => router.push(url),
+      })
+    },
+    [router, setPreviousPath],
   )
 
   // Unlock mobile underline when word is almost fully visible
@@ -207,13 +255,8 @@ export default function ProjectsList({ projects }: Props) {
   )
 
   const getItemHref = (
-    item: PlaceholderProject | PROJECTS_QUERY_RESULT[number],
-  ): string => {
-    if ("slug" in item && item.slug?.current) {
-      return `/projects/${item.slug.current}`
-    }
-    return "#"
-  }
+    item: PROJECTS_QUERY_RESULT[number] | undefined,
+  ): string => (item?.slug?.current ? `/projects/${item.slug.current}` : "#")
 
   const displayIndex = hoverIndex !== null ? hoverIndex : activeIndex
   const isHovering = !isScrolling && hoverIndex !== null
@@ -222,18 +265,10 @@ export default function ProjectsList({ projects }: Props) {
   const imageHref = getItemHref(displayedItem)
 
   const activeItem = items[activeIndex]
-  const activeYear = activeItem
-    ? "year" in activeItem
-      ? (activeItem as PlaceholderProject).year
-      : ((activeItem as PROJECTS_QUERY_RESULT[number]).year ?? "")
-    : ""
+  const activeYear = activeItem?.year ?? ""
 
-  const getLabel = (
-    item: PlaceholderProject | PROJECTS_QUERY_RESULT[number],
-  ) => ("code" in item ? item.code : (item.title ?? ""))
-
-  const getKey = (item: PlaceholderProject | PROJECTS_QUERY_RESULT[number]) =>
-    "id" in item ? item.id : item._id
+  const getLabel = (item: PROJECTS_QUERY_RESULT[number] | undefined) =>
+    item?.title ?? ""
 
   return (
     <>
@@ -248,7 +283,7 @@ export default function ProjectsList({ projects }: Props) {
         }
         .pl-img-clip[data-clip="enter"] {
           clip-path: inset(100% 0 0 0);
-          animation: pl-clip-enter 1.35s cubic-bezier(0.22, 1, 0.36, 1) .75s forwards;
+          animation: pl-clip-enter 1.35s cubic-bezier(0.22, 1, 0.36, 1) .25s forwards;
         }
         .pl-img-clip[data-clip="exiting"] {
           animation: pl-clip-exit 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
@@ -328,7 +363,13 @@ export default function ProjectsList({ projects }: Props) {
       `}</style>
 
       <div className="fixed bottom-5 left-6 z-30">
-        <SelectionCTA onNavigate={() => navigate("/projects")} />
+        <SelectionCTA
+          onNavigate={
+            onSelectionClick
+              ? () => exitWithCallback(onSelectionClick)
+              : () => navigate("/projects")
+          }
+        />
       </div>
 
       <div className="fixed top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-30 pointer-events-none overflow-hidden">
@@ -341,6 +382,7 @@ export default function ProjectsList({ projects }: Props) {
         {/* Mobile image */}
         <div className="md:hidden absolute inset-0">
           <a
+            ref={mobileWrapRef}
             href={imageHref}
             className={cn(
               "pl-img-clip group absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[60vw]",
@@ -355,7 +397,7 @@ export default function ProjectsList({ projects }: Props) {
               }
               if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
               e.preventDefault()
-              navigate(imageHref)
+              navigateWithTransition(imageHref)
             }}
           >
             <div
@@ -369,37 +411,21 @@ export default function ProjectsList({ projects }: Props) {
                   "group-hover:scale-110",
                 )}
               >
-                {usePlaceholder
-                  ? PLACEHOLDER_PROJECTS.map((p, i) => (
-                      <div
-                        key={p.id}
-                        className="pl-img-slide"
-                        data-active={displayIndex === i ? "true" : "false"}
-                      >
-                        <NextImage
-                          src={`https://picsum.photos/seed/${p.id}/800/600`}
-                          fill
-                          alt={p.title}
-                          className="object-cover"
-                          priority={i < 2}
-                        />
-                      </div>
-                    ))
-                  : projects!.map((p, i) => (
-                      <div
-                        key={`${p._id}-${i}`}
-                        className="pl-img-slide"
-                        data-active={displayIndex === i ? "true" : "false"}
-                      >
-                        <Image
-                          image={p.coverDetail}
-                          resizeId="cover-detail"
-                          fill
-                          fit="cover"
-                          priority={i < 2}
-                        />
-                      </div>
-                    ))}
+                {items.map((p, i) => (
+                  <div
+                    key={`${p._id}-${i}`}
+                    className="pl-img-slide"
+                    data-active={displayIndex === i ? "true" : "false"}
+                  >
+                    <Image
+                      image={p.coverDetail}
+                      resizeId="cover-detail"
+                      fill
+                      fit="cover"
+                      priority={i < 2}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           </a>
@@ -408,6 +434,7 @@ export default function ProjectsList({ projects }: Props) {
         {/* Desktop: sopra lo swiper per vedere lo scale; solo il box immagine ha pointer-events per hover */}
         <div className="hidden md:block relative h-screen z-20 pointer-events-none">
           <a
+            ref={desktopWrapRef}
             href={imageHref}
             className={cn(
               "pl-img-clip group pointer-events-auto absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] lg:w-[35vw]",
@@ -422,7 +449,7 @@ export default function ProjectsList({ projects }: Props) {
               }
               if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
               e.preventDefault()
-              navigate(imageHref)
+              navigateWithTransition(imageHref)
             }}
           >
             <div
@@ -436,37 +463,21 @@ export default function ProjectsList({ projects }: Props) {
                   "group-hover:scale-110",
                 )}
               >
-                {usePlaceholder
-                  ? PLACEHOLDER_PROJECTS.map((p, i) => (
-                      <div
-                        key={p.id}
-                        className="pl-img-slide"
-                        data-active={displayIndex === i ? "true" : "false"}
-                      >
-                        <NextImage
-                          src={`https://picsum.photos/seed/${p.id}/800/600`}
-                          fill
-                          alt={p.title}
-                          className="object-cover"
-                          priority={i < 2}
-                        />
-                      </div>
-                    ))
-                  : projects!.map((p, i) => (
-                      <div
-                        key={`${p._id}-${i}`}
-                        className="pl-img-slide"
-                        data-active={displayIndex === i ? "true" : "false"}
-                      >
-                        <Image
-                          image={p.coverDetail}
-                          resizeId="cover-detail"
-                          fill
-                          fit="cover"
-                          priority={i < 2}
-                        />
-                      </div>
-                    ))}
+                {items.map((p, i) => (
+                  <div
+                    key={`${p._id}-${i}`}
+                    className="pl-img-slide"
+                    data-active={displayIndex === i ? "true" : "false"}
+                  >
+                    <Image
+                      image={p.coverDetail}
+                      resizeId="cover-detail"
+                      fill
+                      fit="cover"
+                      priority={i < 2}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           </a>
@@ -521,7 +532,7 @@ export default function ProjectsList({ projects }: Props) {
                       ...(yearSpanRef.current ? [yearSpanRef.current] : []),
                     ],
                     { y: "110%" },
-                    { y: "0%", duration: 1.2, ease: "power3.out", delay: 0.4 },
+                    { y: "0%", duration: 1.2, ease: "power3.out", delay: 0.1 },
                   )
                 }, 0)
               }}
@@ -529,7 +540,7 @@ export default function ProjectsList({ projects }: Props) {
               className="h-full"
             >
               {items.map((p, i) => (
-                <SwiperSlide key={getKey(p)} role="listitem">
+                <SwiperSlide key={p._id} role="listitem">
                   <div className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10">
                     <a
                       href="#"
@@ -560,10 +571,17 @@ export default function ProjectsList({ projects }: Props) {
                         interactedItemsRef.current.add(i)
                         setHoverIndex(i)
                       }}
-                      onMouseLeave={() => setHoverIndex(null)}
+                      onMouseLeave={() => {
+                        if (!isExitingRef.current) setHoverIndex(null)
+                      }}
                       onFocus={() => setHoverIndex(i)}
                       onBlur={() => setHoverIndex(null)}
-                      onClick={(e) => e.preventDefault()}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        const href = getItemHref(p)
+                        if (href === "#") return
+                        navigateWithTransition(href)
+                      }}
                       aria-label={getLabel(p)}
                     >
                       {getLabel(p)

@@ -32,7 +32,7 @@ export default function HeroAbout() {
         duration: 1.25,
         ease: "power3.out",
         stagger: 0.08,
-        delay: 0.15,
+        delay: 0.4,
       })
 
       return () => {
