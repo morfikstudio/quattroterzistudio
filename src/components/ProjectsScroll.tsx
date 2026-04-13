@@ -62,7 +62,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const thumbInnerRefs = useRef<(HTMLDivElement | null)[]>([]) // Inner media layer receives hover scale and is reset before route transition.
   const wordsRefs = useRef<(HTMLSpanElement | null)[][]>([])
   const yearsRefs = useRef<(HTMLSpanElement | null)[]>([])
-  const countersRefs = useRef<(HTMLSpanElement | null)[]>([])
+  const counterRef = useRef<HTMLSpanElement | null>(null)
   const copyGroupRefs = useRef<(HTMLDivElement | null)[]>([])
   const activeSectionIndexRef = useRef(0)
   const fixedLayerRef = useRef<HTMLDivElement | null>(null)
@@ -272,11 +272,9 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         for (let i = 0; i < projects.length; i++) {
           const letters = wordsRefs.current[i]?.filter(Boolean) ?? []
           const year = yearsRefs.current[i]
-          const counter = countersRefs.current[i]
           const y = i < activeIdx ? "-110%" : i === activeIdx ? "0%" : "110%"
           gsap.set(letters, { y })
           if (year) gsap.set(year, { y })
-          if (counter) gsap.set(counter, { y })
         }
       }
 
@@ -299,20 +297,16 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         /* Kill all tweens */
         const allLetters = wordsRefs.current.flat().filter(Boolean)
         const allYears = yearsRefs.current.filter(Boolean)
-        const allCounters = countersRefs.current.filter(Boolean)
         gsap.killTweensOf(allLetters)
         gsap.killTweensOf(allYears)
-        gsap.killTweensOf(allCounters)
 
         /* Set the target index */
         targetIndex = nextIndex
 
         const lettersOut = wordsRefs.current[activeIndex]?.filter(Boolean) ?? []
         const yearOut = yearsRefs.current[activeIndex]
-        const counterOut = countersRefs.current[activeIndex]
         const lettersIn = wordsRefs.current[nextIndex]?.filter(Boolean) ?? []
         const yearIn = yearsRefs.current[nextIndex]
-        const counterIn = countersRefs.current[nextIndex]
 
         const isDown = nextIndex > activeIndex
         const outgoingY = isDown ? "-100%" : "100%"
@@ -355,27 +349,10 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           )
         }
 
-        if (counterOut) {
-          tl.to(
-            counterOut,
-            {
-              y: outgoingY,
-              duration: 0.3,
-              ease: "power2.in",
-              overwrite: "auto",
-            },
-            0,
-          )
-        }
-
         tl.set(lettersIn, { y: incomingFromY }, 0)
 
         if (yearIn) {
           tl.set(yearIn, { y: incomingFromY }, 0)
-        }
-
-        if (counterIn) {
-          tl.set(counterIn, { y: incomingFromY }, 0)
         }
 
         tl.to(
@@ -393,19 +370,6 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         if (yearIn) {
           tl.to(
             yearIn,
-            {
-              y: "0%",
-              duration: 0.7,
-              ease: "expo.out",
-              overwrite: "auto",
-            },
-            0.4,
-          )
-        }
-
-        if (counterIn) {
-          tl.to(
-            counterIn,
             {
               y: "0%",
               duration: 0.7,
@@ -468,6 +432,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       const syncFromProgress = () => {
         const nextIndex = getActiveIndexFromProgress()
         activeSectionIndexRef.current = nextIndex
+
+        // Update fixed counter text
+        if (counterRef.current) {
+          counterRef.current.textContent = `${String(nextIndex + 1).padStart(2, "0")}-${String(projects.length).padStart(2, "0")}`
+        }
 
         for (let i = 0; i < projects.length; i++) {
           const group = copyGroupRefs.current[i]
@@ -626,7 +595,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       const firstThumbClip = thumbClipRefs.current[0]
       const firstLetters = wordsRefs.current[0]?.filter(Boolean) ?? []
       const firstYear = yearsRefs.current[0]
-      const firstCounter = countersRefs.current[0]
+      const firstCounter = counterRef.current
 
       if (firstBg) {
         gsap.fromTo(
@@ -768,7 +737,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     <div
       ref={wrapRef}
       className={cn(
-        "max-md:overflow-x-clip max-md:touch-pan-y",
+        "overflow-x-clip max-md:touch-pan-y",
         "transition-opacity duration-500 ease-out",
         !show && "opacity-0",
         !show && "pointer-events-none",
@@ -944,20 +913,6 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                   </span>
                 </span>
               </div>
-
-              <div className="absolute bottom-6 right-6 pointer-events-none">
-                <span className="flex overflow-hidden">
-                  <span
-                    className="type-caption text-white"
-                    ref={(el) => {
-                      countersRefs.current[i] = el
-                    }}
-                  >
-                    {String(i + 1).padStart(2, "0")}-
-                    {String(projects.length).padStart(2, "0")}
-                  </span>
-                </span>
-              </div>
             </div>
           ))}
         </div>
@@ -974,6 +929,16 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       {/* LIST CTA */}
       <div ref={listCTAWrapRef} className="fixed bottom-6 left-6 z-30">
         <ListCTA onArchiveClick={handleArchiveClick} />
+      </div>
+
+      {/* COUNTER */}
+      <div className="fixed bottom-6 right-6 z-30 pointer-events-none overflow-hidden">
+        <span className="flex overflow-hidden">
+          <span ref={counterRef} className="type-caption text-white">
+            {String(1).padStart(2, "0")}-
+            {String(projects.length).padStart(2, "0")}
+          </span>
+        </span>
       </div>
     </div>
   )
