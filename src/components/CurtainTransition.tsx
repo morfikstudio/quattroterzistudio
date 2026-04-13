@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation"
 import gsap from "gsap"
 
 const PHASE_1_DURATION = 0.85
-const PAUSE_DURATION = 0.08
+const PAUSE_DURATION = 0.015
 const PHASE_2_DURATION = 0.85
 
 export function dispatchCurtainNavigate(url: string) {
