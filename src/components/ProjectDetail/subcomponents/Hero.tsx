@@ -1,7 +1,11 @@
 "use client"
 
+import { useEffect, useRef } from "react"
+import gsap from "gsap"
+
 import type { PROJECT_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
+import { useNavigationStore } from "@/stores/navigationStore"
 
 import Image from "@/components/ui/Image"
 import ScrollIndicator from "@/components/ScrollIndicator"
@@ -12,7 +16,52 @@ type HeroProps = {
   year: NonNullable<PROJECT_QUERY_RESULT>["year"] | null
 }
 
+const TRANSITION_PATHS = ["/projects", "/archive"]
+
 export default function Hero({ cover, title, year }: HeroProps) {
+  const titleRef = useRef<HTMLHeadingElement | null>(null)
+  const yearRef = useRef<HTMLSpanElement | null>(null)
+
+  const shouldAnimate = useRef(
+    typeof window !== "undefined" &&
+      TRANSITION_PATHS.some((p) =>
+        useNavigationStore.getState().previousPath?.startsWith(p),
+      ),
+  )
+
+  useEffect(() => {
+    if (!shouldAnimate.current) return
+    // Clear so subsequent Hero instances (infinite scroll) don't animate
+    shouldAnimate.current = false
+    useNavigationStore.getState().setPreviousPath(null)
+
+    const chars = titleRef.current
+      ? (Array.from(titleRef.current.children) as HTMLElement[])
+      : []
+    const yearEl = yearRef.current
+
+    if (chars.length) {
+      gsap.set(chars, { y: "110%" })
+      gsap.to(chars, {
+        y: "0%",
+        duration: 0.45,
+        ease: "expo.out",
+        stagger: 0.02,
+        delay: 0.1,
+      })
+    }
+
+    if (yearEl) {
+      gsap.set(yearEl, { y: "110%" })
+      gsap.to(yearEl, {
+        y: "0%",
+        duration: 0.7,
+        ease: "expo.out",
+        delay: 0.4,
+      })
+    }
+  }, [])
+
   return (
     <div className="relative">
       {/* COVER IMAGE */}
@@ -39,7 +88,7 @@ export default function Hero({ cover, title, year }: HeroProps) {
               "-translate-y-[calc(50%-4px)] md:-translate-y-[calc(50%-6px)]",
             )}
           >
-            <h1>
+            <h1 ref={titleRef}>
               {title.split("").map((char, i) => (
                 <span
                   key={i}
@@ -60,7 +109,9 @@ export default function Hero({ cover, title, year }: HeroProps) {
             )}
           >
             <span className="flex overflow-hidden">
-              <span className="type-caption text-white">{year}</span>
+              <span ref={yearRef} className="type-caption text-white">
+                {year}
+              </span>
             </span>
           </div>
         )}

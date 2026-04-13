@@ -6,13 +6,7 @@ import { SplitText } from "gsap/SplitText"
 import { cn } from "@/utils/classNames"
 import ScrollIndicator from "@/components/ScrollIndicator"
 
-interface HeroAboutProps {
-  title?: string
-  pretitle?: string
-  label?: string
-}
-
-export default function HeroAbout({ title, pretitle, label }: HeroAboutProps) {
+export default function HeroAbout() {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
@@ -33,11 +27,12 @@ export default function HeroAbout({ title, pretitle, label }: HeroAboutProps) {
 
       gsap.set(lines, { yPercent: 110 })
       gsap.to(lines, {
-        yPercent: 10,
+        yPercent: 0,
+        y: 3,
         duration: 1.25,
         ease: "power3.out",
-        stagger: 0.03,
-        delay: 0.15,
+        stagger: 0.08,
+        delay: 0.4,
       })
 
       return () => {
@@ -67,27 +62,27 @@ export default function HeroAbout({ title, pretitle, label }: HeroAboutProps) {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div
             className={cn(
-              "hero-about-title-container type-display-l",
-              "flex flex-col mb-[50px] ",
+              "hero-about-title-container type-display-l max-md:text-[42px]",
+              "flex flex-col mb-[50px]",
               "md:mb-0",
             )}
           >
             <span data-split className="block pt-[0.08em]">
-              lorem ipsum
+              we make
             </span>
             <span
               data-split
               className="block pt-[0.08em] ml-[30px] md:ml-[100px]"
             >
-              dolor{" "}
+              the unseen
             </span>
             <span data-split className="block pt-[0.08em]">
-              iscing elit
+              fell unknown
             </span>
           </div>
           <span
-            className={cn("label-right type-caption", "text-right")}
             data-split
+            className={cn("label-right type-caption", "text-right")}
           >
             Images creators
             <br />& Shadows lovers

@@ -1,6 +1,13 @@
 "use client"
 
-import { useEffect, useRef, useCallback, useState, useMemo } from "react"
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useCallback,
+  useState,
+  useMemo,
+} from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import gsap from "gsap"
@@ -11,6 +18,7 @@ import { getImageUrl } from "@/utils/media"
 import { cn } from "@/utils/classNames"
 
 import { useBreakpoint } from "@/stores/breakpointStore"
+import { useNavigationStore } from "@/stores/navigationStore"
 import { useIsTouch } from "@/hooks/useIsTouch"
 
 import { useLenis } from "@/components/LenisProvider"
@@ -22,6 +30,9 @@ type ProjectsScrollProps = {
 }
 
 gsap.registerPlugin(ScrollTrigger)
+
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect
 
 function clamp(value: number) {
   return Math.min(1, Math.max(0, value))
@@ -36,6 +47,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const lenis = useLenis()
   const { current: breakpoint } = useBreakpoint()
   const isTouch = useIsTouch()
+  const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
 
   const [firstBgReady, setFirstBgReady] = useState(false)
   const [firstThumbReady, setFirstThumbReady] = useState(false)
@@ -52,11 +64,18 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const yearsRefs = useRef<(HTMLSpanElement | null)[]>([])
   const copyGroupRefs = useRef<(HTMLDivElement | null)[]>([])
   const activeSectionIndexRef = useRef(0)
+  const fixedLayerRef = useRef<HTMLDivElement | null>(null)
+  const scrollIndicatorWrapRef = useRef<HTMLDivElement | null>(null)
+  const listCTAWrapRef = useRef<HTMLDivElement | null>(null)
 
   const transitioningRef = useRef(false)
   const transitionTweenRef = useRef<gsap.core.Tween | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const isSnappedRef = useRef(true) // true when scroll is fully at rest (user + snap animation)
+  const fromArchiveRef = useRef(
+    typeof window !== "undefined" &&
+      useNavigationStore.getState().previousPath === "/archive",
+  )
 
   const raf = useRef<number | null>(null)
   const lastWidth = useRef<number>(
@@ -96,6 +115,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
       if (!isDesktop) {
         setIsRouteTransitioning(true)
+        setPreviousPath(window.location.pathname)
         if (!isSnappedRef.current && wrapRef.current) {
           const targetY = wrapRef.current.offsetTop + index * window.innerHeight
           lenis.scrollTo(targetY, {
@@ -134,6 +154,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           if (signal.aborted) return
 
           lenis.stop()
+
+          // Hide title and year — the Hero will show them with letters-in
+          const copyGroup = copyGroupRefs.current[index]
+          if (copyGroup) gsap.set(copyGroup, { autoAlpha: 0 })
+
           previousInlineTransition = innerEl.style.transition
 
           /*
@@ -175,6 +200,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
             if (!signal.aborted) {
               didNavigate = true
+              setPreviousPath(window.location.pathname)
               router.push(url)
             }
           } finally {
@@ -198,13 +224,31 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         doTransition()
       }
     },
-    [lenis, router, isDesktop],
+    [lenis, router, isDesktop, setPreviousPath],
   )
 
   const show = useMemo(
     () => firstBgReady && firstThumbReady,
     [firstBgReady, firstThumbReady],
   )
+
+  /* Clip-path entrance when coming from /archive — hide before first paint */
+  useIsomorphicLayoutEffect(() => {
+    if (!fromArchiveRef.current || !wrapRef.current) return
+    gsap.set(wrapRef.current, { clipPath: "inset(0% 0% 100% 0%)" })
+  }, [])
+
+  /* Clip-path entrance when coming from /archive — animate in */
+  useEffect(() => {
+    if (!fromArchiveRef.current || !wrapRef.current) return
+    fromArchiveRef.current = false
+
+    gsap.to(wrapRef.current, {
+      clipPath: "inset(0% 0% 0% 0%)",
+      duration: 1.2,
+      ease: "power3.inOut",
+    })
+  }, [])
 
   useEffect(() => {
     if (!breakpoint || projects.length === 0 || !wrapRef.current) return
@@ -538,6 +582,125 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     }
   }, [lenis])
 
+  /* Splash reveal: scala lo sfondo dal lontano e rivela il thumbnail con clip-path */
+  useEffect(() => {
+    const handleReveal = () => {
+      const firstBg = bgRefs.current[0]
+      const firstThumbClip = thumbClipRefs.current[0]
+      const firstLetters = wordsRefs.current[0]?.filter(Boolean) ?? []
+      const firstYear = yearsRefs.current[0]
+
+      if (firstBg) {
+        gsap.fromTo(
+          firstBg,
+          { scale: 1.5 },
+          { scale: 1, duration: 2.8, ease: "expo.out" },
+        )
+      }
+
+      if (firstThumbClip) {
+        gsap.set(firstThumbClip, { clipPath: "inset(100% 0% 0% 0%)" })
+        gsap.to(firstThumbClip, {
+          clipPath: "inset(0% 0% 0% 0%)",
+          duration: 1.35,
+          ease: "cubic-bezier(0.22, 1, 0.36, 1)",
+          delay: 0.5,
+        })
+      }
+
+      // Stessa animazione "lettersIn" dello scroll — parte a metà del clip-path
+      if (firstLetters.length) {
+        gsap.set(firstLetters, { y: "110%" })
+        gsap.to(firstLetters, {
+          y: "0%",
+          duration: 0.45,
+          ease: "expo.out",
+          stagger: 0.02,
+          delay: 0.9,
+          overwrite: "auto",
+        })
+      }
+
+      if (firstYear) {
+        gsap.set(firstYear, { y: "110%" })
+        gsap.to(firstYear, {
+          y: "0%",
+          duration: 0.7,
+          ease: "expo.out",
+          delay: 1.2,
+          overwrite: "auto",
+        })
+      }
+    }
+
+    window.addEventListener("splash:reveal", handleReveal)
+    return () => window.removeEventListener("splash:reveal", handleReveal)
+  }, [])
+
+  const handleArchiveClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault()
+      if (transitioningRef.current || !lenis) return
+      transitioningRef.current = true
+      setIsRouteTransitioning(true)
+      lenis.stop()
+
+      const wrap = wrapRef.current
+      if (!wrap) {
+        setPreviousPath(window.location.pathname)
+        router.push("/archive")
+        return
+      }
+
+      /*
+        Disable every ScrollTrigger BEFORE changing the layout.
+        Switching wrapRef to position:fixed shrinks the scroll height;
+        if ScrollTrigger is still active it recalculates progress and
+        the component "breaks" visually.
+      */
+      ScrollTrigger.getAll().forEach((st) => st.disable(false))
+
+      const scrollY = window.scrollY
+
+      /*
+        Freeze the wrapper to the viewport and create a containing block
+        via transform so that all fixed-positioned children (thumbs, titles,
+        scroll indicator, CTA) are clipped together.
+      */
+      gsap.set(wrap, {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100lvh",
+        overflow: "hidden",
+        transform: "translate3d(0,0,0)",
+        zIndex: 40,
+      })
+
+      // Offset background sections to preserve visual scroll position
+      const bgContainer = wrap.children[0] as HTMLElement | null
+      if (bgContainer && scrollY > 0) {
+        gsap.set(bgContainer, { y: -scrollY })
+      }
+
+      gsap.fromTo(
+        wrap,
+        { clipPath: "inset(0% 0% 0% 0%)" },
+        {
+          clipPath: "inset(0% 0% 100% 0%)",
+          duration: 1.2,
+          ease: "power3.inOut",
+          onComplete: () => {
+            setPreviousPath(window.location.pathname)
+            router.push("/archive")
+          },
+        },
+      )
+    },
+    [router, lenis, setPreviousPath],
+  )
+
   /* Initialize first background image */
   useEffect(() => {
     if (!projects[0]) return
@@ -599,7 +762,10 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         ))}
       </div>
 
-      <div className="fixed top-0 left-0 w-full h-lvh z-20 pointer-events-none">
+      <div
+        ref={fixedLayerRef}
+        className="fixed top-0 left-0 w-full h-lvh z-20 pointer-events-none"
+      >
         {/* THUMBS */}
         <div className="absolute inset-0 z-0 isolate pointer-events-none">
           {projects.map((p, i) => (
@@ -735,19 +901,26 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       </div>
 
       {/* SCROLL INDICATOR */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+      <div
+        ref={scrollIndicatorWrapRef}
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+      >
         <ScrollIndicator />
       </div>
 
       {/* LIST CTA */}
-      <div className="fixed bottom-6 left-6 z-30">
-        <ListCTA />
+      <div ref={listCTAWrapRef} className="fixed bottom-6 left-6 z-30">
+        <ListCTA onArchiveClick={handleArchiveClick} />
       </div>
     </div>
   )
 }
 
-function ListCTA() {
+function ListCTA({
+  onArchiveClick,
+}: {
+  onArchiveClick: (e: React.MouseEvent) => void
+}) {
   const Icons = useCallback(() => {
     return (
       <div className="flex flex-col items-center gap-[3px]">
@@ -758,7 +931,10 @@ function ListCTA() {
   }, [])
 
   return (
-    <Link href="/archive">
+    <button
+      onClick={onArchiveClick}
+      className="appearance-none bg-transparent p-0 border-0"
+    >
       <div
         className={cn(
           "group",
@@ -817,6 +993,6 @@ function ListCTA() {
           </div>
         </div>
       </div>
-    </Link>
+    </button>
   )
 }

@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useCallback, useEffect, useRef, useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { FreeMode, Mousewheel } from "swiper/modules"
@@ -13,6 +12,7 @@ import Image from "@/components/ui/Image"
 import { useImageScale } from "@/hooks/useImageScale"
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
+import { useNavigationStore } from "@/stores/navigationStore"
 
 const SLIDES_PER_VIEW = 7
 
@@ -27,46 +27,17 @@ function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
       onClick={onNavigate}
       className="appearance-none bg-transparent p-0 border-0"
     >
-      <div
-        className={cn(
-          "group",
-          "relative h-[40px] w-[120px] flex items-center justify-center px-4",
-          "border border-black max-md:bg-black ",
-        )}
-      >
-        <div
-          className={cn(
-            "relative h-full w-full",
-            "flex items-center justify-center overflow-hidden",
-          )}
-        >
-          <div
-            className={cn(
-              "absolute top-1/2 left-0",
-              "-translate-y-1/2 group-hover:-translate-x-1 group-hover:opacity-0",
-              "transition-all duration-200 ease-in-out",
-            )}
-          >
+      <div className="group relative h-[40px] w-[120px] border border-black max-md:bg-black flex items-center justify-center px-4">
+        <div className="relative h-full w-full flex items-center justify-center overflow-hidden">
+          <div className="absolute top-1/2 left-0 -translate-y-1/2 group-hover:-translate-x-1 group-hover:opacity-0 transition-all duration-200 ease-in-out">
             <Icons />
           </div>
-          <div
-            className={cn(
-              "absolute top-1/2 left-1/2",
-              "-translate-x-1/2 -translate-y-1/2 group-hover:-translate-x-[calc(50%+14px)]",
-              "transition-transform duration-400 ease-out",
-            )}
-          >
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 group-hover:-translate-x-[calc(50%+14px)] transition-transform duration-400 ease-out">
             <span className="type-button-m uppercase text-black max-md:text-white">
               selection
             </span>
           </div>
-          <div
-            className={cn(
-              "absolute top-1/2 right-0",
-              " -translate-y-1/2 translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100",
-              "transition-all duration-200 ease-in-out",
-            )}
-          >
+          <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200 ease-in-out">
             <Icons />
           </div>
         </div>
@@ -75,19 +46,24 @@ function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
   )
 }
 
-type Props = { projects: PROJECTS_QUERY_RESULT }
+type Props = { projects?: PROJECTS_QUERY_RESULT; onSelectionClick?: () => void }
 
-export default function ProjectsList({ projects }: Props) {
+export default function ProjectsList({ projects, onSelectionClick }: Props) {
+  const items = projects ?? []
+
   const router = useRouter()
+  const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
   const [clipState, setClipState] = useState<"enter" | "exiting">("enter")
   const isExitingRef = useRef(false)
   const listContainerRef = useRef<HTMLDivElement | null>(null)
   const wordSpansRef = useRef<HTMLElement[]>([])
   const yearSpanRef = useRef<HTMLSpanElement | null>(null)
-  // Mobile enter: unlock underline only when word is almost done
+  // Mobile enter: unlock underline only when word is almost done (0.4s delay + ~0.9s into anim)
   const [pageEnterDone, setPageEnterDone] = useState(false)
   // Mobile exit: force active underline to "out" before words animate away
   const [underlineExiting, setUnderlineExiting] = useState(false)
+  const mobileWrapRef = useRef<HTMLAnchorElement | null>(null)
+  const desktopWrapRef = useRef<HTMLAnchorElement | null>(null)
 
   const allAnimTargets = useCallback(
     () => [
@@ -97,8 +73,8 @@ export default function ProjectsList({ projects }: Props) {
     [],
   )
 
-  const navigate = useCallback(
-    (url: string) => {
+  const exitWithCallback = useCallback(
+    (onComplete: () => void) => {
       if (isExitingRef.current) return
       isExitingRef.current = true
       setClipState("exiting")
@@ -108,7 +84,7 @@ export default function ProjectsList({ projects }: Props) {
           duration: 0.7,
           ease: "power3.in",
           overwrite: true,
-          onComplete: () => router.push(url),
+          onComplete,
         })
       if (isMobileRef.current) {
         setUnderlineExiting(true)
@@ -117,7 +93,74 @@ export default function ProjectsList({ projects }: Props) {
         startWords()
       }
     },
-    [router, allAnimTargets],
+    [allAnimTargets],
+  )
+
+  const navigate = useCallback(
+    (url: string) => {
+      // Set previousPath BEFORE router.push so SplashMarquee can read it
+      // synchronously during its first render on the destination page.
+      setPreviousPath(window.location.pathname)
+      exitWithCallback(() => router.push(url))
+    },
+    [router, exitWithCallback, setPreviousPath],
+  )
+
+  const navigateWithTransition = useCallback(
+    (url: string) => {
+      if (isExitingRef.current) return
+      isExitingRef.current = true
+
+      setPreviousPath(window.location.pathname)
+
+      const isMob = isMobileRef.current
+      const wrapEl = isMob ? mobileWrapRef.current : desktopWrapRef.current
+      const imgEl = isMob ? mobileImgRef.current : desktopImgRef.current
+
+      if (!wrapEl) {
+        router.push(url)
+        return
+      }
+
+      // Reset hover scale on the inner image layer
+      if (imgEl) {
+        const scaleChild = imgEl.firstElementChild as HTMLElement | null
+        if (scaleChild) {
+          scaleChild.style.transition = "none"
+          gsap.set(scaleChild, { scale: 1, overwrite: true })
+        }
+      }
+
+      // Hide year — the Hero will show it with letters-in
+      const yearContainer = yearSpanRef.current?.parentElement
+      if (yearContainer) gsap.set(yearContainer, { autoAlpha: 0 })
+
+      const rect = wrapEl.getBoundingClientRect()
+
+      // Cancel CSS keyframe animation so it doesn't fight inline styles
+      wrapEl.style.animation = "none"
+
+      gsap.set(wrapEl, {
+        position: "fixed",
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        transform: "none",
+        clipPath: "none",
+        zIndex: 100,
+      })
+
+      // Image expansion, then navigate (letters-in happens on the project page Hero)
+      gsap.to(wrapEl, {
+        top: 0,
+        left: 0,
+        width: "100%",
+        duration: 1.5,
+        ease: "power3.out",
+        onComplete: () => router.push(url),
+      })
+    },
+    [router, setPreviousPath],
   )
 
   // Unlock mobile underline when word is almost fully visible
@@ -211,8 +254,21 @@ export default function ProjectsList({ projects }: Props) {
     [startScaleLoop],
   )
 
+  const getItemHref = (
+    item: PROJECTS_QUERY_RESULT[number] | undefined,
+  ): string => (item?.slug?.current ? `/projects/${item.slug.current}` : "#")
+
   const displayIndex = hoverIndex !== null ? hoverIndex : activeIndex
   const isHovering = !isScrolling && hoverIndex !== null
+
+  const displayedItem = items[displayIndex]
+  const imageHref = getItemHref(displayedItem)
+
+  const activeItem = items[activeIndex]
+  const activeYear = activeItem?.year ?? ""
+
+  const getLabel = (item: PROJECTS_QUERY_RESULT[number] | undefined) =>
+    item?.title ?? ""
 
   return (
     <>
@@ -227,7 +283,7 @@ export default function ProjectsList({ projects }: Props) {
         }
         .pl-img-clip[data-clip="enter"] {
           clip-path: inset(100% 0 0 0);
-          animation: pl-clip-enter 1.35s cubic-bezier(0.22, 1, 0.36, 1) .75s forwards;
+          animation: pl-clip-enter 1.35s cubic-bezier(0.22, 1, 0.36, 1) .25s forwards;
         }
         .pl-img-clip[data-clip="exiting"] {
           animation: pl-clip-exit 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
@@ -304,76 +360,127 @@ export default function ProjectsList({ projects }: Props) {
           transform: translateY(110%);
           display: inline-block;
         }
-
       `}</style>
 
-      <div className="fixed bottom-6 left-6 z-30">
-        <SelectionCTA onNavigate={() => navigate("/projects")} />
+      <div className="fixed bottom-5 left-6 z-30">
+        <SelectionCTA
+          onNavigate={
+            onSelectionClick
+              ? () => exitWithCallback(onSelectionClick)
+              : () => navigate("/projects")
+          }
+        />
       </div>
 
       <div className="fixed top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-30 pointer-events-none overflow-hidden">
         <span ref={yearSpanRef} className="pl-year-span type-caption">
-          {projects[activeIndex]?.year ?? ""}
+          {activeYear}
         </span>
       </div>
 
       <div className="relative h-screen md:grid md:grid-cols-2">
         {/* Mobile image */}
         <div className="md:hidden absolute inset-0">
-          <div
-            className="pl-img-clip absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw]"
+          <a
+            ref={mobileWrapRef}
+            href={imageHref}
+            className={cn(
+              "pl-img-clip group absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[60vw]",
+              "block cursor-pointer no-underline text-inherit focus-visible:outline-none",
+            )}
             data-clip={clipState}
+            aria-label={`Open project: ${getLabel(displayedItem)}`}
+            onClick={(e) => {
+              if (imageHref === "#") {
+                e.preventDefault()
+                return
+              }
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+              e.preventDefault()
+              navigateWithTransition(imageHref)
+            }}
           >
             <div
               ref={mobileImgRef}
               className="relative aspect-4/3 overflow-hidden w-full"
             >
-              {projects.map((p, i) => (
-                <div
-                  key={p._id}
-                  className="pl-img-slide"
-                  data-active={displayIndex === i ? "true" : "false"}
-                >
-                  <Image
-                    image={p.coverDetail}
-                    resizeId="cover-detail"
-                    fill
-                    fit="cover"
-                    priority={i < 2}
-                  />
-                </div>
-              ))}
+              <div
+                className={cn(
+                  "absolute inset-0 origin-center",
+                  "transition-transform duration-500 ease-out",
+                  "group-hover:scale-110",
+                )}
+              >
+                {items.map((p, i) => (
+                  <div
+                    key={`${p._id}-${i}`}
+                    className="pl-img-slide"
+                    data-active={displayIndex === i ? "true" : "false"}
+                  >
+                    <Image
+                      image={p.coverDetail}
+                      resizeId="cover-detail"
+                      fill
+                      fit="cover"
+                      priority={i < 2}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          </a>
         </div>
 
-        {/* Desktop image */}
-        <div className="hidden md:block relative h-screen">
-          <div
-            className="pl-img-clip absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] lg:w-[35vw]"
+        {/* Desktop: sopra lo swiper per vedere lo scale; solo il box immagine ha pointer-events per hover */}
+        <div className="hidden md:block relative h-screen z-20 pointer-events-none">
+          <a
+            ref={desktopWrapRef}
+            href={imageHref}
+            className={cn(
+              "pl-img-clip group pointer-events-auto absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] lg:w-[35vw]",
+              "block cursor-pointer no-underline text-inherit focus-visible:outline-none",
+            )}
             data-clip={clipState}
+            aria-label={`Open project: ${getLabel(displayedItem)}`}
+            onClick={(e) => {
+              if (imageHref === "#") {
+                e.preventDefault()
+                return
+              }
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+              e.preventDefault()
+              navigateWithTransition(imageHref)
+            }}
           >
             <div
               ref={desktopImgRef}
               className="relative aspect-4/3 overflow-hidden w-full"
             >
-              {projects.map((p, i) => (
-                <div
-                  key={p._id}
-                  className="pl-img-slide"
-                  data-active={displayIndex === i ? "true" : "false"}
-                >
-                  <Image
-                    image={p.coverDetail}
-                    resizeId="cover-detail"
-                    fill
-                    fit="cover"
-                    priority={i < 2}
-                  />
-                </div>
-              ))}
+              <div
+                className={cn(
+                  "absolute inset-0 origin-center",
+                  "transition-transform duration-500 ease-out",
+                  "group-hover:scale-110",
+                )}
+              >
+                {items.map((p, i) => (
+                  <div
+                    key={`${p._id}-${i}`}
+                    className="pl-img-slide"
+                    data-active={displayIndex === i ? "true" : "false"}
+                  >
+                    <Image
+                      image={p.coverDetail}
+                      resizeId="cover-detail"
+                      fill
+                      fit="cover"
+                      priority={i < 2}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          </a>
         </div>
 
         {/* Lista */}
@@ -425,23 +532,16 @@ export default function ProjectsList({ projects }: Props) {
                       ...(yearSpanRef.current ? [yearSpanRef.current] : []),
                     ],
                     { y: "110%" },
-                    { y: "0%", duration: 1.2, ease: "power3.out", delay: 0.4 },
+                    { y: "0%", duration: 1.2, ease: "power3.out", delay: 0.1 },
                   )
                 }, 0)
               }}
               onSetTranslate={handleSetTranslate}
               className="h-full"
             >
-              {projects.map((p, i) => (
+              {items.map((p, i) => (
                 <SwiperSlide key={p._id} role="listitem">
-                  <div
-                    className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10"
-                    onMouseEnter={() => {
-                      interactedItemsRef.current.add(i)
-                      setHoverIndex(i)
-                    }}
-                    onMouseLeave={() => setHoverIndex(null)}
-                  >
+                  <div className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10">
                     <a
                       href="#"
                       className={cn(
@@ -455,6 +555,7 @@ export default function ProjectsList({ projects }: Props) {
                       data-line={
                         (!isScrolling && hoverIndex === i) ||
                         (isMobile &&
+                          !isScrolling &&
                           pageEnterDone &&
                           !underlineExiting &&
                           activeIndex === i)
@@ -466,22 +567,36 @@ export default function ProjectsList({ projects }: Props) {
                             ? "out"
                             : undefined
                       }
+                      onMouseEnter={() => {
+                        interactedItemsRef.current.add(i)
+                        setHoverIndex(i)
+                      }}
+                      onMouseLeave={() => {
+                        if (!isExitingRef.current) setHoverIndex(null)
+                      }}
                       onFocus={() => setHoverIndex(i)}
                       onBlur={() => setHoverIndex(null)}
-                      onClick={(e) => e.preventDefault()}
-                      aria-label={p.title ?? undefined}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        const href = getItemHref(p)
+                        if (href === "#") return
+                        navigateWithTransition(href)
+                      }}
+                      aria-label={getLabel(p)}
                     >
-                      {(p.title ?? "").split(" ").map((word, j, arr) => (
-                        <span
-                          key={j}
-                          className="overflow-hidden inline-block align-bottom"
-                        >
-                          <span className="pl-word-inner">
-                            {word}
-                            {j < arr.length - 1 ? "\u00A0" : ""}
+                      {getLabel(p)
+                        .split(" ")
+                        .map((word, j, arr) => (
+                          <span
+                            key={j}
+                            className="overflow-hidden inline-block align-bottom"
+                          >
+                            <span className="pl-word-inner">
+                              {word}
+                              {j < arr.length - 1 ? "\u00A0" : ""}
+                            </span>
                           </span>
-                        </span>
-                      ))}
+                        ))}
                       <span
                         className={cn(
                           "pl-underline",

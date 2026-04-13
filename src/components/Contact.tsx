@@ -45,29 +45,35 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
       const tl = gsap.timeline()
       tlRef.current = tl
 
-      tl.to(el, {
-        clipPath: "inset(0% 0% 0% 0%)",
-        duration: 1,
-        ease: "power3.inOut",
-      })
-        .to(
-          lines,
-          {
-            yPercent: 0,
-            duration: 1,
-            ease: "power3.out",
-          },
-          "-=0.4",
-        )
-        .to(
+      // Marquee e apertura pannello partono subito; le righe di testo dopo, così il marquee anticipa.
+      if (marqueeEl) {
+        tl.to(
           marqueeEl,
           {
             yPercent: 0,
             duration: 0.9,
             ease: "power3.out",
           },
-          "-=0.8",
+          0,
         )
+      }
+      tl.to(
+        el,
+        {
+          clipPath: "inset(0% 0% 0% 0%)",
+          duration: 1,
+          ease: "power3.inOut",
+        },
+        0,
+      ).to(
+        lines,
+        {
+          yPercent: 0,
+          duration: 1,
+          ease: "power3.out",
+        },
+        0.35,
+      )
 
       return () => {
         splits.forEach((s) => s.revert())
@@ -103,7 +109,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
       )}
     >
       {/* Header interno */}
-      <div className="flex justify-between items-center p-3 md:p-7">
+      <div className="flex justify-between items-center px-3 pt-6 md:px-6">
         <div className={cn("copyright md:block hidden")}>
           <span data-split className="text-[16px]">
             Copyright © quattroterzi 2026
@@ -115,12 +121,19 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
             label="Close"
             onClick={onClose}
             size="l"
+            variant="close"
           />
         </div>
       </div>
 
       {/* Contenuto */}
-      <div className="flex-1 flex flex-col justify-end px-3 pb-3 md:px-7 md:pb-12">
+      <div
+        className={cn(
+          "flex-1 flex flex-col justify-start",
+          "px-3 pb-3 pt-14",
+          "md:justify-end  md:pt-0 md:px-7 md:pb-12",
+        )}
+      >
         <div className="flex flex-col md:flex-row md:items-start">
           <div className={cn("title", "md:flex-1 md:min-w-0")}>
             <h2
@@ -209,7 +222,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                 <span className={cn("link-underline-bar")} />
               </a>
             </div>
-            <div className="flex flex-col uppercase">
+            <div className="flex-col uppercase hidden md:flex">
               <span data-split className="type-caption text-secondary mb-2">
                 legal
               </span>

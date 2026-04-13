@@ -115,7 +115,7 @@ export default function Footer() {
 
   return (
     <footer className={cn("footer bg-black text-white h-svh")}>
-      <div className="md:px-4 md:py-8 p-4 flex flex-col justify-between h-full">
+      <div className="md:px-6 md:py-8 p-4 flex flex-col justify-between h-full">
         <div
           ref={logoRef}
           className={cn(
