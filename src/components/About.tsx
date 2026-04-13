@@ -15,10 +15,10 @@ export default function About() {
         )}
       >
         <TextTwoCol
-          label="Lorem ipsum dolor"
+          label="the studio"
           paragraphs={[
-            "Vitae vel tellus nullam sit hendrerit amet eget turpis. Tortor adipiscing orci orci porta. Sed elementum eget dignissim in euismod faucibus non. Vitae vel tellus nullam sit hendrerit amet eget turpis. ",
-            "Facilisi morbi leo aenean vitae sed posuere ut. Vestibulum turpis tellus lobortis diam. Auctor in urna lectus nec dictum blandit. Suspendisse ac sagittis.",
+            "Identity is built before a word is spoken. It lives in spaces, in the way things look before they're explained. Environments, details, finishes. Images that define what people see first. ",
+            "We make those images. Light, then shadows.",
           ]}
         />
       </section>
@@ -31,7 +31,7 @@ export default function About() {
           "max-w-[1280px] mx-auto",
         )}
       >
-        <HoverList label="Imcommodo tellus" />
+        <HoverList label="what we shape" />
       </section>
     </>
   )
