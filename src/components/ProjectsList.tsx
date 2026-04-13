@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback, useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { FreeMode, Mousewheel } from "swiper/modules"
@@ -13,6 +13,7 @@ import { useImageScale } from "@/hooks/useImageScale"
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
 import { useNavigationStore } from "@/stores/navigationStore"
+import { useBreakpoint } from "@/stores/breakpointStore"
 
 const SLIDES_PER_VIEW = 7
 
@@ -27,17 +28,42 @@ function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
       onClick={onNavigate}
       className="appearance-none bg-transparent p-0 border-0"
     >
-      <div className="group relative h-[40px] w-[120px] border border-black max-md:bg-black flex items-center justify-center px-4">
-        <div className="relative h-full w-full flex items-center justify-center overflow-hidden">
-          <div className="absolute top-1/2 left-0 -translate-y-1/2 group-hover:-translate-x-1 group-hover:opacity-0 transition-all duration-200 ease-in-out">
+      <div
+        className={cn(
+          "group relative h-[40px] w-[125px]",
+          "border border-black max-md:bg-black flex items-center justify-center px-4",
+        )}
+      >
+        <div
+          className={cn(
+            "relative h-full w-full",
+            "flex items-center justify-center overflow-hidden",
+          )}
+        >
+          <div
+            className={cn(
+              "absolute top-1/2 left-0",
+              "-translate-y-1/2 group-hover:-translate-x-1 group-hover:opacity-0 transition-all duration-200 ease-in-out",
+            )}
+          >
             <Icons />
           </div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 group-hover:-translate-x-[calc(50%+14px)] transition-transform duration-400 ease-out">
+          <div
+            className={cn(
+              "absolute top-1/2 left-1/2",
+              "-translate-x-[calc(50%-8px)] -translate-y-1/2 group-hover:-translate-x-[calc(50%+5.5px)] transition-transform duration-400 ease-out",
+            )}
+          >
             <span className="type-button-m uppercase text-black max-md:text-white">
               selection
             </span>
           </div>
-          <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200 ease-in-out">
+          <div
+            className={cn(
+              "absolute top-1/2 right-0",
+              "-translate-y-1/2 translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200 ease-in-out",
+            )}
+          >
             <Icons />
           </div>
         </div>
@@ -53,6 +79,14 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
 
   const router = useRouter()
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
+  const { current: breakpoint } = useBreakpoint()
+  const isDesktop = useMemo(
+    () =>
+      typeof window !== "undefined" &&
+      window.innerWidth / window.innerHeight >= 1.35 &&
+      breakpoint?.startsWith("desktop"),
+    [breakpoint],
+  )
   const [clipState, setClipState] = useState<"enter" | "exiting">("enter")
   const isExitingRef = useRef(false)
   const listContainerRef = useRef<HTMLDivElement | null>(null)
@@ -113,9 +147,14 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
 
       setPreviousPath(window.location.pathname)
 
-      const isMob = isMobileRef.current
-      const wrapEl = isMob ? mobileWrapRef.current : desktopWrapRef.current
-      const imgEl = isMob ? mobileImgRef.current : desktopImgRef.current
+      // Non-desktop: navigate directly (no image expansion), same as ProjectsScroll
+      if (!isDesktop) {
+        router.push(url)
+        return
+      }
+
+      const wrapEl = desktopWrapRef.current
+      const imgEl = desktopImgRef.current
 
       if (!wrapEl) {
         router.push(url)
@@ -385,7 +424,7 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
             ref={mobileWrapRef}
             href={imageHref}
             className={cn(
-              "pl-img-clip group absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[60vw]",
+              "pl-img-clip grou absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[60vw]",
               "block cursor-pointer no-underline text-inherit focus-visible:outline-none",
             )}
             data-clip={clipState}
