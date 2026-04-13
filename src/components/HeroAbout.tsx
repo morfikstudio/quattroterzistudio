@@ -46,11 +46,13 @@ export default function HeroAbout() {
   }, [])
 
   return (
-    <div ref={containerRef} className={cn("hero-about", "px-4 md:px-12")}>
+    <div ref={containerRef} className={cn("hero-about relative", " md:pr-12")}>
       <div
         className={cn(
           "content uppercase",
           "h-svh flex flex-col justify-center",
+          "relative px-[12px] md:px-[24px] pt-[48px] md:py-[104px]",
+          "max-w-[1280px] mx-auto",
         )}
       >
         <span
@@ -59,7 +61,7 @@ export default function HeroAbout() {
         >
           ( we are quattroterzi )
         </span>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div className="">
           <div
             className={cn(
               "hero-about-title-container type-display-l max-md:text-[42px]",
@@ -80,15 +82,19 @@ export default function HeroAbout() {
               fell unknown
             </span>
           </div>
-          <span
-            data-split
-            className={cn("label-right type-caption", "text-right")}
-          >
-            Images creators
-            <br />& Shadows lovers
-          </span>
         </div>
       </div>
+      <span
+        data-split
+        className={cn(
+          "label-right type-caption text-right ",
+          "absolute right-4 md:right-[24px] bottom-1/4",
+          "xl:right-12 xl:top-1/2 xl:bottom-auto xl:-translate-y-1/2 xl:translate-x-0",
+        )}
+      >
+        Images creators
+        <br />& Shadows lovers
+      </span>
       <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-10">
         <ScrollIndicator variant="dark" />
       </div>

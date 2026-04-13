@@ -69,7 +69,7 @@ export default function TextTwoCol({
     >
       <span
         data-split
-        className="type-caption  uppercase md:flex-1 mb-6 md:mb-0"
+        className="type-caption uppercase md:flex-1 mb-6 md:mb-0"
       >
         {label}
       </span>
