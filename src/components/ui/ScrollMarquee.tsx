@@ -4,6 +4,8 @@ import { useLayoutEffect, useRef } from "react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { cn } from "@/utils/classNames"
+import Lenis from "lenis"
+import { useLenis } from "@/components/LenisProvider"
 
 interface ScrollMarqueeProps {
   topText?: string
@@ -19,7 +21,7 @@ export default function ScrollMarquee({
   const containerRef = useRef<HTMLDivElement>(null)
   const topTrackRef = useRef<HTMLDivElement>(null)
   const bottomTrackRef = useRef<HTMLDivElement>(null)
-
+  const lenis = useLenis()
   useLayoutEffect(() => {
     gsap.registerPlugin(ScrollTrigger)
 
@@ -30,16 +32,23 @@ export default function ScrollMarquee({
 
     const triggerConfig = {
       trigger: container,
-      start: "top bottom+=200",
+      start: "top bottom-=200",
       end: "bottom top",
       scrub: 1.5,
+      markers: true,
     }
 
     // Row 1
     const topTween = gsap.fromTo(
       topTrack,
       { x: 200 },
-      { x: -300, ease: "none", force3D: true, scrollTrigger: triggerConfig },
+      {
+        x: -300,
+        ease: "none",
+        force3D: true,
+        scrollTrigger: triggerConfig,
+        markers: true,
+      },
     )
 
     // Row 2
@@ -51,6 +60,7 @@ export default function ScrollMarquee({
         ease: "none",
         force3D: true,
         scrollTrigger: triggerConfig,
+        markers: true,
       },
     )
 
@@ -59,7 +69,7 @@ export default function ScrollMarquee({
       bottomTween.scrollTrigger?.kill()
       gsap.set([topTrack, bottomTrack], { clearProps: "all" })
     }
-  }, [])
+  }, [lenis])
 
   return (
     <div

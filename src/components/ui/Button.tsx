@@ -87,12 +87,10 @@ export default function Button({
     "arrow-reverse": "translate-x-full group-hover:translate-x-0",
   }[variant]
 
-  const content = (
-    <>
-      <span
-        ref={scaleRef}
-        className="relative inline-flex items-center justify-center overflow-hidden"
-      >
+  const iconBox = (
+    <span className="relative inline-flex items-center justify-center">
+      {/* Scalable border */}
+      <span ref={scaleRef} className="inline-flex items-center justify-center">
         <span
           style={cornerStyle}
           className={cn(
@@ -107,26 +105,55 @@ export default function Button({
             {icon}
           </span>
         </span>
-        {/* Arrow 1 */}
-        <span
-          className={cn(
-            "pointer-events-none absolute inset-0 inline-flex items-center justify-center",
-            arrowOneClass,
-          )}
-        >
-          {icon}
-        </span>
-        {/* Arrow 2 */}
-        <span
-          className={cn(
-            "pointer-events-none absolute inset-0 inline-flex items-center justify-center",
-            "transition-transform duration-[700ms] ease-in-out",
-            arrowTwoClass,
-          )}
-        >
+      </span>
+      {/* Fixed icon — sits on top, unaffected by scale */}
+      <span className="pointer-events-none absolute inset-0 inline-flex items-center justify-center">
+        {icon}
+      </span>
+    </span>
+  )
+
+  const iconBoxDefault = (
+    <span
+      ref={scaleRef}
+      className="relative inline-flex items-center justify-center overflow-hidden"
+    >
+      <span
+        style={cornerStyle}
+        className={cn(
+          "corner-border inline-flex items-center justify-center",
+          paddingClass,
+        )}
+      >
+        <span className="inline-flex opacity-0 pointer-events-none" aria-hidden>
           {icon}
         </span>
       </span>
+      {/* Arrow 1 */}
+      <span
+        className={cn(
+          "pointer-events-none absolute inset-0 inline-flex items-center justify-center",
+          arrowOneClass,
+        )}
+      >
+        {icon}
+      </span>
+      {/* Arrow 2 */}
+      <span
+        className={cn(
+          "pointer-events-none absolute inset-0 inline-flex items-center justify-center",
+          "transition-transform duration-[700ms] ease-in-out",
+          arrowTwoClass,
+        )}
+      >
+        {icon}
+      </span>
+    </span>
+  )
+
+  const content = (
+    <>
+      {variant === "close" ? iconBox : iconBoxDefault}
       <span
         className={cn(
           "transition-transform duration-[400ms] ease-in-out group-hover:translate-x-1.5",
