@@ -73,6 +73,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const transitionTweenRef = useRef<gsap.core.Tween | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const isSnappedRef = useRef(true) // true when scroll is fully at rest (user + snap animation)
+  const isRevealingRef = useRef(false) // true during splash:reveal thumb animation
   const fromArchiveRef = useRef(
     typeof window !== "undefined" &&
       useNavigationStore.getState().previousPath === "/archive",
@@ -382,6 +383,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       }
 
       function handleThumbs(activeIdx: number, progress: number) {
+        if (isRevealingRef.current) return
         const prevIdx = activeIdx - 1
 
         /*
@@ -606,12 +608,16 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       }
 
       if (firstThumbClip) {
+        isRevealingRef.current = true
         gsap.set(firstThumbClip, { clipPath: "inset(100% 0% 0% 0%)" })
         gsap.to(firstThumbClip, {
           clipPath: "inset(0% 0% 0% 0%)",
-          duration: 1.35,
+          duration: 0.55,
           ease: "cubic-bezier(0.22, 1, 0.36, 1)",
-          delay: 0.5,
+          delay: 0,
+          onComplete: () => {
+            isRevealingRef.current = false
+          },
         })
       }
 
