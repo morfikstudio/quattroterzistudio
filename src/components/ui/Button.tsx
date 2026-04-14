@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { ReactNode, useState } from "react"
+import { ReactNode, useCallback, useRef } from "react"
+import gsap from "gsap"
 
 import { cn } from "@/utils/classNames"
 
@@ -24,12 +25,25 @@ export default function Button({
   className,
   onClick,
 }: ButtonProps) {
-  const [scaleAnim, setScaleAnim] = useState<"a" | "b" | null>(null)
+  const scaleRef = useRef<HTMLSpanElement | null>(null)
 
-  const handleMouseEnter = () =>
-    setScaleAnim((prev) => (prev === "a" ? "b" : "a"))
-  const handleMouseLeave = () =>
-    setScaleAnim((prev) => (prev === "a" ? "b" : "a"))
+  const bounce = useCallback(() => {
+    const el = scaleRef.current
+    if (!el) return
+    // Kill any running tween so we start from the current scale
+    gsap.killTweensOf(el)
+    gsap.fromTo(
+      el,
+      { scale: (gsap.getProperty(el, "scale") as number) || 1 },
+      {
+        keyframes: [
+          { scale: 0.8, duration: 0.09, ease: "power2.in" },
+          { scale: 1, duration: 0.8, ease: "power3.out" },
+        ],
+        overwrite: true,
+      },
+    )
+  }, [])
 
   const sizeClass = {
     default: "type-button-m",
@@ -55,8 +69,8 @@ export default function Button({
   )
 
   const hoverHandlers = {
-    onMouseEnter: handleMouseEnter,
-    onMouseLeave: handleMouseLeave,
+    onMouseEnter: bounce,
+    onMouseLeave: bounce,
   }
 
   const arrowOneClass = {
@@ -76,11 +90,8 @@ export default function Button({
   const content = (
     <>
       <span
-        className={cn(
-          "relative inline-flex items-center justify-center overflow-hidden",
-          scaleAnim === "a" && "animate-[icon-scale-a_900ms_ease-in-out]",
-          scaleAnim === "b" && "animate-[icon-scale-b_900ms_ease-in-out]",
-        )}
+        ref={scaleRef}
+        className="relative inline-flex items-center justify-center overflow-hidden"
       >
         <span
           style={cornerStyle}
@@ -127,34 +138,18 @@ export default function Button({
     </>
   )
 
-  return (
-    <>
-      <style>{`
-        @keyframes icon-scale-a {
-          0%   { transform: scale(1); }
-          10%  { transform: scale(0.8); }
-          100% { transform: scale(1); }
-        }
-        @keyframes icon-scale-b {
-          0%   { transform: scale(1); }
-          10%  { transform: scale(0.8); }
-          100% { transform: scale(1); }
-        }
-      `}</style>
-      {href ? (
-        <Link href={href} className={sharedClassName} {...hoverHandlers}>
-          {content}
-        </Link>
-      ) : (
-        <button
-          type="button"
-          onClick={onClick}
-          className={sharedClassName}
-          {...hoverHandlers}
-        >
-          {content}
-        </button>
-      )}
-    </>
+  return href ? (
+    <Link href={href} className={sharedClassName} {...hoverHandlers}>
+      {content}
+    </Link>
+  ) : (
+    <button
+      type="button"
+      onClick={onClick}
+      className={sharedClassName}
+      {...hoverHandlers}
+    >
+      {content}
+    </button>
   )
 }

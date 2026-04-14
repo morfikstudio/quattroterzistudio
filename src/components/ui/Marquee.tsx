@@ -44,8 +44,8 @@ export default function Marquee({ duration = 18 }: MarqueeProps) {
         paddingRight: "0.2em",
       }}
     >
-      <span style={{ fontWeight: 600 }}>quattroterzi</span>
-      <span style={{ fontWeight: 200 }}>studio</span>
+      <span className="font-medium">quattroterzi</span>
+      <span className="font-thin">studio</span>
     </span>
   )
 

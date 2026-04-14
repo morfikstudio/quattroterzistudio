@@ -119,7 +119,7 @@ export default function Footer() {
         <div
           ref={logoRef}
           className={cn(
-            "uppercase text-[12.5vw] md:text-[13vw] w-full",
+            "uppercase text-[12.5vw] md:text-[13vw] w-full tracking-[-0.015em] overflow-hidden",
             "flex flex-col items-end justify-end",
           )}
         >
@@ -188,18 +188,20 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div
+      <button
+        type="button"
+        onClick={() => lenis?.scrollTo(0, { duration: 1.5 })}
         className={cn(
           "btt",
           "md:hidden block absolute bottom-4.5 right-4",
-          "flex items-center gap-2 ",
+          "flex items-center gap-2 cursor-pointer",
         )}
       >
         <Icon type="arrowUp" size="xs" />
         <span className="font-medium uppercase text-[12px] leading-none">
           Back to top
         </span>
-      </div>
+      </button>
     </footer>
   )
 }
