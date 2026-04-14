@@ -143,7 +143,7 @@ export default function Footer() {
           >
             <div className={cn("type-body-l uppercase md:flex-1")}>
               <span data-split data-ready-trigger>
-                Ready to discuss your project?
+                Tell us what you see.
               </span>
             </div>
             <div
