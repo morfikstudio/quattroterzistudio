@@ -1,11 +1,14 @@
 "use client"
 
 import { useLayoutEffect, useRef } from "react"
+import { usePathname } from "next/navigation"
 import gsap from "gsap"
 import { SplitText } from "gsap/SplitText"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { cn } from "@/utils/classNames"
 import { useLenis } from "@/components/LenisProvider"
+import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
+import { useNavigationStore } from "@/stores/navigationStore"
 import Button from "./ui/Button"
 import Icon from "./ui/Icon"
 
@@ -22,6 +25,8 @@ export default function TextTwoCol({
 }: TextTwoColProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const lenis = useLenis()
+  const pathname = usePathname()
+  const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
 
   useLayoutEffect(() => {
     const scope = containerRef.current
@@ -84,8 +89,11 @@ export default function TextTwoCol({
           <Button
             label="Discover our work"
             icon={<Icon type="arrowRight" size="s" />}
-            href="/projects"
             size="l"
+            onClick={() => {
+              setPreviousPath(pathname)
+              dispatchCurtainNavigate("/projects")
+            }}
           />
         </div>
       </div>
