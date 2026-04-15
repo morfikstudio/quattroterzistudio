@@ -135,7 +135,9 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
         )}
       >
         <div className="flex flex-col md:flex-row md:items-start">
-          <div className={cn("title", "md:flex-1 md:min-w-0")}>
+          <div
+            className={cn("title mb-[30px] md:mb-0", "md:flex-1 md:min-w-0")}
+          >
             <h2
               data-split
               className={cn("type-h3 uppercase", "w-[100%] md:w-[80%]  ")}
