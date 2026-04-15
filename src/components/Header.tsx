@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
@@ -10,13 +10,16 @@ import { SplitText } from "gsap/SplitText"
 import { cn } from "@/utils/classNames"
 import Contact from "@/components/Contact"
 import { useNavigationStore } from "@/stores/navigationStore"
+import { useContactStore } from "@/stores/contactStore"
 import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
 
 const navLinkClass = cn("link-underline")
 const navUnderlineClass = cn("link-underline-bar")
 
 export default function Header() {
-  const [isContactOpen, setIsContactOpen] = useState(false)
+  const isContactOpen = useContactStore((s) => s.isOpen)
+  const openContact = useContactStore((s) => s.open)
+  const closeContact = useContactStore((s) => s.close)
   const pathname = usePathname()
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
   const navRef = useRef<HTMLDivElement>(null)
@@ -98,7 +101,6 @@ export default function Header() {
 
   const isProjectsActive =
     pathname === "/projects" ||
-    pathname.startsWith("/projects/") ||
     pathname === "/archive" ||
     pathname.startsWith("/archive/")
   const isAboutActive = pathname === "/about" || pathname.startsWith("/about/")
@@ -209,7 +211,7 @@ export default function Header() {
               )
             })}
             <button
-              onClick={() => setIsContactOpen(true)}
+              onClick={() => openContact()}
               className={cn(navLinkClass, "cursor-pointer")}
               onMouseEnter={(e) => {
                 e.currentTarget.dataset.line = "in"
@@ -225,7 +227,7 @@ export default function Header() {
         </div>
       </nav>
 
-      <Contact isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+      <Contact isOpen={isContactOpen} onClose={closeContact} />
     </>
   )
 }
