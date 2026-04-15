@@ -99,6 +99,7 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
   const mobileWrapRef = useRef<HTMLAnchorElement | null>(null)
   const desktopWrapRef = useRef<HTMLAnchorElement | null>(null)
   const counterSpanRef = useRef<HTMLSpanElement | null>(null)
+  const selectionCtaWrapRef = useRef<HTMLDivElement | null>(null)
 
   const allAnimTargets = useCallback(
     () => [
@@ -114,6 +115,15 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
       if (isExitingRef.current) return
       isExitingRef.current = true
       setClipState("exiting")
+      if (selectionCtaWrapRef.current) {
+        gsap.to(selectionCtaWrapRef.current, {
+          y: -20,
+          opacity: 0,
+          duration: 0.7,
+          ease: "power3.in",
+          overwrite: true,
+        })
+      }
       const startWords = () =>
         gsap.to(allAnimTargets(), {
           y: "-110%",
@@ -208,6 +218,17 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
   useEffect(() => {
     const t = setTimeout(() => setPageEnterDone(true), 1300)
     return () => clearTimeout(t)
+  }, [])
+
+  // Entry animation for the SelectionCTA (bottom-left)
+  useEffect(() => {
+    const el = selectionCtaWrapRef.current
+    if (!el) return
+    gsap.fromTo(
+      el,
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.9, ease: "power3.out", delay: 0.3 },
+    )
   }, [])
 
   useEffect(() => {
@@ -403,7 +424,7 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
         }
       `}</style>
 
-      <div className="fixed bottom-5 left-6 z-30">
+      <div ref={selectionCtaWrapRef} className="fixed bottom-5 left-6 z-30">
         <SelectionCTA
           onNavigate={
             onSelectionClick

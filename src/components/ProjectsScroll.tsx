@@ -743,6 +743,24 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     [router, lenis, setPreviousPath],
   )
 
+  /* Entry animation for the ListCTA (bottom-left archive button) */
+  useEffect(() => {
+    if (!show) return
+    const el = listCTAWrapRef.current
+    if (!el) return
+    gsap.fromTo(
+      el,
+      { y: 20, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.9,
+        ease: "power3.out",
+        delay: fromSplashRef.current ? 1.3 : 0.3,
+      },
+    )
+  }, [show])
+
   /* Initialize first background image */
   useEffect(() => {
     if (!projects[0]) return
