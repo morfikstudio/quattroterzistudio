@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react"
+import { useRouter } from "next/navigation"
 import gsap from "gsap"
 
 import { cn } from "@/utils/classNames"
@@ -28,6 +29,7 @@ export default function Splash({
   ctaText,
   forceShow = false,
 }: SplashProps) {
+  const router = useRouter()
   const setCursor = useCursorStore((s) => s.setCursor)
   const isTouch = useIsTouch()
 
@@ -213,8 +215,6 @@ export default function Splash({
     if (isLeavingRef.current || !rectRef.current || !wrapRef.current) return
     isLeavingRef.current = true
 
-    // Reset previousPath so the useEffect above doesn't re-trigger the splash
-    // when visible goes false at the end of the exit animation.
     useNavigationStore.getState().setPreviousPath(window.location.pathname)
 
     const el = rectRef.current
@@ -273,6 +273,7 @@ export default function Splash({
       onComplete: () => {
         setCursor(false)
         setVisible(false)
+        router.push("/projects")
       },
     })
 
@@ -285,7 +286,7 @@ export default function Splash({
     gsap.delayedCall(expandDuration * 0.8, () => {
       window.dispatchEvent(new CustomEvent("splash:header"))
     })
-  }, [setCursor])
+  }, [setCursor, router])
 
   if (!visible) return null
 
