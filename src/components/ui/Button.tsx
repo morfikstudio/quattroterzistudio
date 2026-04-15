@@ -1,7 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { ReactNode, useState } from "react"
+import {
+  ReactNode,
+  isValidElement,
+  cloneElement,
+  useCallback,
+  useRef,
+  useState,
+} from "react"
+import gsap from "gsap"
 
 import { cn } from "@/utils/classNames"
 
@@ -24,12 +32,38 @@ export default function Button({
   className,
   onClick,
 }: ButtonProps) {
-  const [scaleAnim, setScaleAnim] = useState<"a" | "b" | null>(null)
+  const scaleRef = useRef<HTMLSpanElement | null>(null)
+  const [lineState, setLineState] = useState<"idle" | "in" | "out">("idle")
 
-  const handleMouseEnter = () =>
-    setScaleAnim((prev) => (prev === "a" ? "b" : "a"))
-  const handleMouseLeave = () =>
-    setScaleAnim((prev) => (prev === "a" ? "b" : "a"))
+  const bounce = useCallback(() => {
+    const el = scaleRef.current
+    if (!el) return
+    // Kill any running tween so we start from the current scale
+    gsap.killTweensOf(el)
+    gsap.fromTo(
+      el,
+      { scale: (gsap.getProperty(el, "scale") as number) || 1 },
+      {
+        keyframes: [
+          { scale: 0.8, duration: 0.09, ease: "power2.in" },
+          { scale: 1, duration: 0.8, ease: "power3.out" },
+        ],
+        overwrite: true,
+      },
+    )
+  }, [])
+
+  const scaleTo = useCallback((value: number) => {
+    const el = scaleRef.current
+    if (!el) return
+    gsap.killTweensOf(el)
+    gsap.to(el, {
+      scale: value,
+      duration: 0.55,
+      ease: "power3.inOut",
+      overwrite: true,
+    })
+  }, [])
 
   const sizeClass = {
     default: "type-button-m",
@@ -50,14 +84,27 @@ export default function Button({
   }[size] as React.CSSProperties
 
   const sharedClassName = cn(
-    "group inline-flex items-center gap-4 cursor-pointer",
+    "group inline-flex items-center cursor-pointer",
+    variant === "close" ? "gap-1.5" : "gap-4",
     className,
   )
 
-  const hoverHandlers = {
-    onMouseEnter: handleMouseEnter,
-    onMouseLeave: handleMouseLeave,
-  }
+  const hoverHandlers =
+    variant === "close"
+      ? {
+          onMouseEnter: () => {
+            scaleTo(0.8)
+            setLineState("in")
+          },
+          onMouseLeave: () => {
+            scaleTo(1)
+            setLineState("out")
+          },
+        }
+      : {
+          onMouseEnter: bounce,
+          onMouseLeave: bounce,
+        }
 
   const arrowOneClass = {
     default:
@@ -73,88 +120,114 @@ export default function Button({
     "arrow-reverse": "translate-x-full group-hover:translate-x-0",
   }[variant]
 
+  const closeIcon = isValidElement(icon)
+    ? cloneElement(icon as React.ReactElement<{ size?: string }>, {
+        size: "xs",
+      })
+    : icon
+
+  const iconBox = (
+    <span ref={scaleRef} className="inline-flex items-center justify-center">
+      {closeIcon}
+    </span>
+  )
+
+  const iconBoxDefault = (
+    <span
+      ref={scaleRef}
+      className="relative inline-flex items-center justify-center overflow-hidden"
+    >
+      <span
+        style={cornerStyle}
+        className={cn(
+          "corner-border inline-flex items-center justify-center",
+          paddingClass,
+        )}
+      >
+        <span className="inline-flex opacity-0 pointer-events-none" aria-hidden>
+          {icon}
+        </span>
+      </span>
+      {/* Arrow 1 */}
+      <span
+        className={cn(
+          "pointer-events-none absolute inset-0 inline-flex items-center justify-center",
+          arrowOneClass,
+        )}
+      >
+        {icon}
+      </span>
+      {/* Arrow 2 */}
+      <span
+        className={cn(
+          "pointer-events-none absolute inset-0 inline-flex items-center justify-center",
+          "transition-transform duration-[700ms] ease-in-out",
+          arrowTwoClass,
+        )}
+      >
+        {icon}
+      </span>
+    </span>
+  )
+
   const content = (
     <>
-      <span
-        className={cn(
-          "relative inline-flex items-center justify-center overflow-hidden",
-          scaleAnim === "a" && "animate-[icon-scale-a_900ms_ease-in-out]",
-          scaleAnim === "b" && "animate-[icon-scale-b_900ms_ease-in-out]",
-        )}
-      >
+      {variant === "close" ? iconBox : iconBoxDefault}
+      {variant === "close" ? (
         <span
-          style={cornerStyle}
-          className={cn(
-            "corner-border inline-flex items-center justify-center",
-            paddingClass,
-          )}
+          className={cn("relative inline-block type-body-s")}
+          data-line={lineState === "idle" ? undefined : lineState}
         >
+          {label}
           <span
-            className="inline-flex opacity-0 pointer-events-none"
             aria-hidden
-          >
-            {icon}
-          </span>
+            className="btn-close-underline absolute left-0 w-full h-[1.5px] bg-current bottom-[0.1em]"
+          />
         </span>
-        {/* Arrow 1 */}
+      ) : (
         <span
           className={cn(
-            "pointer-events-none absolute inset-0 inline-flex items-center justify-center",
-            arrowOneClass,
+            "transition-transform duration-[400ms] ease-in-out group-hover:translate-x-1.5",
+            sizeClass,
           )}
         >
-          {icon}
+          {label}
         </span>
-        {/* Arrow 2 */}
-        <span
-          className={cn(
-            "pointer-events-none absolute inset-0 inline-flex items-center justify-center",
-            "transition-transform duration-[700ms] ease-in-out",
-            arrowTwoClass,
-          )}
-        >
-          {icon}
-        </span>
-      </span>
-      <span
-        className={cn(
-          "transition-transform duration-[400ms] ease-in-out group-hover:translate-x-1.5",
-          sizeClass,
-        )}
-      >
-        {label}
-      </span>
+      )}
+      {variant === "close" && (
+        <style>{`
+          .btn-close-underline { clip-path: inset(0 100% 0 0); }
+          @keyframes btn-close-line-in {
+            from { clip-path: inset(0 100% 0 0); }
+            to   { clip-path: inset(0 0% 0 0); }
+          }
+          @keyframes btn-close-line-out {
+            from { clip-path: inset(0 0% 0 0); }
+            to   { clip-path: inset(0 0% 0 100%); }
+          }
+          [data-line="in"] > .btn-close-underline {
+            animation: btn-close-line-in 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          }
+          [data-line="out"] > .btn-close-underline {
+            animation: btn-close-line-out 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+          }
+        `}</style>
+      )}
     </>
   )
 
-  return (
-    <>
-      <style>{`
-        @keyframes icon-scale-a {
-          0%   { transform: scale(1); }
-          10%  { transform: scale(0.8); }
-          100% { transform: scale(1); }
-        }
-        @keyframes icon-scale-b {
-          0%   { transform: scale(1); }
-          10%  { transform: scale(0.8); }
-          100% { transform: scale(1); }
-        }
-      `}</style>
-      {href ? (
-        <Link href={href} className={sharedClassName} {...hoverHandlers}>
-          {content}
-        </Link>
-      ) : (
-        <button
-          type="button"
-          onClick={onClick}
-          className={sharedClassName}
-          {...hoverHandlers}
-        >
-          {content}
-        </button>
-      )}
-    </>
+  return href ? (
+    <Link href={href} className={sharedClassName} {...hoverHandlers}>
+      {content}
+    </Link>
+  ) : (
+    <button
+      type="button"
+      onClick={onClick}
+      className={sharedClassName}
+      {...hoverHandlers}
+    >
+      {content}
+    </button>
   )
 }

@@ -250,7 +250,12 @@ export default function NextProjectTeaser({
       ctx.revert()
       killTween(textTween.current)
       killTween(thumbTween.current)
-      gsap.set([wrapRef, maskRef, thumbRef], { clearProps: "all" })
+      const targets = [
+        wrapRef.current,
+        maskRef.current,
+        thumbRef.current,
+      ].filter(Boolean) as HTMLElement[]
+      if (targets.length) gsap.set(targets, { clearProps: "all" })
       setState("idle")
       abortRef.current?.abort()
       abortRef.current = null
