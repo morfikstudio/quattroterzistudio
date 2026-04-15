@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import gsap from "gsap"
 
 import { cn } from "@/utils/classNames"
@@ -20,45 +20,30 @@ const MARQUEE_X_OFFSET = -0.75
 type SplashProps = {
   title: string
   ctaText: string
-  /** True when the server detected a direct "/" navigation (via middleware cookie). */
-  forceShow?: boolean
 }
 
-export default function Splash({
-  title,
-  ctaText,
-  forceShow = false,
-}: SplashProps) {
+export default function Splash({ title, ctaText }: SplashProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const setCursor = useCursorStore((s) => s.setCursor)
   const isTouch = useIsTouch()
 
-  // Show splash when:
-  //  - forceShow: server read the middleware cookie (direct "/" URL visit)
-  //  - previousPath === "/": logo click
-  // The previousPath must be set BEFORE router.push in click handlers so it's
-  // readable here during the very first render (useState initializer runs once).
-  const [visible, setVisible] = useState(() => {
-    if (forceShow) return true
-    const prev = useNavigationStore.getState().previousPath
-    return prev === "/"
-  })
+  /*
+    Splash is mounted inside the layout and persists across route changes.
+    Visibility is gated by the pathname:
+      - pathname === "/"  → show splash (landing or logo click from another route)
+      - during the exit animation we keep `visible = true` even after pathname
+        becomes "/projects", so the splash stays on top until its tween completes
+      - at animation end, `setVisible(false)` unmounts the DOM
+  */
+  const [visible, setVisible] = useState(() => pathname === "/")
 
-  // Clear the middleware cookie on the client as soon as the splash is shown.
   useEffect(() => {
-    if (visible) {
-      document.cookie = "show_splash=; max-age=0; path=/"
-    }
-  }, [visible])
-
-  // React to logo clicks when already on /projects (no remount → useState doesn't re-run).
-  const previousPath = useNavigationStore((s) => s.previousPath)
-  useEffect(() => {
-    if (previousPath === "/") {
+    if (pathname === "/") {
       isLeavingRef.current = false
       setVisible(true)
     }
-  }, [previousPath])
+  }, [pathname])
 
   const wrapRef = useRef<HTMLDivElement>(null)
   const rectRef = useRef<HTMLDivElement>(null)
@@ -208,16 +193,23 @@ export default function Splash({
   }, [setCursor, visible])
 
   /**
-   * Splash exit animation — il rettangolo si espande a coprire l'overlay,
-   * poi l'intero overlay sfuma rivelando /projects già caricata sotto.
+   * Splash exit animation — /projects viene montata subito sotto il wrap
+   * (z-[9999]) grazie a router.push anticipato; il rect nero si espande E
+   * contemporaneamente l'intero wrap (rect + bg bianco + lettere) fa fade out,
+   * così mentre il rettangolo cresce diventa anche sempre più trasparente e
+   * rivela /projects sotto.
    */
   const handleEnter = useCallback(() => {
     if (isLeavingRef.current || !rectRef.current || !wrapRef.current) return
     isLeavingRef.current = true
 
+    // 1. Anticipa la navigazione: /projects comincia a montarsi in background
+    //    mentre lo splash si dissolve sopra.
     useNavigationStore.getState().setPreviousPath(window.location.pathname)
+    router.push("/projects")
 
     const el = rectRef.current
+    const wrap = wrapRef.current
     const box = el.getBoundingClientRect()
 
     if (marqueeRef.current) gsap.killTweensOf(marqueeRef.current)
@@ -236,14 +228,10 @@ export default function Splash({
       maxWidth: "none",
     })
 
-    const letters = wrapRef.current.querySelectorAll<HTMLElement>(
-      "[data-splash-letter]",
-    )
-
-    // Durata espansione rect
     const expandDuration = 1.3
+    const fadeDelay = 0.3
 
-    // Rect si espande — t=0
+    // 2. Rect si espande a full-screen
     gsap.to(el, {
       left: 0,
       top: 0,
@@ -253,39 +241,33 @@ export default function Splash({
       ease: "expo.inOut",
     })
 
-    // Lettere scompaiono — partono un po' dopo l'inizio dell'espansione
+    // 3. Lettere del marquee fade out rapido — devono sparire prima che
+    //    il wrap inizi a dissolversi.
+    const letters = wrap.querySelectorAll<HTMLElement>("[data-splash-letter]")
     if (letters.length) {
       gsap.to(letters, {
         opacity: 0,
-        delay: 0.25,
-        duration: 0.4,
+        duration: 0.65,
         ease: "power2.in",
       })
     }
 
-    // Overlay sfuma — parte al 30% dell'espansione, finisce insieme ad essa
-    const fadeDelay = expandDuration * 0.3
-    gsap.to(wrapRef.current, {
+    // 4. Wrap intero (bg + rect) si dissolve con un piccolo delay rispetto
+    //    all'espansione, così il rect resta pieno all'inizio e inizia a
+    //    svanire solo quando l'espansione è già in corso.
+    gsap.to(wrap, {
       opacity: 0,
+      duration: expandDuration,
       delay: fadeDelay,
-      duration: expandDuration - fadeDelay,
       ease: "power2.inOut",
       onComplete: () => {
         setCursor(false)
         setVisible(false)
-        router.push("/projects")
       },
     })
 
-    // Notifica ProjectsScroll di avviare le animazioni di ingresso
-    gsap.delayedCall(fadeDelay, () => {
-      window.dispatchEvent(new CustomEvent("splash:reveal"))
-    })
-
-    // Notifica Header di animarsi quando il quadrato è quasi sparito
-    gsap.delayedCall(expandDuration * 0.8, () => {
-      window.dispatchEvent(new CustomEvent("splash:header"))
-    })
+    // ProjectsScroll si auto-triggera la reveal animation quando `show`
+    // diventa true e previousPath è "/", quindi qui non serve più dispatch.
   }, [setCursor, router])
 
   if (!visible) return null

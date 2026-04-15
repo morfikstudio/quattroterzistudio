@@ -73,11 +73,21 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const transitionTweenRef = useRef<gsap.core.Tween | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const isSnappedRef = useRef(true) // true when scroll is fully at rest (user + snap animation)
-  const isRevealingRef = useRef(false) // true during splash:reveal thumb animation
+  const isRevealingRef = useRef(false) // true during splash reveal thumb animation
   const fromArchiveRef = useRef(
     typeof window !== "undefined" &&
       useNavigationStore.getState().previousPath === "/archive",
   )
+  /*
+    True when ProjectsScroll is mounted as a direct result of exiting the
+    splash (/ → /projects). Captured once at mount from the navigation store
+    so the flag is stable even if previousPath changes later.
+  */
+  const fromSplashRef = useRef(
+    typeof window !== "undefined" &&
+      useNavigationStore.getState().previousPath === "/",
+  )
+  const revealPlayedRef = useRef(false)
 
   const raf = useRef<number | null>(null)
   const lastWidth = useRef<number>(
@@ -590,76 +600,80 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     }
   }, [lenis])
 
-  /* Splash reveal: scala lo sfondo dal lontano e rivela il thumbnail con clip-path */
+  /*
+    Splash reveal: scala lo sfondo dal lontano e rivela il thumbnail con
+    clip-path. Triggered self-hosted quando arriviamo da "/" (fromSplashRef)
+    e il wrapper è pronto a mostrarsi (`show` true = immagini caricate).
+    Aspettare `show` evita che l'animazione runni su un wrapper ancora
+    opacity-0 e non venga mai vista dall'utente.
+  */
   useEffect(() => {
-    const handleReveal = () => {
-      const firstBg = bgRefs.current[0]
-      const firstThumbClip = thumbClipRefs.current[0]
-      const firstLetters = wordsRefs.current[0]?.filter(Boolean) ?? []
-      const firstYear = yearsRefs.current[0]
-      const firstCounter = counterRef.current
+    if (!show || !fromSplashRef.current || revealPlayedRef.current) return
+    revealPlayedRef.current = true
 
-      if (firstBg) {
-        gsap.fromTo(
-          firstBg,
-          { scale: 1.5 },
-          { scale: 1, duration: 2.8, ease: "expo.out" },
-        )
-      }
+    const firstBg = bgRefs.current[0]
+    const firstThumbClip = thumbClipRefs.current[0]
+    const firstLetters = wordsRefs.current[0]?.filter(Boolean) ?? []
+    const firstYear = yearsRefs.current[0]
+    const firstCounter = counterRef.current
 
-      if (firstThumbClip) {
-        isRevealingRef.current = true
-        gsap.set(firstThumbClip, { clipPath: "inset(100% 0% 0% 0%)" })
-        gsap.to(firstThumbClip, {
-          clipPath: "inset(0% 0% 0% 0%)",
-          duration: 0.55,
-          ease: "cubic-bezier(0.22, 1, 0.36, 1)",
-          delay: 0,
-          onComplete: () => {
-            isRevealingRef.current = false
-          },
-        })
-      }
-
-      // Stessa animazione "lettersIn" dello scroll — parte a metà del clip-path
-      if (firstLetters.length) {
-        gsap.set(firstLetters, { y: "110%" })
-        gsap.to(firstLetters, {
-          y: "0%",
-          duration: 0.45,
-          ease: "expo.out",
-          stagger: 0.02,
-          delay: 0.9,
-          overwrite: "auto",
-        })
-      }
-
-      if (firstYear) {
-        gsap.set(firstYear, { y: "110%" })
-        gsap.to(firstYear, {
-          y: "0%",
-          duration: 0.7,
-          ease: "expo.out",
-          delay: 1.2,
-          overwrite: "auto",
-        })
-      }
-
-      if (firstCounter) {
-        gsap.set(firstCounter, { y: "110%" })
-        gsap.to(firstCounter, {
-          y: "0%",
-          duration: 0.7,
-          ease: "expo.out",
-          delay: 1.2,
-          overwrite: "auto",
-        })
-      }
+    if (firstBg) {
+      gsap.fromTo(
+        firstBg,
+        { scale: 1.5 },
+        { scale: 1, duration: 2.8, ease: "expo.out" },
+      )
     }
 
-    window.addEventListener("splash:reveal", handleReveal)
-    return () => window.removeEventListener("splash:reveal", handleReveal)
-  }, [])
+    if (firstThumbClip) {
+      isRevealingRef.current = true
+      gsap.set(firstThumbClip, { clipPath: "inset(100% 0% 0% 0%)" })
+      gsap.to(firstThumbClip, {
+        clipPath: "inset(0% 0% 0% 0%)",
+        duration: 0.55,
+        ease: "cubic-bezier(0.22, 1, 0.36, 1)",
+        delay: 0,
+        onComplete: () => {
+          isRevealingRef.current = false
+        },
+      })
+    }
+
+    // Stessa animazione "lettersIn" dello scroll — parte a metà del clip-path
+    if (firstLetters.length) {
+      gsap.set(firstLetters, { y: "110%" })
+      gsap.to(firstLetters, {
+        y: "0%",
+        duration: 0.45,
+        ease: "expo.out",
+        stagger: 0.02,
+        delay: 0.9,
+        overwrite: "auto",
+      })
+    }
+
+    if (firstYear) {
+      gsap.set(firstYear, { y: "110%" })
+      gsap.to(firstYear, {
+        y: "0%",
+        duration: 0.7,
+        ease: "expo.out",
+        delay: 1.2,
+        overwrite: "auto",
+      })
+    }
+
+    if (firstCounter) {
+      gsap.set(firstCounter, { y: "110%" })
+      gsap.to(firstCounter, {
+        y: "0%",
+        duration: 0.7,
+        ease: "expo.out",
+        delay: 1.2,
+        overwrite: "auto",
+      })
+    }
+  }, [show])
 
   const handleArchiveClick = useCallback(
     (e: React.MouseEvent) => {
