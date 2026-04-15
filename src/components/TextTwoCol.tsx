@@ -24,14 +24,13 @@ export default function TextTwoCol({
   const lenis = useLenis()
 
   useLayoutEffect(() => {
-    if (!lenis || !containerRef.current) return
+    const scope = containerRef.current
+    if (!lenis || !scope) return
 
     gsap.registerPlugin(SplitText, ScrollTrigger)
 
     const ctx = gsap.context(() => {
-      const textEls =
-        containerRef.current?.querySelectorAll<HTMLElement>("[data-split]") ??
-        []
+      const textEls = scope.querySelectorAll<HTMLElement>("[data-split]")
       if (!textEls.length) return
 
       const splits = Array.from(textEls).map(
@@ -46,7 +45,7 @@ export default function TextTwoCol({
         ease: "power3.out",
         stagger: 0.03,
         scrollTrigger: {
-          trigger: containerRef.current,
+          trigger: scope,
           start: "top 85%",
           invalidateOnRefresh: true,
         },
@@ -55,7 +54,7 @@ export default function TextTwoCol({
       return () => {
         splits.forEach((s) => s.revert())
       }
-    }, containerRef)
+    }, scope)
 
     return () => {
       ctx.revert()

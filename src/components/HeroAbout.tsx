@@ -10,14 +10,13 @@ export default function HeroAbout() {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
-    if (!containerRef.current) return
+    const scope = containerRef.current
+    if (!scope) return
 
     gsap.registerPlugin(SplitText)
 
     const ctx = gsap.context(() => {
-      const textEls =
-        containerRef.current?.querySelectorAll<HTMLElement>("[data-split]") ??
-        []
+      const textEls = scope.querySelectorAll<HTMLElement>("[data-split]")
       if (!textEls.length) return
 
       const splits = Array.from(textEls).map(
@@ -38,7 +37,7 @@ export default function HeroAbout() {
       return () => {
         splits.forEach((s) => s.revert())
       }
-    }, containerRef)
+    }, scope)
 
     return () => {
       ctx.revert()

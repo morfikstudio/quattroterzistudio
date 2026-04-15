@@ -70,10 +70,10 @@ export default function Image({
         fluidHeight ? `${className} max-w-full h-auto`.trim() : className
       }
       priority={priority}
-      onLoadingComplete={
+      onLoad={
         onLoad
-          ? (img: HTMLImageElement) => {
-              onLoad(img)
+          ? (e) => {
+              onLoad(e.currentTarget)
             }
           : undefined
       }

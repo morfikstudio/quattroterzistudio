@@ -49,7 +49,8 @@ export default function HoverListDesktop({
 
   /* ── Viewport-enter: animate titles + show first item ───────────────── */
   useLayoutEffect(() => {
-    if (!lenis) return
+    const scope = containerRef.current
+    if (!lenis || !scope) return
 
     gsap.registerPlugin(SplitText, ScrollTrigger)
 
@@ -77,7 +78,7 @@ export default function HoverListDesktop({
         stagger: 0.05,
         force3D: true,
         scrollTrigger: {
-          trigger: containerRef.current,
+          trigger: scope,
           start: "top 85%",
           invalidateOnRefresh: true,
           onEnter: () => {
@@ -91,7 +92,7 @@ export default function HoverListDesktop({
         titleSplits.forEach((s) => s.revert())
         splitInstances.current.forEach((s) => s?.revert())
       }
-    }, containerRef)
+    }, scope)
 
     return () => ctx.revert()
   }, [lenis])

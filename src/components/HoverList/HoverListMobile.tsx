@@ -85,7 +85,8 @@ export default function HoverListMobile({
 
   /* ── Setup ───────────────────────────────────────────────────────────── */
   useLayoutEffect(() => {
-    if (!lenis) return
+    const scope = containerRef.current
+    if (!lenis || !scope) return
 
     gsap.registerPlugin(SplitText, ScrollTrigger)
 
@@ -125,7 +126,7 @@ export default function HoverListMobile({
         stagger: 0.05,
         force3D: true,
         scrollTrigger: {
-          trigger: containerRef.current,
+          trigger: scope,
           start: "top 80%",
           invalidateOnRefresh: true,
           onEnter: () => {
@@ -149,7 +150,7 @@ export default function HoverListMobile({
       const totalScroll = (items.length - 1) * scrollPerStep
 
       ScrollTrigger.create({
-        trigger: containerRef.current,
+        trigger: scope,
         start: "top 15%",
         end: `+=${totalScroll}`,
         pin: true,
@@ -169,7 +170,7 @@ export default function HoverListMobile({
         titleSplits.forEach((s) => s.revert())
         descSplits.current.forEach((s) => s?.revert())
       }
-    }, containerRef)
+    }, scope)
 
     return () => ctx.revert()
   }, [lenis])

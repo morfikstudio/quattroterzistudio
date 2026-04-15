@@ -284,7 +284,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           const letters = wordsRefs.current[i]?.filter(Boolean) ?? []
           const year = yearsRefs.current[i]
           const y = i < activeIdx ? "-110%" : i === activeIdx ? "0%" : "110%"
-          gsap.set(letters, { y })
+          if (letters.length) gsap.set(letters, { y })
           if (year) gsap.set(year, { y })
         }
       }
@@ -336,16 +336,18 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
         textTl = tl
 
-        tl.to(
-          lettersOut,
-          {
-            y: outgoingY,
-            duration: 0.3,
-            ease: "power2.in",
-            overwrite: "auto",
-          },
-          0,
-        )
+        if (lettersOut.length) {
+          tl.to(
+            lettersOut,
+            {
+              y: outgoingY,
+              duration: 0.3,
+              ease: "power2.in",
+              overwrite: "auto",
+            },
+            0,
+          )
+        }
 
         if (yearOut) {
           tl.to(
@@ -360,23 +362,25 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           )
         }
 
-        tl.set(lettersIn, { y: incomingFromY }, 0)
+        if (lettersIn.length) tl.set(lettersIn, { y: incomingFromY }, 0)
 
         if (yearIn) {
           tl.set(yearIn, { y: incomingFromY }, 0)
         }
 
-        tl.to(
-          lettersIn,
-          {
-            y: "0%",
-            duration: 0.45,
-            ease: "expo.out",
-            stagger: 0.02,
-            overwrite: "auto",
-          },
-          0.1,
-        )
+        if (lettersIn.length) {
+          tl.to(
+            lettersIn,
+            {
+              y: "0%",
+              duration: 0.45,
+              ease: "expo.out",
+              stagger: 0.02,
+              overwrite: "auto",
+            },
+            0.1,
+          )
+        }
 
         if (yearIn) {
           tl.to(
