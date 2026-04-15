@@ -62,6 +62,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const thumbInnerRefs = useRef<(HTMLDivElement | null)[]>([]) // Inner media layer receives hover scale and is reset before route transition.
   const wordsRefs = useRef<(HTMLSpanElement | null)[][]>([])
   const yearsRefs = useRef<(HTMLSpanElement | null)[]>([])
+  const counterRef = useRef<HTMLSpanElement | null>(null)
   const copyGroupRefs = useRef<(HTMLDivElement | null)[]>([])
   const activeSectionIndexRef = useRef(0)
   const fixedLayerRef = useRef<HTMLDivElement | null>(null)
@@ -72,10 +73,21 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const transitionTweenRef = useRef<gsap.core.Tween | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const isSnappedRef = useRef(true) // true when scroll is fully at rest (user + snap animation)
+  const isRevealingRef = useRef(false) // true during splash reveal thumb animation
   const fromArchiveRef = useRef(
     typeof window !== "undefined" &&
       useNavigationStore.getState().previousPath === "/archive",
   )
+  /*
+    True when ProjectsScroll is mounted as a direct result of exiting the
+    splash (/ → /projects). Captured once at mount from the navigation store
+    so the flag is stable even if previousPath changes later.
+  */
+  const fromSplashRef = useRef(
+    typeof window !== "undefined" &&
+      useNavigationStore.getState().previousPath === "/",
+  )
+  const revealPlayedRef = useRef(false)
 
   const raf = useRef<number | null>(null)
   const lastWidth = useRef<number>(
@@ -272,7 +284,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           const letters = wordsRefs.current[i]?.filter(Boolean) ?? []
           const year = yearsRefs.current[i]
           const y = i < activeIdx ? "-110%" : i === activeIdx ? "0%" : "110%"
-          gsap.set(letters, { y })
+          if (letters.length) gsap.set(letters, { y })
           if (year) gsap.set(year, { y })
         }
       }
@@ -324,16 +336,18 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
         textTl = tl
 
-        tl.to(
-          lettersOut,
-          {
-            y: outgoingY,
-            duration: 0.3,
-            ease: "power2.in",
-            overwrite: "auto",
-          },
-          0,
-        )
+        if (lettersOut.length) {
+          tl.to(
+            lettersOut,
+            {
+              y: outgoingY,
+              duration: 0.3,
+              ease: "power2.in",
+              overwrite: "auto",
+            },
+            0,
+          )
+        }
 
         if (yearOut) {
           tl.to(
@@ -348,23 +362,25 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           )
         }
 
-        tl.set(lettersIn, { y: incomingFromY }, 0)
+        if (lettersIn.length) tl.set(lettersIn, { y: incomingFromY }, 0)
 
         if (yearIn) {
           tl.set(yearIn, { y: incomingFromY }, 0)
         }
 
-        tl.to(
-          lettersIn,
-          {
-            y: "0%",
-            duration: 0.45,
-            ease: "expo.out",
-            stagger: 0.02,
-            overwrite: "auto",
-          },
-          0.1,
-        )
+        if (lettersIn.length) {
+          tl.to(
+            lettersIn,
+            {
+              y: "0%",
+              duration: 0.45,
+              ease: "expo.out",
+              stagger: 0.02,
+              overwrite: "auto",
+            },
+            0.1,
+          )
+        }
 
         if (yearIn) {
           tl.to(
@@ -381,6 +397,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       }
 
       function handleThumbs(activeIdx: number, progress: number) {
+        if (isRevealingRef.current) return
         const prevIdx = activeIdx - 1
 
         /*
@@ -431,6 +448,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       const syncFromProgress = () => {
         const nextIndex = getActiveIndexFromProgress()
         activeSectionIndexRef.current = nextIndex
+
+        // Update fixed counter text
+        if (counterRef.current) {
+          counterRef.current.textContent = `${String(nextIndex + 1).padStart(2, "0")}-${String(projects.length).padStart(2, "0")}`
+        }
 
         for (let i = 0; i < projects.length; i++) {
           const group = copyGroupRefs.current[i]
@@ -582,60 +604,80 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     }
   }, [lenis])
 
-  /* Splash reveal: scala lo sfondo dal lontano e rivela il thumbnail con clip-path */
+  /*
+    Splash reveal: scala lo sfondo dal lontano e rivela il thumbnail con
+    clip-path. Triggered self-hosted quando arriviamo da "/" (fromSplashRef)
+    e il wrapper è pronto a mostrarsi (`show` true = immagini caricate).
+    Aspettare `show` evita che l'animazione runni su un wrapper ancora
+    opacity-0 e non venga mai vista dall'utente.
+  */
   useEffect(() => {
-    const handleReveal = () => {
-      const firstBg = bgRefs.current[0]
-      const firstThumbClip = thumbClipRefs.current[0]
-      const firstLetters = wordsRefs.current[0]?.filter(Boolean) ?? []
-      const firstYear = yearsRefs.current[0]
+    if (!show || !fromSplashRef.current || revealPlayedRef.current) return
+    revealPlayedRef.current = true
 
-      if (firstBg) {
-        gsap.fromTo(
-          firstBg,
-          { scale: 1.5 },
-          { scale: 1, duration: 2.8, ease: "expo.out" },
-        )
-      }
+    const firstBg = bgRefs.current[0]
+    const firstThumbClip = thumbClipRefs.current[0]
+    const firstLetters = wordsRefs.current[0]?.filter(Boolean) ?? []
+    const firstYear = yearsRefs.current[0]
+    const firstCounter = counterRef.current
 
-      if (firstThumbClip) {
-        gsap.set(firstThumbClip, { clipPath: "inset(100% 0% 0% 0%)" })
-        gsap.to(firstThumbClip, {
-          clipPath: "inset(0% 0% 0% 0%)",
-          duration: 1.35,
-          ease: "cubic-bezier(0.22, 1, 0.36, 1)",
-          delay: 0.5,
-        })
-      }
-
-      // Stessa animazione "lettersIn" dello scroll — parte a metà del clip-path
-      if (firstLetters.length) {
-        gsap.set(firstLetters, { y: "110%" })
-        gsap.to(firstLetters, {
-          y: "0%",
-          duration: 0.45,
-          ease: "expo.out",
-          stagger: 0.02,
-          delay: 0.9,
-          overwrite: "auto",
-        })
-      }
-
-      if (firstYear) {
-        gsap.set(firstYear, { y: "110%" })
-        gsap.to(firstYear, {
-          y: "0%",
-          duration: 0.7,
-          ease: "expo.out",
-          delay: 1.2,
-          overwrite: "auto",
-        })
-      }
+    if (firstBg) {
+      gsap.fromTo(
+        firstBg,
+        { scale: 1.5 },
+        { scale: 1, duration: 2.8, ease: "expo.out" },
+      )
     }
 
-    window.addEventListener("splash:reveal", handleReveal)
-    return () => window.removeEventListener("splash:reveal", handleReveal)
-  }, [])
+    if (firstThumbClip) {
+      isRevealingRef.current = true
+      gsap.set(firstThumbClip, { clipPath: "inset(100% 0% 0% 0%)" })
+      gsap.to(firstThumbClip, {
+        clipPath: "inset(0% 0% 0% 0%)",
+        duration: 0.55,
+        ease: "cubic-bezier(0.22, 1, 0.36, 1)",
+        delay: 0,
+        onComplete: () => {
+          isRevealingRef.current = false
+        },
+      })
+    }
+
+    // Stessa animazione "lettersIn" dello scroll — parte a metà del clip-path
+    if (firstLetters.length) {
+      gsap.set(firstLetters, { y: "110%" })
+      gsap.to(firstLetters, {
+        y: "0%",
+        duration: 0.45,
+        ease: "expo.out",
+        stagger: 0.02,
+        delay: 0.9,
+        overwrite: "auto",
+      })
+    }
+
+    if (firstYear) {
+      gsap.set(firstYear, { y: "110%" })
+      gsap.to(firstYear, {
+        y: "0%",
+        duration: 0.7,
+        ease: "expo.out",
+        delay: 1.2,
+        overwrite: "auto",
+      })
+    }
+
+    if (firstCounter) {
+      gsap.set(firstCounter, { y: "110%" })
+      gsap.to(firstCounter, {
+        y: "0%",
+        duration: 0.7,
+        ease: "expo.out",
+        delay: 1.2,
+        overwrite: "auto",
+      })
+    }
+  }, [show])
 
   const handleArchiveClick = useCallback(
     (e: React.MouseEvent) => {
@@ -719,7 +761,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     <div
       ref={wrapRef}
       className={cn(
-        "max-md:overflow-x-clip max-md:touch-pan-y",
+        "overflow-x-clip max-md:touch-pan-y",
         "transition-opacity duration-500 ease-out",
         !show && "opacity-0",
         !show && "pointer-events-none",
@@ -911,6 +953,16 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       {/* LIST CTA */}
       <div ref={listCTAWrapRef} className="fixed bottom-6 left-6 z-30">
         <ListCTA onArchiveClick={handleArchiveClick} />
+      </div>
+
+      {/* COUNTER */}
+      <div className="fixed bottom-6 right-6 z-30 pointer-events-none overflow-hidden">
+        <span className="flex overflow-hidden">
+          <span ref={counterRef} className="type-caption text-white">
+            {String(1).padStart(2, "0")}-
+            {String(projects.length).padStart(2, "0")}
+          </span>
+        </span>
       </div>
     </div>
   )

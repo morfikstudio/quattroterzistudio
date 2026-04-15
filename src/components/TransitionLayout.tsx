@@ -58,6 +58,18 @@ export default function TransitionLayout({
         gsap.set([outgoing, incoming], { clearProps: "all" })
         setDisplayChildren(children)
         setCurrentPath(pathname)
+
+        requestAnimationFrame(() => {
+          gsap.set(outgoing, { opacity: 1 })
+        })
+      }
+
+      // ─── / → /projects (splash exit) ───────────────────────────────────────
+      // L'animazione di uscita della splash è già completata prima di navigare,
+      // quindi qui facciamo solo uno swap immediato.
+      if (currentPath === "/") {
+        done()
+        return
       }
 
       // ─── /projects → /archive ────────────────────────────────────────────────

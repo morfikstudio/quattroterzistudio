@@ -140,7 +140,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
               data-split
               className={cn("type-h3 uppercase", "w-[100%] md:w-[80%]  ")}
             >
-              Images creLor fsvho iufsovhs fsvsc.
+              image creators & shadows lovers
             </h2>
           </div>
           <div
@@ -155,7 +155,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                 address
               </span>
               <span data-split>
-                Via 4 novembre
+                Via IV Novembre 2
                 <br />
                 33170 brugnera pn
               </span>
@@ -209,7 +209,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                 <span className={cn("link-underline-bar")} />
               </a>
               <a
-                href="tel:+393333333333"
+                href="tel:++39 3515990023"
                 className={cn("link-underline w-fit")}
                 onMouseEnter={(e) => {
                   e.currentTarget.dataset.line = "in"
@@ -218,7 +218,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                   e.currentTarget.dataset.line = "out"
                 }}
               >
-                <span data-split>+39 333 333 33 33</span>
+                <span data-split>++39 351 599 0023</span>
                 <span className={cn("link-underline-bar")} />
               </a>
             </div>

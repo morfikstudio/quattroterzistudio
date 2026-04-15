@@ -263,11 +263,11 @@
 }
 
 .title-hover[data-line="in"] .link-underline-bar {
-  animation: link-line-in 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+  animation: link-line-in 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .title-hover[data-line="out"] .link-underline-bar {
-  animation: link-line-out 0.45s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+  animation: link-line-out 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .title-hover[data-route-transitioning="true"] {

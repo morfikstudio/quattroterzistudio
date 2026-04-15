@@ -4,6 +4,8 @@ import { useLayoutEffect, useRef } from "react"
 import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { cn } from "@/utils/classNames"
+import Lenis from "lenis"
+import { useLenis } from "@/components/LenisProvider"
 
 interface ScrollMarqueeProps {
   topText?: string
@@ -19,7 +21,7 @@ export default function ScrollMarquee({
   const containerRef = useRef<HTMLDivElement>(null)
   const topTrackRef = useRef<HTMLDivElement>(null)
   const bottomTrackRef = useRef<HTMLDivElement>(null)
-
+  const lenis = useLenis()
   useLayoutEffect(() => {
     gsap.registerPlugin(ScrollTrigger)
 
@@ -28,38 +30,51 @@ export default function ScrollMarquee({
     const bottomTrack = bottomTrackRef.current
     if (!container || !topTrack || !bottomTrack) return
 
-    const triggerConfig = {
+    const makeTriggerConfig = () => ({
       trigger: container,
       start: "top bottom+=200",
       end: "bottom top",
       scrub: 1.5,
-    }
+      invalidateOnRefresh: true,
+    })
 
     // Row 1
     const topTween = gsap.fromTo(
       topTrack,
       { x: 200 },
-      { x: -300, ease: "none", force3D: true, scrollTrigger: triggerConfig },
-    )
-
-    // Row 2
-    const bottomTween = gsap.fromTo(
-      bottomTrack,
-      { x: window.innerWidth < 768 ? -100 : -500 },
       {
-        x: window.innerWidth < 768 ? 50 : -100,
+        x: -300,
         ease: "none",
         force3D: true,
-        scrollTrigger: triggerConfig,
+        scrollTrigger: makeTriggerConfig(),
       },
     )
 
+    // Row 2
+    const isMobile = () => window.innerWidth < 768
+    const bottomTween = gsap.fromTo(
+      bottomTrack,
+      { x: () => (isMobile() ? -100 : -150) },
+      {
+        x: () => (isMobile() ? 50 : 250),
+        ease: "none",
+        force3D: true,
+        scrollTrigger: makeTriggerConfig(),
+      },
+    )
+
+    // Ensure positions are computed after layout is stable
+    const refreshId = requestAnimationFrame(() => ScrollTrigger.refresh())
+
     return () => {
+      cancelAnimationFrame(refreshId)
       topTween.scrollTrigger?.kill()
       bottomTween.scrollTrigger?.kill()
+      topTween.kill()
+      bottomTween.kill()
       gsap.set([topTrack, bottomTrack], { clearProps: "all" })
     }
-  }, [])
+  }, [lenis])
 
   return (
     <div

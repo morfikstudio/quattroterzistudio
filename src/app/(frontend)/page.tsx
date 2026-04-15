@@ -1,5 +1,11 @@
-import { redirect } from "next/navigation"
-
+import SplashMarquee from "@/components/SplashMarquee"
 export default function Page() {
-  redirect("/projects")
+  return (
+    <main>
+      <SplashMarquee
+        title="Welcome to Quattroterzi Studio"
+        ctaText="Click anywhere to enter"
+      />
+    </main>
+  )
 }

@@ -11,23 +11,23 @@ export interface HoverListProps {
 
 export const defaultItems: HoverListItem[] = [
   {
-    title: "3D Visualization",
+    title: "Identity",
     description:
-      "Lorem ipsum gfyegfacilisi morbi leo aenean vitae sed posuere ut. Vestibulum turpis tellus lobortis diam. Auctor in urna lectus nec dictum blandit. Suspendisse ac sagittis.",
+      "How something is recogniSed at first sight. The visual language that defines it before anything is said or written.",
   },
   {
-    title: "Art Direction",
+    title: "Environments",
     description:
-      "Lorem ipsum gfyegfacilisi morbi leo aenean vitae sed posuere ut. Vestibulum turpis tellus lobortis diam. Auctor in urna lectus nec dictum blandit. Suspendisse ac sagittis.",
+      "Spaces where a vision takes shape. The rooms, the light, the atmosphere that make an idea feel real and specific.",
   },
   {
-    title: "CGI Lorem",
+    title: "Details",
     description:
-      "Lorem ipsum gfyegfacilisi morbi leo aenean vitae sed posuere ut. Vestibulum turpis tellus lobortis diam. Auctor in urna lectus nec dictum blandit. Suspendisse ac sagittis.",
+      "The choices that hold everything else together. A finish, a texture, a proportion: the things you notice second but remember first.",
   },
   {
-    title: "3D Visualization",
+    title: "Imagery",
     description:
-      "Lorem ipsum gfyegfacilisi morbi leo aenean vitae sed posuere ut. Vestibulum turpis tellus lobortis diam. Auctor in urna lectus nec dictum blandit. Suspendisse ac sagittis.",
+      "Where it all becomes visible. The final form that carries everything forward and makes it last.",
   },
 ]
