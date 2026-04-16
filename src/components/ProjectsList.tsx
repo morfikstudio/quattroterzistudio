@@ -257,7 +257,10 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
   const hoverIndexRef = useRef<number | null>(null)
   const swiperReadyRef = useRef(false)
 
-  const { mobileImgRef, desktopImgRef, startScaleLoop } = useImageScale({
+  // `mobileImgRef` is intentionally not wired up — on touch we don't want
+  // the image to scale down with scroll velocity. Keeping the ref out of the
+  // JSX means `useImageScale` never applies a transform to the mobile node.
+  const { desktopImgRef, startScaleLoop } = useImageScale({
     velocityRef,
   })
 
@@ -469,10 +472,7 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
               navigateWithTransition(imageHref)
             }}
           >
-            <div
-              ref={mobileImgRef}
-              className="relative aspect-4/3 overflow-hidden w-full"
-            >
+            <div className="relative aspect-4/3 overflow-hidden w-full">
               <div
                 className={cn(
                   "absolute inset-0 origin-center",
@@ -569,14 +569,25 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
               centeredSlides
               slidesPerView={SLIDES_PER_VIEW}
               speed={900}
-              freeMode={{
-                enabled: true,
-                momentum: true,
-                momentumRatio: 0.4,
-                momentumVelocityRatio: 0.3,
-                momentumBounce: false,
-                minimumVelocity: 0.15,
-              }}
+              /*
+                On mobile freeMode + momentum produced an aggressive snap on
+                release and occasionally broke the loop after fast flicks.
+                Disabling freeMode entirely on touch falls back to Swiper's
+                classic "one slide per swipe" behaviour, which uses the
+                standard `speed`/easing transition and feels predictable.
+              */
+              freeMode={
+                isMobile
+                  ? false
+                  : {
+                      enabled: true,
+                      momentum: true,
+                      momentumRatio: 0.4,
+                      momentumVelocityRatio: 0.3,
+                      momentumBounce: false,
+                      minimumVelocity: 0.15,
+                    }
+              }
               mousewheel={{ sensitivity: 1, thresholdDelta: 10 }}
               modules={[FreeMode, Mousewheel]}
               onRealIndexChange={(swiper) => {
@@ -625,19 +636,30 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
                         hoverIndex === i || activeIndex === i ? "true" : "false"
                       }
                       data-line={
-                        (!isScrolling && hoverIndex === i) ||
-                        (isMobile &&
-                          !isScrolling &&
-                          pageEnterDone &&
-                          !underlineExiting &&
-                          activeIndex === i)
-                          ? "in"
-                          : interactedItemsRef.current.has(i) ||
-                              (isMobile &&
-                                underlineExiting &&
-                                activeIndex === i)
-                            ? "out"
-                            : undefined
+                        isMobile
+                          ? /*
+                              Mobile: the underline is tied strictly to the
+                              settled active item. Previously-active items
+                              (those that passed through center while the
+                              user was scrolling) must NOT trigger the
+                              `pl-line-out` animation — otherwise the
+                              underline flashes under every slide that
+                              scrolls by.
+                            */
+                            !isScrolling &&
+                            pageEnterDone &&
+                            !underlineExiting &&
+                            activeIndex === i
+                            ? "in"
+                            : underlineExiting && activeIndex === i
+                              ? "out"
+                              : undefined
+                          : /* Desktop: hover-driven, unchanged. */
+                            !isScrolling && hoverIndex === i
+                            ? "in"
+                            : interactedItemsRef.current.has(i)
+                              ? "out"
+                              : undefined
                       }
                       onMouseEnter={() => {
                         interactedItemsRef.current.add(i)
