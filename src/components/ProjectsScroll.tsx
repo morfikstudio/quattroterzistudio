@@ -257,7 +257,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
     gsap.to(wrapRef.current, {
       clipPath: "inset(0% 0% 0% 0%)",
-      duration: 1.2,
+      duration: 2,
       ease: "power3.inOut",
     })
   }, [])
