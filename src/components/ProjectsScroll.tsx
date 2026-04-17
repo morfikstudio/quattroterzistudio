@@ -257,7 +257,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
     gsap.to(wrapRef.current, {
       clipPath: "inset(0% 0% 0% 0%)",
-      duration: 1.2,
+      duration: 2,
       ease: "power3.inOut",
     })
   }, [])
@@ -743,6 +743,24 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     [router, lenis, setPreviousPath],
   )
 
+  /* Entry animation for the ListCTA (bottom-left archive button) */
+  useEffect(() => {
+    if (!show) return
+    const el = listCTAWrapRef.current
+    if (!el) return
+    gsap.fromTo(
+      el,
+      { y: 20, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.9,
+        ease: "power3.out",
+        delay: fromSplashRef.current ? 1.3 : 0.3,
+      },
+    )
+  }, [show])
+
   /* Initialize first background image */
   useEffect(() => {
     if (!projects[0]) return
@@ -886,7 +904,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
               aria-label={p.title ?? undefined}
             >
               <div
-                className="title-hover text-white absolute top-1/2 -translate-y-[calc(50%-4px)] md:-translate-y-[calc(50%-6px)] left-[14px] md:left-[calc(50%)] pointer-events-auto cursor-pointer"
+                className="title-hover text-white absolute top-1/2 -translate-y-[calc(50%-4px)] md:-translate-y-[calc(50%-6px)] left-[14px] md:left-[calc(50%)] pointer-events-auto cursor-pointer flex items-center"
                 id={projectTitleId(p)}
                 data-route-transitioning={
                   isRouteTransitioning ? "true" : undefined
@@ -908,21 +926,24 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                   handleProjectClick(idx, `/projects/${slug}`)
                 }}
               >
-                <h1 className="overflow-hidden">
-                  {(p.title ?? "").split("").map((char, j) => (
-                    <span
-                      key={`${p._id}-${j}`}
-                      className="inline-block type-h1 leading-none text-white"
-                      ref={(el) => {
-                        if (!wordsRefs.current[i]) wordsRefs.current[i] = []
-                        wordsRefs.current[i][j] = el
-                      }}
-                    >
-                      {char === " " ? "\u00A0" : char}
-                    </span>
-                  ))}
-                </h1>
-                <span className="link-underline-bar" />
+                <span className="block w-3 h-3 bg-white flex-shrink-0 mr-4" />
+                <div>
+                  <h1 className="overflow-hidden">
+                    {(p.title ?? "").split("").map((char, j) => (
+                      <span
+                        key={`${p._id}-${j}`}
+                        className="inline-block type-h1 leading-none text-white"
+                        ref={(el) => {
+                          if (!wordsRefs.current[i]) wordsRefs.current[i] = []
+                          wordsRefs.current[i][j] = el
+                        }}
+                      >
+                        {char === " " ? "\u00A0" : char}
+                      </span>
+                    ))}
+                  </h1>
+                  <span className="link-underline-bar" />
+                </div>
               </div>
 
               <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] pointer-events-none">

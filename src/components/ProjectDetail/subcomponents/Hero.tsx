@@ -86,8 +86,10 @@ export default function Hero({ cover, title, year }: HeroProps) {
               "sticky overflow-hidden pointer-events-auto",
               "top-[50vh] -translate-y-1/2 ml-[14px] md:ml-[calc(50%)]",
               "-translate-y-[calc(50%-4px)] md:-translate-y-[calc(50%-6px)]",
+              "flex items-center",
             )}
           >
+            <span className="block w-3 h-3 bg-white flex-shrink-0 mr-4" />
             <h1 ref={titleRef}>
               {title.split("").map((char, i) => (
                 <span
