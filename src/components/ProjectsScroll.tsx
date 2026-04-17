@@ -904,7 +904,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
               aria-label={p.title ?? undefined}
             >
               <div
-                className="title-hover text-white absolute top-1/2 -translate-y-[calc(50%-4px)] md:-translate-y-[calc(50%-6px)] left-[14px] md:left-[calc(50%)] pointer-events-auto cursor-pointer"
+                className="title-hover text-white absolute top-1/2 -translate-y-[calc(50%-4px)] md:-translate-y-[calc(50%-6px)] left-[14px] md:left-[calc(50%)] pointer-events-auto cursor-pointer flex items-center"
                 id={projectTitleId(p)}
                 data-route-transitioning={
                   isRouteTransitioning ? "true" : undefined
@@ -926,21 +926,24 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                   handleProjectClick(idx, `/projects/${slug}`)
                 }}
               >
-                <h1 className="overflow-hidden">
-                  {(p.title ?? "").split("").map((char, j) => (
-                    <span
-                      key={`${p._id}-${j}`}
-                      className="inline-block type-h1 leading-none text-white"
-                      ref={(el) => {
-                        if (!wordsRefs.current[i]) wordsRefs.current[i] = []
-                        wordsRefs.current[i][j] = el
-                      }}
-                    >
-                      {char === " " ? "\u00A0" : char}
-                    </span>
-                  ))}
-                </h1>
-                <span className="link-underline-bar" />
+                <span className="block w-3 h-3 bg-white flex-shrink-0 mr-4" />
+                <div>
+                  <h1 className="overflow-hidden">
+                    {(p.title ?? "").split("").map((char, j) => (
+                      <span
+                        key={`${p._id}-${j}`}
+                        className="inline-block type-h1 leading-none text-white"
+                        ref={(el) => {
+                          if (!wordsRefs.current[i]) wordsRefs.current[i] = []
+                          wordsRefs.current[i][j] = el
+                        }}
+                      >
+                        {char === " " ? "\u00A0" : char}
+                      </span>
+                    ))}
+                  </h1>
+                  <span className="link-underline-bar" />
+                </div>
               </div>
 
               <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] pointer-events-none">

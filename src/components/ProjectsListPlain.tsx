@@ -112,6 +112,7 @@ export default function ProjectsListPlain({
   const isExitingRef = useRef(false)
   const listContainerRef = useRef<HTMLDivElement | null>(null)
   const wordSpansRef = useRef<HTMLElement[]>([])
+  const squareSpansRef = useRef<HTMLElement[]>([])
   const yearSpanRef = useRef<HTMLSpanElement | null>(null)
   // Mobile enter: unlock underline only when word is almost done (0.4s delay + ~0.9s into anim)
   const [pageEnterDone, setPageEnterDone] = useState(false)
@@ -125,6 +126,7 @@ export default function ProjectsListPlain({
   const allAnimTargets = useCallback(
     () => [
       ...wordSpansRef.current,
+      ...squareSpansRef.current,
       ...(yearSpanRef.current ? [yearSpanRef.current] : []),
       ...(counterSpanRef.current ? [counterSpanRef.current] : []),
     ],
@@ -452,11 +454,18 @@ export default function ProjectsListPlain({
           ".pl-word-inner",
         ),
       )
+      const squares = Array.from(
+        listContainerRef.current.querySelectorAll<HTMLElement>(
+          ".pl-square-inner",
+        ),
+      )
       if (!spans.length) return
       wordSpansRef.current = spans
+      squareSpansRef.current = squares
       gsap.fromTo(
         [
           ...spans,
+          ...squares,
           ...(yearSpanRef.current ? [yearSpanRef.current] : []),
           ...(counterSpanRef.current ? [counterSpanRef.current] : []),
         ],
@@ -572,6 +581,11 @@ export default function ProjectsListPlain({
         .pl-word-inner {
           transform: translateY(110%);
           display: inline-block;
+        }
+
+        .pl-square-inner {
+          transform: translateY(110%);
+          display: block;
         }
 
         .pl-ul {
@@ -755,7 +769,7 @@ export default function ProjectsListPlain({
                       className={cn(
                         "pl-item-link",
                         "type-h1 text-secondary no-underline focus-visible:outline-none",
-                        "relative inline-block leading-tight cursor-pointer",
+                        "relative inline-flex items-center leading-tight cursor-pointer",
                       )}
                       data-active={
                         hoverIndex === i || activeIndex === i ? "true" : "false"
@@ -803,6 +817,9 @@ export default function ProjectsListPlain({
                       }}
                       aria-label={getLabel(p)}
                     >
+                      <span className="overflow-hidden block w-3 h-3 flex-shrink-0 mr-4">
+                        <span className="pl-square-inner block w-3 h-3 bg-current" />
+                      </span>
                       {getLabel(p)
                         .split(" ")
                         .map((word, j, arr) => (
