@@ -817,7 +817,7 @@ export default function ProjectsListPlain({
                       }}
                       aria-label={getLabel(p)}
                     >
-                      <span className="overflow-hidden block w-[10px] h-[10px] flex-shrink-0 mr-4">
+                      <span className="overflow-hidden block w-[10px] h-[10px] flex-shrink-0 mr-4 -translate-y-[5px]">
                         <span className="pl-square-inner block w-[10px] h-[10px] bg-current" />
                       </span>
                       {getLabel(p)
