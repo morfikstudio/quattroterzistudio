@@ -112,6 +112,7 @@ export type Project = {
   orderRank?: string
   title?: string
   slug?: Slug
+  isSelected?: boolean
   description?: Array<{
     children?: Array<{
       marks?: Array<string>
@@ -325,8 +326,53 @@ export type AllSanitySchemaTypes =
 
 // Source: src/sanity/lib/queries.ts
 // Variable: PROJECTS_QUERY
-// Query: *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{    _id,    orderRank,    title,    slug,    year,    coverList,    coverDetail  }
+// Query: *[_type == "project" && defined(slug.current) && isSelected == true]|order(orderRank asc)[0...100]{    _id,    orderRank,    title,    slug,    year,    coverList,    coverDetail  }
 export type PROJECTS_QUERY_RESULT = Array<{
+  _id: string
+  orderRank: string | null
+  title: string | null
+  slug: Slug
+  year: number
+  coverList: {
+    portrait?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    landscape?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    alt?: string
+  } | null
+  coverDetail: {
+    portrait?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    landscape?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    alt?: string
+  } | null
+}>
+
+// Source: src/sanity/lib/queries.ts
+// Variable: ARCHIVE_PROJECTS_QUERY
+// Query: *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...100]{    _id,    orderRank,    title,    slug,    year,    coverList,    coverDetail  }
+export type ARCHIVE_PROJECTS_QUERY_RESULT = Array<{
   _id: string
   orderRank: string | null
   title: string | null
@@ -581,7 +627,8 @@ export type PROJECT_QUERY_RESULT = {
 import "@sanity/client"
 declare module "@sanity/client" {
   interface SanityQueries {
-    '*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverList,\n    coverDetail\n  }': PROJECTS_QUERY_RESULT
+    '*[_type == "project" && defined(slug.current) && isSelected == true]|order(orderRank asc)[0...100]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverList,\n    coverDetail\n\n  }': PROJECTS_QUERY_RESULT
+    '*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...100]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverList,\n    coverDetail\n\n  }': ARCHIVE_PROJECTS_QUERY_RESULT
     '*[_type == "project" && defined(slug.current)]{\n    "slug": slug.current\n  }': PROJECT_SLUGS_QUERY_RESULT
     '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    description,\n    year,\n    client,\n    sector,\n    credits,\n    coverDetail,\n    blocks[]{\n      _key,\n      _type,\n      payoff,\n      "variant": coalesce(variant, singleVariant, doubleVariant),\n      useVideo,\n      image,\n      alt,\n      "videoAsset": video.asset->{ url, mimeType, originalFilename },\n      media1{\n        image,\n        alt\n      },\n      media2{\n        image,\n        alt\n      }\n    },\n    "nextProject": coalesce(\n      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year },\n      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year }\n    )\n  }': PROJECT_QUERY_RESULT
   }

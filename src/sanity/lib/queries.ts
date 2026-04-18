@@ -1,11 +1,6 @@
 import { defineQuery } from "next-sanity"
 
-/**
- * /projects
- */
-
-export const PROJECTS_QUERY = defineQuery(
-  `*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...50]{
+const PROJECTS_LIST_PROJECTION = `
     _id,
     orderRank,
     title,
@@ -13,6 +8,23 @@ export const PROJECTS_QUERY = defineQuery(
     year,
     coverList,
     coverDetail
+`
+
+/**
+ * /projects
+ */
+
+export const PROJECTS_QUERY = defineQuery(
+  `*[_type == "project" && defined(slug.current) && isSelected == true]|order(orderRank asc)[0...100]{${PROJECTS_LIST_PROJECTION}
+  }`,
+)
+
+/**
+ * /archive — tutti i progetti (indipendentemente da isSelected)
+ */
+
+export const ARCHIVE_PROJECTS_QUERY = defineQuery(
+  `*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...100]{${PROJECTS_LIST_PROJECTION}
   }`,
 )
 

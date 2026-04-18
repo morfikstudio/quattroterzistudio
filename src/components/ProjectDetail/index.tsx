@@ -31,7 +31,7 @@ export default function ProjectDetail({
 }: ProjectProps) {
   return (
     <>
-      <section>
+      <section className="min-h-screen">
         <Hero cover={coverDetail} title={title} year={year} />
       </section>
 

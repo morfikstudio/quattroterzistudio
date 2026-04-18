@@ -29,6 +29,15 @@ export const projectType = defineType({
       group: "content",
     }),
     defineField({
+      name: "isSelected",
+      title: "In evidenza su /projects",
+      type: "boolean",
+      description:
+        "Se attivo, il progetto compare nella pagina progetti. L’archivio elenca sempre tutti i progetti.",
+      initialValue: false,
+      group: "content",
+    }),
+    defineField({
       name: "description",
       title: "Description",
       type: "array",

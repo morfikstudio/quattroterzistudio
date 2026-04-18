@@ -7,12 +7,14 @@ import { useLenis } from "@/components/LenisProvider"
 import Button from "@/components/ui/Button"
 import Icon from "@/components/ui/Icon"
 import { useBreakpoint } from "@/stores/breakpointStore"
+import { useContactStore } from "@/stores/contactStore"
 import { cn } from "@/utils/classNames"
 
 export default function Footer() {
   const logoRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const lenis = useLenis()
+  const openContact = useContactStore((s) => s.open)
   const { current: breakpoint } = useBreakpoint()
   const buttonSize =
     breakpoint === "mobile" || breakpoint === "mobileLandscape" ? "l" : "xl"
@@ -161,6 +163,7 @@ export default function Footer() {
                 }
                 label="Contact us"
                 size="xl"
+                onClick={openContact}
               />
             </div>
           </div>

@@ -2,10 +2,6 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Swiper, SwiperSlide } from "swiper/react"
-import { FreeMode, Mousewheel } from "swiper/modules"
-import type { Swiper as SwiperType } from "swiper"
-import "swiper/css"
 
 import gsap from "gsap"
 import Image from "@/components/ui/Image"
@@ -16,6 +12,11 @@ import { useNavigationStore } from "@/stores/navigationStore"
 import { useBreakpoint } from "@/stores/breakpointStore"
 
 const SLIDES_PER_VIEW = 7
+// Number of times the items list is duplicated to simulate an infinite loop
+// with a native scrollable container. The visible viewport always sits inside
+// the middle copy; when the user approaches the first/last copy we silently
+// jump scrollTop by one full list-length so they remain in the middle copy.
+const COPIES = 3
 
 function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
   const Icons = () => (
@@ -74,8 +75,28 @@ function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
 
 type Props = { projects?: PROJECTS_QUERY_RESULT; onSelectionClick?: () => void }
 
-export default function ProjectsList({ projects, onSelectionClick }: Props) {
+export default function ProjectsListPlain({
+  projects,
+  onSelectionClick,
+}: Props) {
   const items = projects ?? []
+
+  // Build the extended list with COPIES copies for infinite-loop simulation.
+  // Each entry knows its original (real) index so active/hover state and
+  // navigation remain consistent across duplicates.
+  const extendedItems = useMemo(() => {
+    const result: {
+      item: PROJECTS_QUERY_RESULT[number]
+      key: string
+      realIndex: number
+    }[] = []
+    for (let c = 0; c < COPIES; c++) {
+      items.forEach((item, i) => {
+        result.push({ item, key: `${item._id}-c${c}`, realIndex: i })
+      })
+    }
+    return result
+  }, [items])
 
   const router = useRouter()
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
@@ -91,6 +112,7 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
   const isExitingRef = useRef(false)
   const listContainerRef = useRef<HTMLDivElement | null>(null)
   const wordSpansRef = useRef<HTMLElement[]>([])
+  const squareSpansRef = useRef<HTMLElement[]>([])
   const yearSpanRef = useRef<HTMLSpanElement | null>(null)
   // Mobile enter: unlock underline only when word is almost done (0.4s delay + ~0.9s into anim)
   const [pageEnterDone, setPageEnterDone] = useState(false)
@@ -104,6 +126,7 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
   const allAnimTargets = useCallback(
     () => [
       ...wordSpansRef.current,
+      ...squareSpansRef.current,
       ...(yearSpanRef.current ? [yearSpanRef.current] : []),
       ...(counterSpanRef.current ? [counterSpanRef.current] : []),
     ],
@@ -211,7 +234,7 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
         onComplete: () => router.push(url),
       })
     },
-    [router, setPreviousPath],
+    [router, setPreviousPath, isDesktop],
   )
 
   // Unlock mobile underline when word is almost fully visible
@@ -251,11 +274,16 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
   const [isMobile, setIsMobile] = useState(false)
 
   const velocityRef = useRef(0)
-  const prevTranslateRef = useRef<number | null>(null)
   const isScrollingRef = useRef(false)
   const scrollCheckRef = useRef<number>(0)
   const hoverIndexRef = useRef<number | null>(null)
-  const swiperReadyRef = useRef(false)
+
+  // Native-scroll bookkeeping (replaces Swiper internals).
+  const ulRef = useRef<HTMLUListElement | null>(null)
+  const sectionRootRef = useRef<HTMLDivElement | null>(null)
+  const itemHeightRef = useRef(0)
+  const totalHeightRef = useRef(0)
+  const lastScrollTopRef = useRef(0)
 
   // `mobileImgRef` is intentionally not wired up — on touch we don't want
   // the image to scale down with scroll velocity. Keeping the ref out of the
@@ -279,45 +307,174 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
     return () => mq.removeEventListener("change", (e) => update(e.matches))
   }, [])
 
-  const handleSetTranslate = useCallback(
-    (_swiper: SwiperType, translate: number) => {
-      if (!swiperReadyRef.current) {
-        prevTranslateRef.current = translate
-        return
+  // Initialize and maintain scroll position so the first item of the middle
+  // copy starts centered in the viewport.
+  useEffect(() => {
+    const ul = ulRef.current
+    if (!ul || items.length === 0) return
+
+    const recalc = () => {
+      const containerHeight = ul.clientHeight
+      const itemHeight = containerHeight / SLIDES_PER_VIEW
+      itemHeightRef.current = itemHeight
+      totalHeightRef.current = items.length * itemHeight
+    }
+
+    recalc()
+
+    // Center first item of middle copy: scrollTop such that
+    // scrollTop + containerHeight/2 falls in the middle of that item.
+    const halfView = Math.floor(SLIDES_PER_VIEW / 2)
+    const initialScrollTop = (items.length - halfView) * itemHeightRef.current
+    ul.scrollTop = initialScrollTop
+    lastScrollTopRef.current = initialScrollTop
+
+    const onResize = () => {
+      const oldItemHeight = itemHeightRef.current
+      recalc()
+      // Maintain visual position across resize: keep the same item centered.
+      if (oldItemHeight > 0) {
+        const ratio = itemHeightRef.current / oldItemHeight
+        const next = ul.scrollTop * ratio
+        ul.scrollTop = next
+        lastScrollTopRef.current = next
       }
-      if (prevTranslateRef.current !== null) {
-        const delta = translate - prevTranslateRef.current
+    }
+    window.addEventListener("resize", onResize)
+    return () => window.removeEventListener("resize", onResize)
+  }, [items.length])
 
-        if (delta !== 0) {
-          velocityRef.current = delta
-          startScaleLoop()
+  // Wheel forwarder: the desktop image sits at z-20 with `pointer-events-auto`
+  // on its anchor, so wheel events directly over the image hit the anchor —
+  // which has no scrollable ancestor in its bubble path (the ul is in a
+  // sibling subtree). Forward those wheel events to the ul so scrolling works
+  // anywhere within the section, not just over the visible list area.
+  useEffect(() => {
+    const root = sectionRootRef.current
+    const ul = ulRef.current
+    if (!root || !ul) return
 
-          if (hoverIndexRef.current !== null) {
-            hoverIndexRef.current = null
-            setHoverIndex(null)
-          }
+    const onWheel = (e: WheelEvent) => {
+      // If the wheel is already targeting (or inside) the ul, the browser
+      // will scroll it natively — don't double-scroll.
+      if (ul.contains(e.target as Node)) return
 
-          if (!isScrollingRef.current) {
-            isScrollingRef.current = true
-            setIsScrolling(true)
-          }
+      let deltaPx = e.deltaY
+      // Normalize delta units to pixels.
+      if (e.deltaMode === 1) deltaPx *= 16
+      else if (e.deltaMode === 2) deltaPx *= ul.clientHeight
 
-          cancelAnimationFrame(scrollCheckRef.current)
-          const check = () => {
-            if (Math.abs(velocityRef.current) > 0.5) {
-              scrollCheckRef.current = requestAnimationFrame(check)
-            } else {
-              isScrollingRef.current = false
-              setIsScrolling(false)
-            }
-          }
+      if (deltaPx === 0) return
+      e.preventDefault()
+      ul.scrollTop += deltaPx
+    }
+
+    root.addEventListener("wheel", onWheel, { passive: false })
+    return () => root.removeEventListener("wheel", onWheel)
+  }, [])
+
+  const handleScroll = useCallback(() => {
+    const ul = ulRef.current
+    if (!ul || itemHeightRef.current === 0) return
+
+    const scrollTop = ul.scrollTop
+    const containerHeight = ul.clientHeight
+    const itemHeight = itemHeightRef.current
+    const totalHeight = totalHeightRef.current
+
+    // Active = item whose center is closest to viewport center.
+    const centerY = scrollTop + containerHeight / 2
+    const extendedIndex = Math.floor(centerY / itemHeight)
+    const realIndex =
+      ((extendedIndex % items.length) + items.length) % items.length
+
+    if (realIndex !== prevActiveRef.current) {
+      interactedItemsRef.current.add(prevActiveRef.current)
+      prevActiveRef.current = realIndex
+      setActiveIndex(realIndex)
+    }
+
+    // Velocity tracking — feeds the image scale loop, mirrors the swiper path.
+    const delta = scrollTop - lastScrollTopRef.current
+    if (delta !== 0) {
+      // Sign mirrors Swiper's translate convention (translate decreases as
+      // scrollTop increases). useImageScale only uses Math.abs(), but we keep
+      // the sign correct in case anything else reads it.
+      velocityRef.current = -delta
+      startScaleLoop()
+
+      if (hoverIndexRef.current !== null) {
+        hoverIndexRef.current = null
+        setHoverIndex(null)
+      }
+
+      if (!isScrollingRef.current) {
+        isScrollingRef.current = true
+        setIsScrolling(true)
+      }
+
+      cancelAnimationFrame(scrollCheckRef.current)
+      const check = () => {
+        if (Math.abs(velocityRef.current) > 0.5) {
           scrollCheckRef.current = requestAnimationFrame(check)
+        } else {
+          isScrollingRef.current = false
+          setIsScrolling(false)
         }
       }
-      prevTranslateRef.current = translate
-    },
-    [startScaleLoop],
-  )
+      scrollCheckRef.current = requestAnimationFrame(check)
+    }
+
+    lastScrollTopRef.current = scrollTop
+
+    // Loop reset: keep the user inside the middle copy.
+    // Middle copy spans [totalHeight, 2*totalHeight). When the viewport's
+    // scrollTop drifts outside [0.5*totalHeight, 1.5*totalHeight] we silently
+    // teleport by ±totalHeight so the visible content is identical.
+    if (totalHeight > 0) {
+      if (scrollTop < totalHeight * 0.5) {
+        const next = scrollTop + totalHeight
+        ul.scrollTop = next
+        lastScrollTopRef.current = next
+      } else if (scrollTop > totalHeight * 1.5) {
+        const next = scrollTop - totalHeight
+        ul.scrollTop = next
+        lastScrollTopRef.current = next
+      }
+    }
+  }, [items.length, startScaleLoop])
+
+  // Entry animation for word spans (replaces Swiper's onAfterInit hook).
+  useEffect(() => {
+    if (!listContainerRef.current || items.length === 0) return
+    const t = setTimeout(() => {
+      if (!listContainerRef.current) return
+      const spans = Array.from(
+        listContainerRef.current.querySelectorAll<HTMLElement>(
+          ".pl-word-inner",
+        ),
+      )
+      const squares = Array.from(
+        listContainerRef.current.querySelectorAll<HTMLElement>(
+          ".pl-square-inner",
+        ),
+      )
+      if (!spans.length) return
+      wordSpansRef.current = spans
+      squareSpansRef.current = squares
+      gsap.fromTo(
+        [
+          ...spans,
+          ...squares,
+          ...(yearSpanRef.current ? [yearSpanRef.current] : []),
+          ...(counterSpanRef.current ? [counterSpanRef.current] : []),
+        ],
+        { y: "110%" },
+        { y: "0%", duration: 1.2, ease: "power3.out", delay: 0.1 },
+      )
+    }, 0)
+    return () => clearTimeout(t)
+  }, [items.length])
 
   const getItemHref = (
     item: PROJECTS_QUERY_RESULT[number] | undefined,
@@ -425,6 +582,21 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
           transform: translateY(110%);
           display: inline-block;
         }
+
+        .pl-square-inner {
+          transform: translateY(110%);
+          display: block;
+        }
+
+        .pl-ul {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          scroll-behavior: auto;
+          overscroll-behavior: contain;
+        }
+        .pl-ul::-webkit-scrollbar {
+          display: none;
+        }
       `}</style>
 
       <div ref={selectionCtaWrapRef} className="fixed bottom-5 left-6 z-30">
@@ -450,7 +622,15 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
         </span>
       </div>
 
-      <div className="relative h-screen md:grid md:grid-cols-2">
+      <div
+        ref={sectionRootRef}
+        // `data-lenis-prevent` opts the whole subtree out of the global
+        // LenisProvider's smooth-scroll hijack. Without this, Lenis
+        // preventDefault()s wheel/touch events on <html> and the ul's native
+        // overflow-y-auto never gets a chance to scroll.
+        data-lenis-prevent
+        className="relative h-screen md:grid md:grid-cols-2"
+      >
         {/* Mobile image */}
         <div className="md:hidden absolute inset-0">
           <a
@@ -500,7 +680,7 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
           </a>
         </div>
 
-        {/* Desktop: sopra lo swiper per vedere lo scale; solo il box immagine ha pointer-events per hover */}
+        {/* Desktop: above the list to receive hover; only the image box has pointer-events */}
         <div className="hidden md:block relative h-screen z-20 pointer-events-none">
           <a
             ref={desktopWrapRef}
@@ -563,74 +743,33 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
             className={cn("pl-swiper-blend pl-list h-full", "group")}
             data-hovering={isHovering ? "true" : "false"}
           >
-            <Swiper
-              direction="vertical"
-              loop
-              centeredSlides
-              slidesPerView={SLIDES_PER_VIEW}
-              speed={900}
-              /*
-                On mobile freeMode + momentum produced an aggressive snap on
-                release and occasionally broke the loop after fast flicks.
-                Disabling freeMode entirely on touch falls back to Swiper's
-                classic "one slide per swipe" behaviour, which uses the
-                standard `speed`/easing transition and feels predictable.
-              */
-              freeMode={
-                isMobile
-                  ? false
-                  : {
-                      enabled: true,
-                      momentum: true,
-                      momentumRatio: 0.4,
-                      momentumVelocityRatio: 0.3,
-                      momentumBounce: false,
-                      minimumVelocity: 0.15,
-                    }
-              }
-              mousewheel={{ sensitivity: 1, thresholdDelta: 10 }}
-              modules={[FreeMode, Mousewheel]}
-              onRealIndexChange={(swiper) => {
-                interactedItemsRef.current.add(prevActiveRef.current)
-                prevActiveRef.current = swiper.realIndex
-                setActiveIndex(swiper.realIndex)
+            <ul
+              ref={ulRef}
+              onScroll={handleScroll}
+              className={cn(
+                "pl-ul h-full w-full overflow-y-auto overflow-x-hidden list-none m-0 p-0",
+              )}
+              style={{
+                scrollSnapType: isMobile ? "y mandatory" : undefined,
               }}
-              onAfterInit={() => {
-                swiperReadyRef.current = true
-                setTimeout(() => {
-                  if (!listContainerRef.current) return
-                  const spans = Array.from(
-                    listContainerRef.current.querySelectorAll<HTMLElement>(
-                      ".pl-word-inner",
-                    ),
-                  ).filter((s) => !s.closest(".swiper-slide-duplicate"))
-                  if (!spans.length) return
-                  wordSpansRef.current = spans
-                  gsap.fromTo(
-                    [
-                      ...spans,
-                      ...(yearSpanRef.current ? [yearSpanRef.current] : []),
-                      ...(counterSpanRef.current
-                        ? [counterSpanRef.current]
-                        : []),
-                    ],
-                    { y: "110%" },
-                    { y: "0%", duration: 1.2, ease: "power3.out", delay: 0.1 },
-                  )
-                }, 0)
-              }}
-              onSetTranslate={handleSetTranslate}
-              className="h-full"
             >
-              {items.map((p, i) => (
-                <SwiperSlide key={p._id} role="listitem">
-                  <div className="flex items-center h-full px-6 md:pl-[calc(50%+2.5rem)] md:pr-10">
+              {extendedItems.map(({ item: p, key, realIndex }) => {
+                const i = realIndex
+                return (
+                  <li
+                    key={key}
+                    className="flex items-center px-6 md:pl-[calc(50%+2.5rem)] md:pr-10"
+                    style={{
+                      height: `calc(100% / ${SLIDES_PER_VIEW})`,
+                      scrollSnapAlign: isMobile ? "center" : undefined,
+                    }}
+                  >
                     <a
                       href="#"
                       className={cn(
                         "pl-item-link",
                         "type-h1 text-secondary no-underline focus-visible:outline-none",
-                        "relative inline-block leading-tight cursor-pointer",
+                        "relative inline-flex items-center leading-tight cursor-pointer",
                       )}
                       data-active={
                         hoverIndex === i || activeIndex === i ? "true" : "false"
@@ -678,6 +817,9 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
                       }}
                       aria-label={getLabel(p)}
                     >
+                      <span className="overflow-hidden block w-3 h-3 flex-shrink-0 mr-4">
+                        <span className="pl-square-inner block w-3 h-3 bg-current" />
+                      </span>
                       {getLabel(p)
                         .split(" ")
                         .map((word, j, arr) => (
@@ -698,10 +840,10 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
                         )}
                       />
                     </a>
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+                  </li>
+                )
+              })}
+            </ul>
           </div>
 
           {/* Fade top/bottom */}

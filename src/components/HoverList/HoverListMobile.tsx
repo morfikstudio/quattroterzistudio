@@ -151,9 +151,11 @@ export default function HoverListMobile({
 
       ScrollTrigger.create({
         trigger: scope,
-        start: "top 15%",
+        start: "center center",
         end: `+=${totalScroll}`,
         pin: true,
+        pinSpacing: true,
+        anticipatePin: 1,
         invalidateOnRefresh: true,
         snap: {
           snapTo: 1 / (items.length - 1),
