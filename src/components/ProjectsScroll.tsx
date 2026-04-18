@@ -61,6 +61,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const thumbClipRefs = useRef<(HTMLDivElement | null)[]>([]) // Inner thumb (overflow-hidden) receives clip-path animations.
   const thumbInnerRefs = useRef<(HTMLDivElement | null)[]>([]) // Inner media layer receives hover scale and is reset before route transition.
   const wordsRefs = useRef<(HTMLSpanElement | null)[][]>([])
+  const squaresRefs = useRef<(HTMLSpanElement | null)[]>([])
   const yearsRefs = useRef<(HTMLSpanElement | null)[]>([])
   const counterRef = useRef<HTMLSpanElement | null>(null)
   const copyGroupRefs = useRef<(HTMLDivElement | null)[]>([])
@@ -283,9 +284,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         for (let i = 0; i < projects.length; i++) {
           const letters = wordsRefs.current[i]?.filter(Boolean) ?? []
           const year = yearsRefs.current[i]
+          const square = squaresRefs.current[i]
           const y = i < activeIdx ? "-110%" : i === activeIdx ? "0%" : "110%"
           if (letters.length) gsap.set(letters, { y })
           if (year) gsap.set(year, { y })
+          if (square) gsap.set(square, { y })
         }
       }
 
@@ -308,16 +311,20 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         /* Kill all tweens */
         const allLetters = wordsRefs.current.flat().filter(Boolean)
         const allYears = yearsRefs.current.filter(Boolean)
+        const allSquares = squaresRefs.current.filter(Boolean)
         gsap.killTweensOf(allLetters)
         gsap.killTweensOf(allYears)
+        gsap.killTweensOf(allSquares)
 
         /* Set the target index */
         targetIndex = nextIndex
 
         const lettersOut = wordsRefs.current[activeIndex]?.filter(Boolean) ?? []
         const yearOut = yearsRefs.current[activeIndex]
+        const squareOut = squaresRefs.current[activeIndex]
         const lettersIn = wordsRefs.current[nextIndex]?.filter(Boolean) ?? []
         const yearIn = yearsRefs.current[nextIndex]
+        const squareIn = squaresRefs.current[nextIndex]
 
         const isDown = nextIndex > activeIndex
         const outgoingY = isDown ? "-100%" : "100%"
@@ -362,10 +369,27 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           )
         }
 
+        if (squareOut) {
+          tl.to(
+            squareOut,
+            {
+              y: outgoingY,
+              duration: 0.3,
+              ease: "power2.in",
+              overwrite: "auto",
+            },
+            0,
+          )
+        }
+
         if (lettersIn.length) tl.set(lettersIn, { y: incomingFromY }, 0)
 
         if (yearIn) {
           tl.set(yearIn, { y: incomingFromY }, 0)
+        }
+
+        if (squareIn) {
+          tl.set(squareIn, { y: incomingFromY }, 0)
         }
 
         if (lettersIn.length) {
@@ -392,6 +416,19 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
               overwrite: "auto",
             },
             0.4,
+          )
+        }
+
+        if (squareIn) {
+          tl.to(
+            squareIn,
+            {
+              y: "0%",
+              duration: 0.45,
+              ease: "expo.out",
+              overwrite: "auto",
+            },
+            0.1,
           )
         }
       }
@@ -620,6 +657,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     const firstLetters = wordsRefs.current[0]?.filter(Boolean) ?? []
     const firstYear = yearsRefs.current[0]
     const firstCounter = counterRef.current
+    const firstSquare = squaresRefs.current[0]
 
     if (firstBg) {
       gsap.fromTo(
@@ -644,6 +682,17 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     }
 
     // Stessa animazione "lettersIn" dello scroll — parte a metà del clip-path
+    if (firstSquare) {
+      gsap.set(firstSquare, { y: "110%" })
+      gsap.to(firstSquare, {
+        y: "0%",
+        duration: 0.45,
+        ease: "expo.out",
+        delay: 0.9,
+        overwrite: "auto",
+      })
+    }
+
     if (firstLetters.length) {
       gsap.set(firstLetters, { y: "110%" })
       gsap.to(firstLetters, {
@@ -926,7 +975,14 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                   handleProjectClick(idx, `/projects/${slug}`)
                 }}
               >
-                <span className="block w-[10px] h-[10px] bg-white flex-shrink-0 mr-4 -translate-y-[5px]" />
+                <span className="overflow-hidden block w-[10px] h-[10px] flex-shrink-0 mr-4 -translate-y-[5px]">
+                  <span
+                    ref={(el) => {
+                      squaresRefs.current[i] = el
+                    }}
+                    className="block w-[10px] h-[10px] bg-white"
+                  />
+                </span>
                 <div>
                   <h1 className="overflow-hidden">
                     {(p.title ?? "").split("").map((char, j) => (
