@@ -22,6 +22,7 @@ import { useNavigationStore } from "@/stores/navigationStore"
 import { useIsTouch } from "@/hooks/useIsTouch"
 
 import { useLenis } from "@/components/LenisProvider"
+import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
 import ScrollIndicator from "@/components/ScrollIndicator"
 import Image from "@/components/ui/Image"
 
@@ -127,16 +128,15 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       transitioningRef.current = true
 
       if (!isDesktop) {
-        setIsRouteTransitioning(true)
         setPreviousPath(window.location.pathname)
         if (!isSnappedRef.current && wrapRef.current) {
           const targetY = wrapRef.current.offsetTop + index * window.innerHeight
           lenis.scrollTo(targetY, {
             duration: 0.3,
-            onComplete: () => router.push(url),
+            onComplete: () => dispatchCurtainNavigate(url),
           })
         } else {
-          router.push(url)
+          dispatchCurtainNavigate(url)
         }
         return
       }

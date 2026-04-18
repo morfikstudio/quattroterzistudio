@@ -10,6 +10,7 @@ import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
 import { useNavigationStore } from "@/stores/navigationStore"
 import { useBreakpoint } from "@/stores/breakpointStore"
+import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
 
 const SLIDES_PER_VIEW = 7
 // Number of times the items list is duplicated to simulate an infinite loop
@@ -184,7 +185,7 @@ export default function ProjectsListPlain({
 
       // Non-desktop: navigate directly (no image expansion), same as ProjectsScroll
       if (!isDesktop) {
-        router.push(url)
+        dispatchCurtainNavigate(url)
         return
       }
 

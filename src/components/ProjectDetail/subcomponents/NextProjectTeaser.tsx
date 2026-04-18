@@ -11,6 +11,7 @@ import { cn } from "@/utils/classNames"
 import { getImageUrl } from "@/utils/media"
 
 import { useLenis, useAnimationKey } from "@/components/LenisProvider"
+import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
 import Image from "@/components/ui/Image"
 
 gsap.registerPlugin(ScrollTrigger)
@@ -74,7 +75,7 @@ export default function NextProjectTeaser({
     }
 
     if (!isDesktop) {
-      router.push(`/projects/${nextProject?.slug?.current ?? ""}`)
+      dispatchCurtainNavigate(`/projects/${nextProject?.slug?.current ?? ""}`)
       return
     }
 
