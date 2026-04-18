@@ -926,7 +926,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                   handleProjectClick(idx, `/projects/${slug}`)
                 }}
               >
-                <span className="block w-3 h-3 bg-white flex-shrink-0 mr-4" />
+                <span className="block w-[10px] h-[10px] bg-white flex-shrink-0 mr-4" />
                 <div>
                   <h1 className="overflow-hidden">
                     {(p.title ?? "").split("").map((char, j) => (

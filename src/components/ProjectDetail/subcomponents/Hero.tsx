@@ -89,7 +89,7 @@ export default function Hero({ cover, title, year }: HeroProps) {
               "flex items-center",
             )}
           >
-            <span className="block w-3 h-3 bg-white flex-shrink-0 mr-4" />
+            <span className="block w-[10px] h-[10px] bg-white flex-shrink-0 mr-4" />
             <h1 ref={titleRef}>
               {title.split("").map((char, i) => (
                 <span
