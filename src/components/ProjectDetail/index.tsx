@@ -5,6 +5,7 @@ import Hero from "./subcomponents/Hero"
 import Contents from "./subcomponents/Contents"
 import MediaBlocks from "./subcomponents/MediaBlocks"
 import NextProjectTeaser from "./subcomponents/NextProjectTeaser"
+import BackLinks from "./subcomponents/BackLinks"
 
 type ProjectProps = {
   coverDetail: NonNullable<PROJECT_QUERY_RESULT>["coverDetail"] | null
@@ -59,6 +60,15 @@ export default function ProjectDetail({
           <MediaBlocks blocks={blocks} />
         </section>
       )}
+
+      <section
+        className={cn(
+          "relative px-[12px] md:px-[24px] pt-[48px] md:pt-[104px]",
+          "max-w-[1280px] mx-auto",
+        )}
+      >
+        <BackLinks />
+      </section>
 
       {nextProject && (
         <section className={cn("pt-[80px] md:pt-[120px]")}>
