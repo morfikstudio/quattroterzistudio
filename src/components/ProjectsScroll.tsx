@@ -972,7 +972,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       </div>
 
       {/* LIST CTA */}
-      <div ref={listCTAWrapRef} className="fixed bottom-6 left-6 z-30">
+      <div ref={listCTAWrapRef} className="fixed bottom-6 left-6 z-30 flex">
         <ListCTA onArchiveClick={handleArchiveClick} />
       </div>
 
