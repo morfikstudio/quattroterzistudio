@@ -21,6 +21,7 @@ const TRANSITION_PATHS = ["/projects", "/archive"]
 export default function Hero({ cover, title, year }: HeroProps) {
   const titleRef = useRef<HTMLHeadingElement | null>(null)
   const yearRef = useRef<HTMLSpanElement | null>(null)
+  const squareRef = useRef<HTMLSpanElement | null>(null)
 
   const shouldAnimate = useRef(
     typeof window !== "undefined" &&
@@ -39,6 +40,18 @@ export default function Hero({ cover, title, year }: HeroProps) {
       ? (Array.from(titleRef.current.children) as HTMLElement[])
       : []
     const yearEl = yearRef.current
+
+    const squareEl = squareRef.current
+
+    if (squareEl) {
+      gsap.set(squareEl, { y: "110%" })
+      gsap.to(squareEl, {
+        y: "0%",
+        duration: 0.45,
+        ease: "expo.out",
+        delay: 0.1,
+      })
+    }
 
     if (chars.length) {
       gsap.set(chars, { y: "110%" })
@@ -89,7 +102,12 @@ export default function Hero({ cover, title, year }: HeroProps) {
               "flex items-center",
             )}
           >
-            <span className="block w-3 h-3 bg-white flex-shrink-0 mr-4" />
+            <span className="overflow-hidden block w-[10px] h-[10px] flex-shrink-0 mr-4 -translate-y-[5px]">
+              <span
+                ref={squareRef}
+                className="block w-[10px] h-[10px] bg-white"
+              />
+            </span>
             <h1 ref={titleRef}>
               {title.split("").map((char, i) => (
                 <span

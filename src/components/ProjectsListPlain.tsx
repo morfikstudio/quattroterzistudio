@@ -10,6 +10,7 @@ import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
 import { useNavigationStore } from "@/stores/navigationStore"
 import { useBreakpoint } from "@/stores/breakpointStore"
+import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
 
 const SLIDES_PER_VIEW = 7
 // Number of times the items list is duplicated to simulate an infinite loop
@@ -184,7 +185,7 @@ export default function ProjectsListPlain({
 
       // Non-desktop: navigate directly (no image expansion), same as ProjectsScroll
       if (!isDesktop) {
-        router.push(url)
+        dispatchCurtainNavigate(url)
         return
       }
 
@@ -817,8 +818,8 @@ export default function ProjectsListPlain({
                       }}
                       aria-label={getLabel(p)}
                     >
-                      <span className="overflow-hidden block w-3 h-3 flex-shrink-0 mr-4">
-                        <span className="pl-square-inner block w-3 h-3 bg-current" />
+                      <span className="overflow-hidden block w-[10px] h-[10px] flex-shrink-0 mr-4 -translate-y-[5px]">
+                        <span className="pl-square-inner block w-[10px] h-[10px] bg-current" />
                       </span>
                       {getLabel(p)
                         .split(" ")

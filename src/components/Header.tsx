@@ -178,7 +178,9 @@ export default function Header() {
           >
             {navItems.map((item) => {
               const needsCurtain =
-                item.href === "/about" || pathname === "/about"
+                item.href === "/about" ||
+                pathname === "/about" ||
+                (item.href === "/projects" && pathname.startsWith("/projects/"))
               return (
                 <Link
                   key={item.href}
