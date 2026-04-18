@@ -37,7 +37,7 @@ function getLenisOptions(): LenisOptions {
     autoRaf: false,
     duration: prefersReducedMotion ? 0 : 1,
     easing: defaultEasing,
-    syncTouch: false,
+    syncTouch: true,
     anchors: true,
     smoothWheel: !prefersReducedMotion,
   }
