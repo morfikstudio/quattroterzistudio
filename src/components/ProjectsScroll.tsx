@@ -674,7 +674,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         clipPath: "inset(0% 0% 0% 0%)",
         duration: 0.55,
         ease: "cubic-bezier(0.22, 1, 0.36, 1)",
-        delay: 0,
+        delay: 0.4,
         onComplete: () => {
           isRevealingRef.current = false
         },
