@@ -86,11 +86,17 @@ export default function TransitionLayout({
         return
       }
 
+      // ─── /projects ↔ /projects/[slug] ────────────────────────────────────────
+      // Gestito da CurtainTransition, nessuna animazione qui.
+      if (
+        (currentPath === "/projects" && pathname.startsWith("/projects/")) ||
+        (currentPath.startsWith("/projects/") && pathname === "/projects")
+      ) {
+        done()
+        return
+      }
+
       // ─── Default: cross-fade (mobile only) ───────────────────────────────────
-      // Usato ad esempio per /projects → /projects/[slug] dove l'expand della
-      // thumbnail è già completato prima di router.push: il cross-fade dà
-      // continuità visiva tra la thumbnail espansa e il project detail.
-      // Su desktop la transizione viene saltata perché l'expand gestisce già tutto.
       if (window.innerWidth >= 1024) {
         done()
         return
