@@ -266,7 +266,7 @@ export default function NextProjectTeaser({
 
   return nextProject ? (
     <div ref={wrapRef}>
-      <div className="relative w-full h-lvh overflow-hidden">
+      <div className="relative w-full h-dvh overflow-hidden">
         {/* COVER */}
         <div
           ref={bgRef}
