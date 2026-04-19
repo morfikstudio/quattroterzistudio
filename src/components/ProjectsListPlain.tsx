@@ -624,7 +624,7 @@ export default function ProjectsListPlain({
         // preventDefault()s wheel/touch events on <html> and the ul's native
         // overflow-y-auto never gets a chance to scroll.
         data-lenis-prevent
-        className="relative h-screen md:grid md:grid-cols-2"
+        className="relative h-svh md:h-screen md:grid md:grid-cols-2"
       >
         <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-30 pointer-events-none overflow-hidden">
           <span ref={yearSpanRef} className="pl-year-span type-caption">
@@ -735,7 +735,7 @@ export default function ProjectsListPlain({
 
         {/* Lista */}
         <div
-          className="relative h-screen md:absolute md:inset-0 md:z-10"
+          className="relative h-svh md:h-screen md:absolute md:inset-0 md:z-10"
           role="region"
           aria-label="Lista progetti"
         >
