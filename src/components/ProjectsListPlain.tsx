@@ -610,12 +610,6 @@ export default function ProjectsListPlain({
         />
       </div>
 
-      <div className="fixed top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-30 pointer-events-none overflow-hidden">
-        <span ref={yearSpanRef} className="pl-year-span type-caption">
-          {activeYear}
-        </span>
-      </div>
-
       <div className="fixed bottom-6 right-6 z-30 pointer-events-none overflow-hidden">
         <span ref={counterSpanRef} className="pl-year-span type-caption">
           {String(displayIndex + 1).padStart(2, "0")}-
@@ -632,6 +626,12 @@ export default function ProjectsListPlain({
         data-lenis-prevent
         className="relative h-screen md:grid md:grid-cols-2"
       >
+        <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-30 pointer-events-none overflow-hidden">
+          <span ref={yearSpanRef} className="pl-year-span type-caption">
+            {activeYear}
+          </span>
+        </div>
+
         {/* Mobile image */}
         <div className="md:hidden absolute inset-0">
           <a
