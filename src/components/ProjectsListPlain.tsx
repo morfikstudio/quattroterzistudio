@@ -672,7 +672,7 @@ export default function ProjectsListPlain({
                       resizeId="cover-detail"
                       fill
                       fit="cover"
-                      priority={i < 2}
+                      priority
                     />
                   </div>
                 ))}
@@ -724,7 +724,7 @@ export default function ProjectsListPlain({
                       resizeId="cover-detail"
                       fill
                       fit="cover"
-                      priority={i < 2}
+                      priority
                     />
                   </div>
                 ))}
