@@ -91,15 +91,15 @@ export default function TransitionLayout({
       // thumbnail è già completato prima di router.push: il cross-fade dà
       // continuità visiva tra la thumbnail espansa e il project detail.
       // Su desktop la transizione viene saltata perché l'expand gestisce già tutto.
-      // if (window.innerWidth >= 1024) {
-      //   done()
-      //   return
-      // }
-      // gsap.set(incoming, { opacity: 0 })
-      // gsap
-      //   .timeline({ onComplete: done })
-      //   .to(outgoing, { opacity: 0, duration: 0.35, ease: "power2.out" }, 0)
-      //   .to(incoming, { opacity: 1, duration: 0.35, ease: "power2.in" }, 0.2)
+      if (window.innerWidth >= 1024) {
+        done()
+        return
+      }
+      gsap.set(incoming, { opacity: 0 })
+      gsap
+        .timeline({ onComplete: done })
+        .to(outgoing, { opacity: 0, duration: 0.35, ease: "power2.out" }, 0)
+        .to(incoming, { opacity: 1, duration: 0.35, ease: "power2.in" }, 0.2)
     }, wrapRef)
 
     return () => ctx.kill()
