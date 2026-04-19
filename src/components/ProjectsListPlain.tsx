@@ -17,7 +17,7 @@ const SLIDES_PER_VIEW = 7
 // with a native scrollable container. The visible viewport always sits inside
 // the middle copy; when the user approaches the first/last copy we silently
 // jump scrollTop by one full list-length so they remain in the middle copy.
-const COPIES = 3
+const COPIES = 5
 
 function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
   const Icons = () => (
@@ -285,6 +285,10 @@ export default function ProjectsListPlain({
   const itemHeightRef = useRef(0)
   const totalHeightRef = useRef(0)
   const lastScrollTopRef = useRef(0)
+  // Pending teleport direction (+1 = add totalHeight, -1 = subtract, 0 = none).
+  // We defer the scrollTop teleport until momentum settles, otherwise setting
+  // scrollTop mid-flick on iOS interrupts the native inertia and causes jank.
+  const pendingTeleportRef = useRef(0)
 
   // `mobileImgRef` is intentionally not wired up — on touch we don't want
   // the image to scale down with scroll velocity. Keeping the ref out of the
@@ -325,8 +329,11 @@ export default function ProjectsListPlain({
 
     // Center first item of middle copy: scrollTop such that
     // scrollTop + containerHeight/2 falls in the middle of that item.
+    // Middle copy index = floor(COPIES / 2).
     const halfView = Math.floor(SLIDES_PER_VIEW / 2)
-    const initialScrollTop = (items.length - halfView) * itemHeightRef.current
+    const middleCopyIndex = Math.floor(COPIES / 2)
+    const initialScrollTop =
+      (middleCopyIndex * items.length - halfView) * itemHeightRef.current
     ul.scrollTop = initialScrollTop
     lastScrollTopRef.current = initialScrollTop
 
@@ -421,6 +428,14 @@ export default function ProjectsListPlain({
         } else {
           isScrollingRef.current = false
           setIsScrolling(false)
+          // Momentum has settled — safe to teleport without breaking inertia.
+          if (pendingTeleportRef.current !== 0 && ul) {
+            const next =
+              ul.scrollTop + pendingTeleportRef.current * totalHeightRef.current
+            ul.scrollTop = next
+            lastScrollTopRef.current = next
+            pendingTeleportRef.current = 0
+          }
         }
       }
       scrollCheckRef.current = requestAnimationFrame(check)
@@ -428,19 +443,17 @@ export default function ProjectsListPlain({
 
     lastScrollTopRef.current = scrollTop
 
-    // Loop reset: keep the user inside the middle copy.
-    // Middle copy spans [totalHeight, 2*totalHeight). When the viewport's
-    // scrollTop drifts outside [0.5*totalHeight, 1.5*totalHeight] we silently
-    // teleport by ±totalHeight so the visible content is identical.
+    // Loop reset: flag the direction, but DON'T teleport here.
+    // Setting scrollTop during active momentum on iOS kills the native inertia
+    // and causes the scroll to "stutter" or stop. Instead we record that a
+    // teleport is needed; the rAF velocity watcher above applies it the
+    // moment the scroll settles, so the user never feels the jump.
+    // Middle copy spans [2*totalHeight, 3*totalHeight) (COPIES=5, index=2).
     if (totalHeight > 0) {
-      if (scrollTop < totalHeight * 0.5) {
-        const next = scrollTop + totalHeight
-        ul.scrollTop = next
-        lastScrollTopRef.current = next
-      } else if (scrollTop > totalHeight * 1.5) {
-        const next = scrollTop - totalHeight
-        ul.scrollTop = next
-        lastScrollTopRef.current = next
+      if (scrollTop < totalHeight) {
+        pendingTeleportRef.current = 1
+      } else if (scrollTop > totalHeight * 4) {
+        pendingTeleportRef.current = -1
       }
     }
   }, [items.length, startScaleLoop])
