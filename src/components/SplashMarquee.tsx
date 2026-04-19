@@ -115,8 +115,8 @@ export default function Splash({ title, ctaText }: SplashProps) {
       centerXRef.current = window.innerWidth / 2
       const marqueeLoopTime = title.length * 0.7
 
-      // Svela gli elementi nascosti inline (opacity:0 / visibility:hidden)
-      // solo ora, così non c'è flash al primo paint.
+      // Hide hidden inline elements (opacity:0 / visibility:hidden)
+      // now, so there's no flash on the first paint.
       gsap.set(rectRef.current, { opacity: 1 })
       gsap.set(marqueeEl, { visibility: "visible" })
 
@@ -198,18 +198,18 @@ export default function Splash({ title, ctaText }: SplashProps) {
   }, [setCursor, visible])
 
   /**
-   * Splash exit animation — /projects viene montata subito sotto il wrap
-   * (z-[9999]) grazie a router.push anticipato; il rect nero si espande E
-   * contemporaneamente l'intero wrap (rect + bg bianco + lettere) fa fade out,
-   * così mentre il rettangolo cresce diventa anche sempre più trasparente e
-   * rivela /projects sotto.
+   * Splash exit animation — /projects is mounted immediately under the wrap
+   * (z-[9999]) thanks to pre-emptive router.push; the black rect expands AND
+   * the entire wrap (rect + white bg + letters) fades out at the same time,
+   * so as the rectangle grows it becomes increasingly transparent and reveals
+   * /projects underneath.
    */
   const handleEnter = useCallback(() => {
     if (isLeavingRef.current || !rectRef.current || !wrapRef.current) return
     isLeavingRef.current = true
 
-    // 1. Anticipa la navigazione: /projects comincia a montarsi in background
-    //    mentre lo splash si dissolve sopra.
+    // 1. Pre-load /projects: it starts loading in the background
+    //    while the splash is dissolving above.
     useNavigationStore.getState().setPreviousPath(window.location.pathname)
     router.push("/projects")
 
@@ -219,7 +219,7 @@ export default function Splash({ title, ctaText }: SplashProps) {
 
     if (marqueeRef.current) gsap.killTweensOf(marqueeRef.current)
 
-    // Fissa il rect alla sua posizione corrente (coordinate relative al fixed parent)
+    // Fix the rect to its current position (relative to the fixed parent)
     gsap.set(el, {
       position: "absolute",
       left: box.left,
@@ -236,7 +236,7 @@ export default function Splash({ title, ctaText }: SplashProps) {
     const expandDuration = 1.3
     const fadeDelay = 0.3
 
-    // 2. Rect si espande a full-screen
+    // 2. Expands the rect to full-screen
     gsap.to(el, {
       left: 0,
       top: 0,
@@ -246,8 +246,8 @@ export default function Splash({ title, ctaText }: SplashProps) {
       ease: "expo.inOut",
     })
 
-    // 3. Lettere del marquee fade out rapido — devono sparire prima che
-    //    il wrap inizi a dissolversi.
+    // 3. Marquee letters fade out quickly — they must disappear before the
+    //    wrap starts fading out.
     const letters = wrap.querySelectorAll<HTMLElement>("[data-splash-letter]")
     if (letters.length) {
       gsap.to(letters, {
@@ -257,9 +257,8 @@ export default function Splash({ title, ctaText }: SplashProps) {
       })
     }
 
-    // 4. Wrap intero (bg + rect) si dissolve con un piccolo delay rispetto
-    //    all'espansione, così il rect resta pieno all'inizio e inizia a
-    //    svanire solo quando l'espansione è già in corso.
+    // 4. Entire wrap (bg + rect) fades out with a small delay relative to
+    //    the expansion, so the rect remains full at the beginning and starts
     gsap.to(wrap, {
       opacity: 0,
       duration: expandDuration,
@@ -271,8 +270,8 @@ export default function Splash({ title, ctaText }: SplashProps) {
       },
     })
 
-    // ProjectsScroll si auto-triggera la reveal animation quando `show`
-    // diventa true e previousPath è "/", quindi qui non serve più dispatch.
+    // ProjectsScroll will trigger the reveal animation when `show`
+    // becomes true and previousPath is "/", so here we don't need to dispatch.
   }, [setCursor, router])
 
   if (!visible) return null
