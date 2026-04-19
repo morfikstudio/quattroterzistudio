@@ -132,6 +132,9 @@ export default function NextProjectTeaser({
   const scrollTransition = useCallback(() => {
     if (!lenis || !wrapRef.current) return
 
+    /* Lenis calls onComplete synchronously when target === targetScroll; stateRef
+     * only updates on render, so set it before scrollTo / rAF or finalTransition bails. */
+    stateRef.current = "navigating"
     setState("navigating")
 
     const hasReachedBottom = lenis.scroll === lenis.limit
