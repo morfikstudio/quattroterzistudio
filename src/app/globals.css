@@ -39,3 +39,9 @@ nav .link-underline-bar {
 .contact-marquee {
   transform: translateY(10px);
 }
+
+.iubenda-cs-preferences-link,
+.iubenda-tp-btn {
+  display: none !important;
+  z-index: -1000 !important;
+}
