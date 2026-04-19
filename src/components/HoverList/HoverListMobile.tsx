@@ -10,7 +10,7 @@ import { defaultItems, HoverListProps } from "./types"
 
 const COLOR_ACTIVE = "var(--color-accent)"
 const COLOR_INACTIVE = "var(--color-tertiary)"
-/** SplitText `mask: "lines"` clips to line boxes; nudge lines down so ascenders are not cut. */
+/** SplitText `mask: "lines"` clips to line boxes; */
 const TITLE_LINE_NUDGE_Y = 2
 
 export default function HoverListMobile({
