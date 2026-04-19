@@ -167,7 +167,8 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                 social
               </span>
               <a
-                href="tel:+393333333333"
+                href="https://www.linkedin.com/company/quattroterzi-studio-sas/about/"
+                target="_blank"
                 className={cn("link-underline w-fit")}
                 onMouseEnter={(e) => {
                   e.currentTarget.dataset.line = "in"
@@ -176,11 +177,12 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                   e.currentTarget.dataset.line = "out"
                 }}
               >
-                <span data-split>facebook</span>
+                <span data-split>linkedin</span>
                 <span className="link-underline-bar" />
               </a>
               <a
-                href="tel:+393333333333"
+                target="_blank"
+                href="https://www.instagram.com/quattroterzistudio/"
                 className={cn("link-underline w-fit")}
                 onMouseEnter={(e) => {
                   e.currentTarget.dataset.line = "in"
@@ -211,7 +213,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                 <span className={cn("link-underline-bar")} />
               </a>
               <a
-                href="tel:++39 3515990023"
+                href="tel:+39 3515990023"
                 className={cn("link-underline w-fit")}
                 onMouseEnter={(e) => {
                   e.currentTarget.dataset.line = "in"

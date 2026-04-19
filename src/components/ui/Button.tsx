@@ -59,8 +59,8 @@ export default function Button({
     gsap.killTweensOf(el)
     gsap.to(el, {
       scale: value,
-      duration: 0.55,
-      ease: "power3.inOut",
+      duration: 0.35,
+      ease: "power3.out",
       overwrite: true,
     })
   }, [])
