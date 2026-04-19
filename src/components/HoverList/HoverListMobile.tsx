@@ -10,6 +10,8 @@ import { defaultItems, HoverListProps } from "./types"
 
 const COLOR_ACTIVE = "var(--color-accent)"
 const COLOR_INACTIVE = "var(--color-tertiary)"
+/** SplitText `mask: "lines"` clips to line boxes; nudge lines down so ascenders are not cut. */
+const TITLE_LINE_NUDGE_Y = 2
 
 export default function HoverListMobile({
   items = defaultItems,
@@ -118,9 +120,14 @@ export default function HoverListMobile({
       )
       const titleLines = titleSplits.flatMap((s) => s.lines)
 
-      gsap.set(titleLines, { yPercent: 110, force3D: true })
+      gsap.set(titleLines, {
+        yPercent: 110,
+        y: TITLE_LINE_NUDGE_Y,
+        force3D: true,
+      })
       gsap.to(titleLines, {
         yPercent: 0,
+        y: TITLE_LINE_NUDGE_Y,
         duration: 1.25,
         ease: "power3.out",
         stagger: 0.05,
@@ -192,7 +199,7 @@ export default function HoverListMobile({
                 ref={(el) => {
                   titleRefs.current[i] = el
                 }}
-                className="type-h1 font-medium uppercase block "
+                className="type-h1 font-medium uppercase block"
               >
                 {item.title}
               </span>
