@@ -168,10 +168,6 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
           lenis.stop()
 
-          // Hide title and year — the Hero will show them with letters-in
-          const copyGroup = copyGroupRefs.current[index]
-          if (copyGroup) gsap.set(copyGroup, { autoAlpha: 0 })
-
           previousInlineTransition = innerEl.style.transition
 
           /*
@@ -190,6 +186,18 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
           gsap.set(clipEl, { clipPath: "none" })
 
+          // Elevate the thumb above the titles layer, the counter and the CTA.
+          // fixedLayerRef creates a stacking context at z-20; its child
+          // thumbs-container sits at z-0 under the titles-container (z-10).
+          // Raising both makes the expanding thumb paint above everything.
+          if (fixedLayerRef.current) {
+            gsap.set(fixedLayerRef.current, { zIndex: 100 })
+          }
+          const thumbsContainer = el.parentElement
+          if (thumbsContainer) {
+            gsap.set(thumbsContainer, { zIndex: 20 })
+          }
+
           gsap.set(el, {
             top: rect.top,
             left: rect.left,
@@ -197,6 +205,41 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             zIndex: 100,
             overwrite: true,
           })
+
+          // Letters-out on the active title, year, square and counter,
+          // plus fade-out of CTA and scroll indicator. Queued on the same
+          // tick as the thumb expansion so they start exactly together.
+          const activeLetters = wordsRefs.current[index]?.filter(Boolean) ?? []
+          const activeYear = yearsRefs.current[index]
+          const activeSquare = squaresRefs.current[index]
+          const lettersOutTargets = [
+            ...activeLetters,
+            ...(activeYear ? [activeYear] : []),
+            ...(activeSquare ? [activeSquare] : []),
+            ...(counterRef.current ? [counterRef.current] : []),
+          ]
+          if (lettersOutTargets.length) {
+            gsap.to(lettersOutTargets, {
+              y: "-110%",
+              duration: 0.7,
+              ease: "power3.in",
+              overwrite: true,
+            })
+          }
+
+          const fadeOutTargets = [
+            listCTAWrapRef.current,
+            scrollIndicatorWrapRef.current,
+          ].filter(Boolean) as HTMLElement[]
+          if (fadeOutTargets.length) {
+            gsap.to(fadeOutTargets, {
+              y: -20,
+              opacity: 0,
+              duration: 0.7,
+              ease: "power3.in",
+              overwrite: true,
+            })
+          }
 
           try {
             await new Promise<void>((resolve) => {
