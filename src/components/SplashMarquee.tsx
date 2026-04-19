@@ -115,6 +115,11 @@ export default function Splash({ title, ctaText }: SplashProps) {
       centerXRef.current = window.innerWidth / 2
       const marqueeLoopTime = title.length * 0.7
 
+      // Svela gli elementi nascosti inline (opacity:0 / visibility:hidden)
+      // solo ora, così non c'è flash al primo paint.
+      gsap.set(rectRef.current, { opacity: 1 })
+      gsap.set(marqueeEl, { visibility: "visible" })
+
       gsap
         .timeline({
           delay: 0.5,
@@ -285,6 +290,7 @@ export default function Splash({ title, ctaText }: SplashProps) {
           "w-full max-w-[65vw] md:max-w-[75vw] lg:max-w-[35vw]",
           "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
         )}
+        style={{ opacity: 0 }}
       />
 
       <div
@@ -294,6 +300,7 @@ export default function Splash({ title, ctaText }: SplashProps) {
         <div
           ref={marqueeRef}
           className="inline-flex whitespace-nowrap text-white"
+          style={{ visibility: "hidden" }}
         >
           {/* 0.5em/1em -> center letters vertically to compensate for the Helvetica line height */}
           <div className="flex translate-y-[0.5em] lg:translate-y-[1em]">
