@@ -240,11 +240,11 @@
               },
               {
                 "type": "string",
-                "value": "20-80"
+                "value": "80-20"
               },
               {
                 "type": "string",
-                "value": "80-20"
+                "value": "20-80"
               }
             ]
           },

@@ -38,6 +38,16 @@ export const PROJECT_SLUGS_QUERY = defineQuery(
   }`,
 )
 
+export const PROJECT_METADATA_QUERY = defineQuery(
+  `*[_type == "project" && slug.current == $slug][0]{
+    title,
+    description,
+    slug,
+    coverDetail,
+    coverList
+  }`,
+)
+
 export const PROJECT_QUERY = defineQuery(
   `*[_type == "project" && slug.current == $slug][0]{
     _id,

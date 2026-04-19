@@ -1,8 +1,14 @@
 import type { Metadata } from "next"
 import localFont from "next/font/local"
 import { Geist_Mono } from "next/font/google"
-import "./globals.css"
+
+import type { SiteSeoConfig } from "@/lib/seo/types"
+import { getSiteOrigin } from "@/lib/seo/site-url"
 import { cn } from "@/utils/classNames"
+
+import siteSeo from "@/data/site-seo.json"
+
+import "./globals.css"
 
 const helvetica = localFont({
   src: [
@@ -43,9 +49,15 @@ const geistMono = Geist_Mono({
 const allowIndexing = process.env.NEXT_PUBLIC_ALLOW_INDEXING === "true"
 const shouldIndex = process.env.NODE_ENV === "production" && allowIndexing
 
+const siteCfg = siteSeo as SiteSeoConfig
+
 export const metadata: Metadata = {
-  title: "Quattro Terzi Studio",
-  description: "Quattro Terzi Studio — portfolio e progetti",
+  metadataBase: new URL(getSiteOrigin()),
+  title: {
+    default: siteCfg.home.title,
+    template: `%s | ${siteCfg.site.name}`,
+  },
+  description: siteCfg.home.description,
   robots: {
     index: shouldIndex,
     follow: shouldIndex,

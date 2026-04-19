@@ -62,8 +62,8 @@ export type ProjectMediaDouble = {
     | "50-40"
     | "30-50"
     | "50-30"
-    | "20-80"
     | "80-20"
+    | "20-80"
   media1?: Media1
   media2?: Media2
 }
@@ -422,6 +422,66 @@ export type PROJECT_SLUGS_QUERY_RESULT = Array<{
 }>
 
 // Source: src/sanity/lib/queries.ts
+// Variable: PROJECT_METADATA_QUERY
+// Query: *[_type == "project" && slug.current == $slug][0]{    title,    description,    slug,    coverDetail,    coverList  }
+export type PROJECT_METADATA_QUERY_RESULT = {
+  title: string | null
+  description: Array<{
+    children?: Array<{
+      marks?: Array<string>
+      text?: string
+      _type: "span"
+      _key: string
+    }>
+    style?: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal"
+    listItem?: "bullet" | "number"
+    markDefs?: Array<{
+      href?: string
+      _type: "link"
+      _key: string
+    }>
+    level?: number
+    _type: "block"
+    _key: string
+  }> | null
+  slug: Slug | null
+  coverDetail: {
+    portrait?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    landscape?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    alt?: string
+  } | null
+  coverList: {
+    portrait?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    landscape?: {
+      asset?: SanityImageAssetReference
+      media?: unknown
+      hotspot?: SanityImageHotspot
+      crop?: SanityImageCrop
+      _type: "image"
+    }
+    alt?: string
+  } | null
+} | null
+
+// Source: src/sanity/lib/queries.ts
 // Variable: PROJECT_QUERY
 // Query: *[_type == "project" && slug.current == $slug][0]{    _id,    orderRank,    title,    slug,    description,    year,    client,    sector,    credits,    coverDetail,    blocks[]{      _key,      _type,      payoff,      "variant": coalesce(variant, singleVariant, doubleVariant),      useVideo,      image,      alt,      "videoAsset": video.asset->{ url, mimeType, originalFilename },      media1{        image,        alt      },      media2{        image,        alt      }    },    "nextProject": coalesce(      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year },      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year }    )  }
 export type PROJECT_QUERY_RESULT = {
@@ -630,6 +690,7 @@ declare module "@sanity/client" {
     '*[_type == "project" && defined(slug.current) && isSelected == true]|order(orderRank asc)[0...100]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverList,\n    coverDetail\n\n  }': PROJECTS_QUERY_RESULT
     '*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...100]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverList,\n    coverDetail\n\n  }': ARCHIVE_PROJECTS_QUERY_RESULT
     '*[_type == "project" && defined(slug.current)]{\n    "slug": slug.current\n  }': PROJECT_SLUGS_QUERY_RESULT
+    '*[_type == "project" && slug.current == $slug][0]{\n    title,\n    description,\n    slug,\n    coverDetail,\n    coverList\n  }': PROJECT_METADATA_QUERY_RESULT
     '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    description,\n    year,\n    client,\n    sector,\n    credits,\n    coverDetail,\n    blocks[]{\n      _key,\n      _type,\n      payoff,\n      "variant": coalesce(variant, singleVariant, doubleVariant),\n      useVideo,\n      image,\n      alt,\n      "videoAsset": video.asset->{ url, mimeType, originalFilename },\n      media1{\n        image,\n        alt\n      },\n      media2{\n        image,\n        alt\n      }\n    },\n    "nextProject": coalesce(\n      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year },\n      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year }\n    )\n  }': PROJECT_QUERY_RESULT
   }
 }
