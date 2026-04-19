@@ -1,0 +1,69 @@
+{
+  "site": {
+    "name": "Quattro Terzi Studio",
+    "defaultDescription": "",
+    "locale": "en_US",
+    "twitterSite": "",
+    "twitterCreator": ""
+  },
+  "home": {
+    "title": "Quattro Terzi Studio",
+    "description": "Quattro Terzi Studio — portfolio and projects.",
+    "keywords": [],
+    "canonicalPath": "/",
+    "openGraph": {
+      "type": "website",
+      "image": {
+        "url": "/images/og-default.png",
+        "width": 1200,
+        "height": 630,
+        "alt": ""
+      }
+    }
+  },
+  "about": {
+    "title": "About",
+    "description": "Quattro Terzi Studio — who we are and our approach to design.",
+    "keywords": [],
+    "canonicalPath": "/about",
+    "openGraph": {
+      "type": "website",
+      "image": {
+        "url": "/images/og-default.png",
+        "width": 1200,
+        "height": 630,
+        "alt": ""
+      }
+    }
+  },
+  "projects": {
+    "title": "Projects",
+    "description": "A curated selection of work from Quattro Terzi Studio — portfolio, case studies, and recent projects.",
+    "keywords": [],
+    "canonicalPath": "/projects",
+    "openGraph": {
+      "type": "website",
+      "image": {
+        "url": "/images/og-default.png",
+        "width": 1200,
+        "height": 630,
+        "alt": ""
+      }
+    }
+  },
+  "archive": {
+    "title": "Archive",
+    "description": "The full project archive from Quattro Terzi Studio — all work in one place.",
+    "keywords": [],
+    "canonicalPath": "/archive",
+    "openGraph": {
+      "type": "website",
+      "image": {
+        "url": "/images/og-default.png",
+        "width": 1200,
+        "height": 630,
+        "alt": ""
+      }
+    }
+  }
+}

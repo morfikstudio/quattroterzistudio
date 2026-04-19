@@ -38,7 +38,7 @@ export default function Button({
   const bounce = useCallback(() => {
     const el = scaleRef.current
     if (!el) return
-    // Kill any running tween so we start from the current scale
+    // Kill any running tween
     gsap.killTweensOf(el)
     gsap.fromTo(
       el,

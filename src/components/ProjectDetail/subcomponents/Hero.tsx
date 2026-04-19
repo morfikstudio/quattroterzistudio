@@ -102,12 +102,14 @@ export default function Hero({ cover, title, year }: HeroProps) {
               "flex items-center",
             )}
           >
+            {/* QUADRATINO — decommentare per riabilitare
             <span className="overflow-hidden block w-[10px] h-[10px] flex-shrink-0 mr-4 -translate-y-[5px]">
               <span
                 ref={squareRef}
                 className="block w-[10px] h-[10px] bg-white"
               />
             </span>
+            */}
             <h1 ref={titleRef}>
               {title.split("").map((char, i) => (
                 <span

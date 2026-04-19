@@ -17,7 +17,7 @@ const SLIDES_PER_VIEW = 7
 // with a native scrollable container. The visible viewport always sits inside
 // the middle copy; when the user approaches the first/last copy we silently
 // jump scrollTop by one full list-length so they remain in the middle copy.
-const COPIES = 3
+const COPIES = 5
 
 function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
   const Icons = () => (
@@ -285,6 +285,10 @@ export default function ProjectsListPlain({
   const itemHeightRef = useRef(0)
   const totalHeightRef = useRef(0)
   const lastScrollTopRef = useRef(0)
+  // Pending teleport direction (+1 = add totalHeight, -1 = subtract, 0 = none).
+  // We defer the scrollTop teleport until momentum settles, otherwise setting
+  // scrollTop mid-flick on iOS interrupts the native inertia and causes jank.
+  const pendingTeleportRef = useRef(0)
 
   // `mobileImgRef` is intentionally not wired up — on touch we don't want
   // the image to scale down with scroll velocity. Keeping the ref out of the
@@ -325,8 +329,11 @@ export default function ProjectsListPlain({
 
     // Center first item of middle copy: scrollTop such that
     // scrollTop + containerHeight/2 falls in the middle of that item.
+    // Middle copy index = floor(COPIES / 2).
     const halfView = Math.floor(SLIDES_PER_VIEW / 2)
-    const initialScrollTop = (items.length - halfView) * itemHeightRef.current
+    const middleCopyIndex = Math.floor(COPIES / 2)
+    const initialScrollTop =
+      (middleCopyIndex * items.length - halfView) * itemHeightRef.current
     ul.scrollTop = initialScrollTop
     lastScrollTopRef.current = initialScrollTop
 
@@ -421,6 +428,14 @@ export default function ProjectsListPlain({
         } else {
           isScrollingRef.current = false
           setIsScrolling(false)
+          // Momentum has settled — safe to teleport without breaking inertia.
+          if (pendingTeleportRef.current !== 0 && ul) {
+            const next =
+              ul.scrollTop + pendingTeleportRef.current * totalHeightRef.current
+            ul.scrollTop = next
+            lastScrollTopRef.current = next
+            pendingTeleportRef.current = 0
+          }
         }
       }
       scrollCheckRef.current = requestAnimationFrame(check)
@@ -428,19 +443,17 @@ export default function ProjectsListPlain({
 
     lastScrollTopRef.current = scrollTop
 
-    // Loop reset: keep the user inside the middle copy.
-    // Middle copy spans [totalHeight, 2*totalHeight). When the viewport's
-    // scrollTop drifts outside [0.5*totalHeight, 1.5*totalHeight] we silently
-    // teleport by ±totalHeight so the visible content is identical.
+    // Loop reset: flag the direction, but DON'T teleport here.
+    // Setting scrollTop during active momentum on iOS kills the native inertia
+    // and causes the scroll to "stutter" or stop. Instead we record that a
+    // teleport is needed; the rAF velocity watcher above applies it the
+    // moment the scroll settles, so the user never feels the jump.
+    // Middle copy spans [2*totalHeight, 3*totalHeight) (COPIES=5, index=2).
     if (totalHeight > 0) {
-      if (scrollTop < totalHeight * 0.5) {
-        const next = scrollTop + totalHeight
-        ul.scrollTop = next
-        lastScrollTopRef.current = next
-      } else if (scrollTop > totalHeight * 1.5) {
-        const next = scrollTop - totalHeight
-        ul.scrollTop = next
-        lastScrollTopRef.current = next
+      if (scrollTop < totalHeight) {
+        pendingTeleportRef.current = 1
+      } else if (scrollTop > totalHeight * 4) {
+        pendingTeleportRef.current = -1
       }
     }
   }, [items.length, startScaleLoop])
@@ -610,12 +623,6 @@ export default function ProjectsListPlain({
         />
       </div>
 
-      <div className="fixed top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-30 pointer-events-none overflow-hidden">
-        <span ref={yearSpanRef} className="pl-year-span type-caption">
-          {activeYear}
-        </span>
-      </div>
-
       <div className="fixed bottom-6 right-6 z-30 pointer-events-none overflow-hidden">
         <span ref={counterSpanRef} className="pl-year-span type-caption">
           {String(displayIndex + 1).padStart(2, "0")}-
@@ -630,8 +637,14 @@ export default function ProjectsListPlain({
         // preventDefault()s wheel/touch events on <html> and the ul's native
         // overflow-y-auto never gets a chance to scroll.
         data-lenis-prevent
-        className="relative h-screen md:grid md:grid-cols-2"
+        className="relative h-svh md:h-screen md:grid md:grid-cols-2"
       >
+        <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-30 pointer-events-none overflow-hidden">
+          <span ref={yearSpanRef} className="pl-year-span type-caption">
+            {activeYear}
+          </span>
+        </div>
+
         {/* Mobile image */}
         <div className="md:hidden absolute inset-0">
           <a
@@ -672,7 +685,7 @@ export default function ProjectsListPlain({
                       resizeId="cover-detail"
                       fill
                       fit="cover"
-                      priority={i < 2}
+                      priority
                     />
                   </div>
                 ))}
@@ -724,7 +737,7 @@ export default function ProjectsListPlain({
                       resizeId="cover-detail"
                       fill
                       fit="cover"
-                      priority={i < 2}
+                      priority
                     />
                   </div>
                 ))}
@@ -735,7 +748,7 @@ export default function ProjectsListPlain({
 
         {/* Lista */}
         <div
-          className="relative h-screen md:absolute md:inset-0 md:z-10"
+          className="relative h-svh md:h-screen md:absolute md:inset-0 md:z-10"
           role="region"
           aria-label="Lista progetti"
         >
@@ -818,9 +831,11 @@ export default function ProjectsListPlain({
                       }}
                       aria-label={getLabel(p)}
                     >
+                      {/* QUADRATINO — decommentare per riabilitare
                       <span className="overflow-hidden block w-[10px] h-[10px] flex-shrink-0 mr-4 -translate-y-[5px]">
                         <span className="pl-square-inner block w-[10px] h-[10px] bg-current" />
                       </span>
+                      */}
                       {getLabel(p)
                         .split(" ")
                         .map((word, j, arr) => (

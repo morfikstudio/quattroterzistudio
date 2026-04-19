@@ -9,12 +9,7 @@ export default function BackLinks() {
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
 
   return (
-    <div className="flex items-center justify-between">
-      <div>
-        <span className="uppercase font-medium text-[12px] md:text-[16px]">
-          Next project
-        </span>
-      </div>
+    <div className="flex items-center justify-between flex-col md:flex-row gap-4 md:gap-0">
       <div>
         <Button
           label="Return to works"
@@ -26,6 +21,11 @@ export default function BackLinks() {
             dispatchCurtainNavigate("/projects")
           }}
         />
+      </div>
+      <div>
+        <span className="uppercase font-medium text-[12px] md:text-[16px]">
+          Otherwise keep scrolling
+        </span>
       </div>
     </div>
   )
