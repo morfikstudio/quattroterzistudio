@@ -36,15 +36,17 @@ function getMediaLayoutByVariant(
         SINGLE_MEDIA_VARIANTS.find((item) => item.value === variant)?.layout ??
         "col-span-12 w-full min-w-0"
       )
-    case "projectMediaDouble":
+    case "projectMediaDouble": {
+      const found =
+        DOUBLE_MEDIA_VARIANTS.find((item) => item.value === variant) ??
+        DOUBLE_MEDIA_VARIANTS[0]
       return {
-        layout1:
-          DOUBLE_MEDIA_VARIANTS.find((item) => item.value === variant)
-            ?.layout1 ?? DOUBLE_MEDIA_VARIANTS[0].layout1,
-        layout2:
-          DOUBLE_MEDIA_VARIANTS.find((item) => item.value === variant)
-            ?.layout2 ?? DOUBLE_MEDIA_VARIANTS[0].layout2,
+        landscapeLayout1: found.landscapeLayout1,
+        landscapeLayout2: found.landscapeLayout2,
+        portraitLayout1: found.portraitLayout1,
+        portraitLayout2: found.portraitLayout2,
       }
+    }
     default:
       return ""
   }
@@ -176,6 +178,10 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
           "data-block-media-double-variant",
         )
         if (!variant) return
+
+        gsap.set([media1, media2], { marginTop: 0 })
+
+        if (window.innerWidth < 768) return
 
         switch (true) {
           case variant === "50-51" ||
@@ -366,7 +372,7 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
             return (
               <div
                 key={block._key}
-                className="grid w-full grid-cols-12 gap-[24px]"
+                className="grid w-full grid-cols-13 md:grid-cols-12 gap-[24px]"
                 data-block-media-single
               >
                 <div
@@ -386,21 +392,28 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
               </div>
             )
           case "projectMediaDouble": {
-            const { layout1, layout2 } = getMediaLayoutByVariant(
-              block._type,
-              block.variant,
-            )
+            const {
+              landscapeLayout1,
+              landscapeLayout2,
+              portraitLayout1,
+              portraitLayout2,
+            } = getMediaLayoutByVariant(block._type, block.variant)
 
             return (
               <div
                 key={block._key}
-                className="grid w-full grid-cols-12 gap-[24px]"
+                className="grid w-full grid-cols-13 md:grid-cols-12 gap-[24px]"
                 data-block-media-double
                 data-block-media-double-variant={block.variant}
               >
                 {block.media1 && (
                   <div
-                    className={cn("w-full min-w-0 overflow-hidden", layout1)}
+                    className={cn(
+                      "w-full min-w-0 overflow-hidden",
+                      "row-start-1 md:row-start-1",
+                      portraitLayout1,
+                      landscapeLayout1,
+                    )}
                   >
                     <div data-media-parallax-wrap className="w-full">
                       <Image
@@ -417,7 +430,12 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
 
                 {block.media2 && (
                   <div
-                    className={cn("w-full min-w-0 overflow-hidden", layout2)}
+                    className={cn(
+                      "w-full min-w-0 overflow-hidden",
+                      "row-start-2 md:row-start-1",
+                      portraitLayout2,
+                      landscapeLayout2,
+                    )}
                   >
                     <div data-media-parallax-wrap className="w-full">
                       <Image
