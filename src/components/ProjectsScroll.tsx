@@ -975,6 +975,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                   handleProjectClick(idx, `/projects/${slug}`)
                 }}
               >
+                {/* QUADRATINO — decommentare per riabilitare
                 <span className="overflow-hidden block w-[10px] h-[10px] flex-shrink-0 mr-4 -translate-y-[5px]">
                   <span
                     ref={(el) => {
@@ -983,6 +984,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                     className="block w-[10px] h-[10px] bg-white"
                   />
                 </span>
+                */}
                 <div>
                   <h1 className="overflow-hidden">
                     {(p.title ?? "").split("").map((char, j) => (
