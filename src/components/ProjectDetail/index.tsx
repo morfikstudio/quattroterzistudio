@@ -63,7 +63,7 @@ export default function ProjectDetail({
 
       <section
         className={cn(
-          "relative px-[12px] md:px-[24px] pt-[48px] md:pt-[104px]",
+          "relative px-[12px] md:px-[24px] pt-[130px] md:pt-[180px]",
           "max-w-[1280px] mx-auto",
         )}
       >
@@ -71,7 +71,7 @@ export default function ProjectDetail({
       </section>
 
       {nextProject && (
-        <section className={cn("pt-[80px] md:pt-[120px]")}>
+        <section className={cn("pt-[130px] md:pt-[180px]")}>
           <NextProjectTeaser nextProject={nextProject} />
         </section>
       )}

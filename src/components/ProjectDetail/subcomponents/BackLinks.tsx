@@ -11,11 +11,13 @@ export default function BackLinks() {
   return (
     <div className="flex items-center justify-between">
       <div>
-        <span className="uppercase font-medium">Next project</span>
+        <span className="uppercase font-medium text-[12px] md:text-[16px]">
+          Next project
+        </span>
       </div>
       <div>
         <Button
-          label="Return to projects"
+          label="Return to works"
           icon={<Icon type="arrowLeft" size="s" />}
           variant="arrow-reverse"
           size="l"

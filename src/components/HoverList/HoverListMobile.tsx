@@ -192,7 +192,7 @@ export default function HoverListMobile({
                 ref={(el) => {
                   titleRefs.current[i] = el
                 }}
-                className="type-h2 uppercase block"
+                className="type-h1 font-medium uppercase block "
               >
                 {item.title}
               </span>
