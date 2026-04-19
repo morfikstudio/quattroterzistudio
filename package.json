@@ -41,6 +41,7 @@
     "js-yaml": ">=3.14.2"
   },
   "devDependencies": {
+    "@mep-agency/next-iubenda": "^1.0.0-alpha5",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^20",

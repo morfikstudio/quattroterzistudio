@@ -231,7 +231,8 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                 legal
               </span>
               <a
-                href="tel:+393333333333"
+                href="https://www.iubenda.com/privacy-policy/23047240"
+                target="_blank"
                 className={cn("link-underline w-fit")}
                 onMouseEnter={(e) => {
                   e.currentTarget.dataset.line = "in"
@@ -244,7 +245,8 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                 <span className={cn("link-underline-bar")} />
               </a>
               <a
-                href="tel:+393333333333"
+                href="https://www.iubenda.com/privacy-policy/23047240/cookie-policy"
+                target="_blank"
                 className={cn("link-underline w-fit")}
                 onMouseEnter={(e) => {
                   e.currentTarget.dataset.line = "in"
