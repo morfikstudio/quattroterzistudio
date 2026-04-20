@@ -14,8 +14,8 @@ interface ScrollMarqueeProps {
 }
 
 export default function ScrollMarquee({
-  topText = "IF IT DOESN'T FEEL REAL",
-  bottomText = "WE START OVER.",
+  topText = "IMAGINING SPACES.",
+  bottomText = "MAKING THEM EXIST.",
   className,
 }: ScrollMarqueeProps) {
   const containerRef = useRef<HTMLDivElement>(null)
