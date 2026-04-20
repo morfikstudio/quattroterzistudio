@@ -18,6 +18,16 @@ type HeroProps = {
 
 const TRANSITION_PATHS = ["/projects", "/archive"]
 
+function cameFromListing(previousPath: string | null | undefined) {
+  if (!previousPath) return false
+  /* Match the listing pages themselves (/projects, /projects/, /archive, /archive/)
+   * but NOT a project detail page like /projects/slug — arriving from another
+   * project via the curtain transition should not replay the Hero animation. */
+  return TRANSITION_PATHS.some(
+    (p) => previousPath === p || previousPath === `${p}/`,
+  )
+}
+
 export default function Hero({ cover, title, year }: HeroProps) {
   const titleRef = useRef<HTMLHeadingElement | null>(null)
   const yearRef = useRef<HTMLSpanElement | null>(null)
@@ -25,9 +35,7 @@ export default function Hero({ cover, title, year }: HeroProps) {
 
   const shouldAnimate = useRef(
     typeof window !== "undefined" &&
-      TRANSITION_PATHS.some((p) =>
-        useNavigationStore.getState().previousPath?.startsWith(p),
-      ),
+      cameFromListing(useNavigationStore.getState().previousPath),
   )
 
   useEffect(() => {
