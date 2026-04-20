@@ -38,7 +38,7 @@ export default function FadeInOnLoad({ children }: { children: ReactNode }) {
     gsap.fromTo(
       el,
       { opacity: 0 },
-      { opacity: 1, duration: 0.6, ease: "power2.out" },
+      { opacity: 1, duration: 0.55, ease: "power2.inOut" },
     )
   }, [])
 

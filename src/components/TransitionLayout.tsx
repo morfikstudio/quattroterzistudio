@@ -86,11 +86,13 @@ export default function TransitionLayout({
         return
       }
 
-      // ─── /projects ↔ /projects/[slug] ────────────────────────────────────────
+      // ─── /projects ↔ /projects/[slug] e /projects/[slug] → /projects/[slug] ──
       // Gestito da CurtainTransition, nessuna animazione qui.
       if (
         (currentPath === "/projects" && pathname.startsWith("/projects/")) ||
-        (currentPath.startsWith("/projects/") && pathname === "/projects")
+        (currentPath.startsWith("/projects/") && pathname === "/projects") ||
+        (currentPath.startsWith("/projects/") &&
+          pathname.startsWith("/projects/"))
       ) {
         done()
         return
