@@ -815,7 +815,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         top: 0,
         left: 0,
         width: "100%",
-        height: "100svh",
+        height: "100dvh",
         overflow: "hidden",
         transform: "translate3d(0,0,0)",
         zIndex: 40,
@@ -891,7 +891,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         {projects.map((p, i) => (
           <section
             key={p._id}
-            className="relative w-full h-svh shrink-0"
+            className="relative w-full h-dvh shrink-0"
             ref={(el) => {
               sectionsRefs.current[i] = el
             }}
@@ -925,7 +925,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
       <div
         ref={fixedLayerRef}
-        className="fixed top-0 left-0 w-full h-svh z-20 pointer-events-none"
+        className="fixed top-0 left-0 w-full h-dvh z-20 pointer-events-none"
       >
         {/* THUMBS */}
         <div className="absolute inset-0 z-0 isolate pointer-events-none">
