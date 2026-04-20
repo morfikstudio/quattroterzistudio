@@ -1,13 +1,14 @@
 import { useCallback, useRef, type MutableRefObject } from "react"
 
 const MAX_VEL = 60
-const MIN_SCALE = 0.88
+const DEFAULT_MIN_SCALE = 0.88
 const LERP = 0.025
 const VEL_DEAD_ZONE = 14
 const VEL_DECAY = 0.88
 
 interface Options {
   velocityRef: MutableRefObject<number>
+  minScale?: number
 }
 
 export interface UseImageScaleReturn {
@@ -17,7 +18,10 @@ export interface UseImageScaleReturn {
   resetScale: () => void
 }
 
-export function useImageScale({ velocityRef }: Options): UseImageScaleReturn {
+export function useImageScale({
+  velocityRef,
+  minScale = DEFAULT_MIN_SCALE,
+}: Options): UseImageScaleReturn {
   const mobileImgRef = useRef<HTMLDivElement | null>(null)
   const desktopImgRef = useRef<HTMLDivElement | null>(null)
   const imageScaleRef = useRef(1)
@@ -48,7 +52,7 @@ export function useImageScale({ velocityRef }: Options): UseImageScaleReturn {
       const target =
         effectiveVel === 0
           ? 1
-          : Math.max(MIN_SCALE, 1 - (effectiveVel / MAX_VEL) * (1 - MIN_SCALE))
+          : Math.max(minScale, 1 - (effectiveVel / MAX_VEL) * (1 - minScale))
 
       const next =
         imageScaleRef.current + (target - imageScaleRef.current) * LERP
