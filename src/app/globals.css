@@ -45,3 +45,14 @@ nav .link-underline-bar {
   display: none !important;
   z-index: -1000 !important;
 }
+
+#iubenda-cs-banner,
+#iubenda-cs-banner * {
+  cursor: default !important;
+}
+
+#iubenda-cs-banner a,
+#iubenda-cs-banner button,
+#iubenda-cs-banner [role="button"] {
+  cursor: pointer !important;
+}
