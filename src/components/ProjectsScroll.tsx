@@ -315,6 +315,9 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     const ctx = gsap.context(() => {
       let activeIndex = 0
       let targetIndex = 0
+      const parallaxConfig = isTouch
+        ? { parallaxFactor: 0.2, bgScale: 1.025 }
+        : { parallaxFactor: 0.5, bgScale: 1 }
 
       // overall progress of each section
       const sectionProgresses = Array.from({ length: projects.length }, () => 0)
@@ -565,20 +568,26 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       sectionsRefs.current.forEach((s, i) => {
         const bg = bgRefs.current[i]
         const { innerHeight: wh } = window
+        const parallaxOffset = wh * parallaxConfig.parallaxFactor
 
         if (!s || !bg) return
 
         const isFirst = i === 0
+
+        gsap.set(bg, {
+          scale: parallaxConfig.bgScale,
+          transformOrigin: "50% 50%",
+        })
 
         /* Background parallax */
         gsap.fromTo(
           bg,
           {
             backgroundPosition: () =>
-              isFirst ? "50% 0px" : `50% ${-wh * 0.5}px`,
+              isFirst ? "50% 0px" : `50% ${-parallaxOffset}px`,
           },
           {
-            backgroundPosition: () => `50% ${wh * 0.5}px`,
+            backgroundPosition: () => `50% ${parallaxOffset}px`,
             ease: "none",
             scrollTrigger: {
               trigger: s,
