@@ -25,6 +25,7 @@ export default function HeroAbout() {
       const lines = splits.flatMap((s) => s.lines)
 
       gsap.set(lines, { yPercent: 110 })
+      gsap.set(textEls, { visibility: "visible" })
       gsap.to(lines, {
         yPercent: 0,
         y: 3,
@@ -57,6 +58,7 @@ export default function HeroAbout() {
         <span
           data-split
           className={cn("label type-caption", "mb-[50px] md:mb-[120px]")}
+          style={{ visibility: "hidden" }}
         >
           ( we are quattroterzi )
         </span>
@@ -68,16 +70,25 @@ export default function HeroAbout() {
               "md:mb-0",
             )}
           >
-            <span data-split className="block pt-[0.08em]">
+            <span
+              data-split
+              className="block pt-[0.08em]"
+              style={{ visibility: "hidden" }}
+            >
               we make
             </span>
             <span
               data-split
               className="block pt-[0.08em] ml-[30px] md:ml-[100px]"
+              style={{ visibility: "hidden" }}
             >
               the unseen
             </span>
-            <span data-split className="block pt-[0.08em]">
+            <span
+              data-split
+              className="block pt-[0.08em]"
+              style={{ visibility: "hidden" }}
+            >
               fell unknown
             </span>
           </div>
@@ -90,6 +101,7 @@ export default function HeroAbout() {
           "absolute right-4 md:right-[24px] bottom-1/4",
           "xl:right-12 xl:top-1/2 xl:bottom-auto xl:-translate-y-1/2 xl:translate-x-0",
         )}
+        style={{ visibility: "hidden" }}
       >
         Images creators
         <br />& Shadows lovers

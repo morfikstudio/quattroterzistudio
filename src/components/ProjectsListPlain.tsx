@@ -374,21 +374,45 @@ export default function ProjectsListPlain({
 
       if (deltaPx === 0) return
       e.preventDefault()
-      ul.scrollTop += deltaPx
+      ul.scrollBy({ top: deltaPx })
     }
 
     root.addEventListener("wheel", onWheel, { passive: false })
     return () => root.removeEventListener("wheel", onWheel)
   }, [])
 
+  const pendingActiveRef = useRef<number | null>(null)
+  const rafUpdateRef = useRef(0)
+
   const handleScroll = useCallback(() => {
     const ul = ulRef.current
     if (!ul || itemHeightRef.current === 0) return
 
-    const scrollTop = ul.scrollTop
+    let scrollTop = ul.scrollTop
     const containerHeight = ul.clientHeight
     const itemHeight = itemHeightRef.current
     const totalHeight = totalHeightRef.current
+
+    // Loop reset. On desktop we teleport immediately — native wheel has no
+    // inertia to preserve, and deferring until momentum settles means that
+    // during continuous scrolling the user can reach scrollTop=0 or max and
+    // hit a hard stop. On touch (iOS), deferring is still required: setting
+    // scrollTop mid-flick kills native inertia.
+    // Middle copy spans [2*totalHeight, 3*totalHeight) (COPIES=5, index=2).
+    if (totalHeight > 0) {
+      const needsForward = scrollTop < totalHeight
+      const needsBackward = scrollTop > totalHeight * 4
+      if (needsForward || needsBackward) {
+        if (isMobileRef.current) {
+          pendingTeleportRef.current = needsForward ? 1 : -1
+        } else {
+          const dir = needsForward ? 1 : -1
+          scrollTop = scrollTop + dir * totalHeight
+          ul.scrollTop = scrollTop
+          lastScrollTopRef.current = scrollTop
+        }
+      }
+    }
 
     // Active = item whose center is closest to viewport center.
     const centerY = scrollTop + containerHeight / 2
@@ -396,66 +420,57 @@ export default function ProjectsListPlain({
     const realIndex =
       ((extendedIndex % items.length) + items.length) % items.length
 
-    if (realIndex !== prevActiveRef.current) {
-      interactedItemsRef.current.add(prevActiveRef.current)
-      prevActiveRef.current = realIndex
-      setActiveIndex(realIndex)
-    }
-
     // Velocity tracking — feeds the image scale loop, mirrors the swiper path.
     const delta = scrollTop - lastScrollTopRef.current
     if (delta !== 0) {
-      // Sign mirrors Swiper's translate convention (translate decreases as
-      // scrollTop increases). useImageScale only uses Math.abs(), but we keep
-      // the sign correct in case anything else reads it.
       velocityRef.current = -delta
       startScaleLoop()
-
-      if (hoverIndexRef.current !== null) {
-        hoverIndexRef.current = null
-        setHoverIndex(null)
-      }
-
-      if (!isScrollingRef.current) {
-        isScrollingRef.current = true
-        setIsScrolling(true)
-      }
-
-      cancelAnimationFrame(scrollCheckRef.current)
-      const check = () => {
-        if (Math.abs(velocityRef.current) > 0.5) {
-          scrollCheckRef.current = requestAnimationFrame(check)
-        } else {
-          isScrollingRef.current = false
-          setIsScrolling(false)
-          // Momentum has settled — safe to teleport without breaking inertia.
-          if (pendingTeleportRef.current !== 0 && ul) {
-            const next =
-              ul.scrollTop + pendingTeleportRef.current * totalHeightRef.current
-            ul.scrollTop = next
-            lastScrollTopRef.current = next
-            pendingTeleportRef.current = 0
-          }
-        }
-      }
-      scrollCheckRef.current = requestAnimationFrame(check)
     }
-
     lastScrollTopRef.current = scrollTop
 
-    // Loop reset: flag the direction, but DON'T teleport here.
-    // Setting scrollTop during active momentum on iOS kills the native inertia
-    // and causes the scroll to "stutter" or stop. Instead we record that a
-    // teleport is needed; the rAF velocity watcher above applies it the
-    // moment the scroll settles, so the user never feels the jump.
-    // Middle copy spans [2*totalHeight, 3*totalHeight) (COPIES=5, index=2).
-    if (totalHeight > 0) {
-      if (scrollTop < totalHeight) {
-        pendingTeleportRef.current = 1
-      } else if (scrollTop > totalHeight * 4) {
-        pendingTeleportRef.current = -1
+    // Coalesce all React state updates into a single rAF tick. Previously we
+    // called setActiveIndex/setIsScrolling/setHoverIndex synchronously on
+    // every scroll event, re-rendering the whole extended list (COPIES×items)
+    // and causing stutter on high-frequency wheel input.
+    pendingActiveRef.current = realIndex
+    if (!rafUpdateRef.current) {
+      rafUpdateRef.current = requestAnimationFrame(() => {
+        rafUpdateRef.current = 0
+        const next = pendingActiveRef.current
+        if (next !== null && next !== prevActiveRef.current) {
+          interactedItemsRef.current.add(prevActiveRef.current)
+          prevActiveRef.current = next
+          setActiveIndex(next)
+        }
+        if (hoverIndexRef.current !== null) {
+          hoverIndexRef.current = null
+          setHoverIndex(null)
+        }
+        if (!isScrollingRef.current) {
+          isScrollingRef.current = true
+          setIsScrolling(true)
+        }
+      })
+    }
+
+    cancelAnimationFrame(scrollCheckRef.current)
+    const check = () => {
+      if (Math.abs(velocityRef.current) > 0.5) {
+        scrollCheckRef.current = requestAnimationFrame(check)
+      } else {
+        isScrollingRef.current = false
+        setIsScrolling(false)
+        const cur = ulRef.current
+        if (pendingTeleportRef.current !== 0 && cur) {
+          const next =
+            cur.scrollTop + pendingTeleportRef.current * totalHeightRef.current
+          cur.scrollTop = next
+          lastScrollTopRef.current = next
+          pendingTeleportRef.current = 0
+        }
       }
     }
+    scrollCheckRef.current = requestAnimationFrame(check)
   }, [items.length, startScaleLoop])
 
   // Entry animation for word spans (replaces Swiper's onAfterInit hook).

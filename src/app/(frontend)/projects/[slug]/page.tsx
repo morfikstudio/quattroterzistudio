@@ -10,6 +10,7 @@ import {
 import { buildProjectDetailMetadata } from "@/lib/seo/project-detail-metadata"
 
 import ProjectDetail from "@/components/ProjectDetail"
+import FadeInOnLoad from "@/components/ProjectDetail/FadeInOnLoad"
 
 export async function generateMetadata({
   params,
@@ -51,7 +52,9 @@ export default async function Page({
 
   return (
     <main>
-      <ProjectDetail {...project} />
+      <FadeInOnLoad>
+        <ProjectDetail {...project} />
+      </FadeInOnLoad>
     </main>
   )
 }
