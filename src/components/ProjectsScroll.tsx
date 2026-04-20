@@ -954,17 +954,22 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                   thumbClipRefs.current[i] = el
                 }}
                 className="relative aspect-4/3 overflow-hidden w-full"
-                style={{ willChange: "clip-path" }}
+                style={{
+                  willChange: "clip-path",
+                  backfaceVisibility: "hidden",
+                  transform: "translateZ(0)",
+                }}
               >
                 <div
                   ref={(el) => {
                     thumbInnerRefs.current[i] = el
                   }}
                   className={cn(
-                    "absolute inset-0 origin-center",
+                    "absolute -inset-px origin-center",
                     "transition-transform duration-500 ease-out motion-reduce:transition-none",
                     "group-hover:scale-110 group-focus-visible:scale-110",
                   )}
+                  style={{ willChange: "transform" }}
                 >
                   <Image
                     image={p.coverDetail}
