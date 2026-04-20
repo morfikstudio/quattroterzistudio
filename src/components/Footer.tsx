@@ -185,8 +185,12 @@ export default function Footer() {
                 "md:flex-1 md:flex-row md:justify-start md:items-center md:gap-10",
               )}
             >
-              <a href="https://www.google.com">Privacy</a>
-              <a href="https://www.google.com">Cookies</a>
+              <a href="https://www.iubenda.com/privacy-policy/23047240">
+                Privacy
+              </a>
+              <a href="https://www.iubenda.com/privacy-policy/23047240/cookie-policy">
+                Cookies
+              </a>
             </div>
           </div>
         </div>

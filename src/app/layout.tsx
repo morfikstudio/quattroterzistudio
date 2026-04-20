@@ -1,3 +1,8 @@
+import {
+  IubendaProvider,
+  IubendaCookieSolutionBannerConfigInterface,
+  i18nDictionaries,
+} from "@mep-agency/next-iubenda"
 import type { Metadata } from "next"
 import localFont from "next/font/local"
 import { Geist_Mono } from "next/font/google"
@@ -68,6 +73,14 @@ export const metadata: Metadata = {
       nocache: !shouldIndex,
     },
   },
+}
+
+const iubendaBannerConfig: IubendaCookieSolutionBannerConfigInterface = {
+  siteId: 4502656, // Your site ID
+  cookiePolicyId: 23047240, // Your cookie policy ID
+  lang: "it",
+
+  // See https://www.iubenda.com/en/help/1205-how-to-configure-your-cookie-solution-advanced-guide
 }
 
 export default function RootLayout({

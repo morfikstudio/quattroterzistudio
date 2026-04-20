@@ -222,7 +222,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                   e.currentTarget.dataset.line = "out"
                 }}
               >
-                <span data-split>++39 351 599 0023</span>
+                <span data-split>+39 351 599 0023</span>
                 <span className={cn("link-underline-bar")} />
               </a>
             </div>

@@ -17,7 +17,7 @@ const SLIDES_PER_VIEW = 7
 // with a native scrollable container. The visible viewport always sits inside
 // the middle copy; when the user approaches the first/last copy we silently
 // jump scrollTop by one full list-length so they remain in the middle copy.
-const COPIES = 5
+const COPIES = 9
 
 function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
   const Icons = () => (
@@ -295,6 +295,7 @@ export default function ProjectsListPlain({
   // JSX means `useImageScale` never applies a transform to the mobile node.
   const { desktopImgRef, startScaleLoop } = useImageScale({
     velocityRef,
+    minScale: 0.78,
   })
 
   useEffect(() => {
@@ -396,17 +397,33 @@ export default function ProjectsListPlain({
     // Loop reset. On desktop we teleport immediately — native wheel has no
     // inertia to preserve, and deferring until momentum settles means that
     // during continuous scrolling the user can reach scrollTop=0 or max and
-    // hit a hard stop. On touch (iOS), deferring is still required: setting
-    // scrollTop mid-flick kills native inertia.
-    // Middle copy spans [2*totalHeight, 3*totalHeight) (COPIES=5, index=2).
+    // hit a hard stop. On touch (iOS), deferring is preferred (setting
+    // scrollTop mid-flick kills native inertia) — BUT if the user keeps
+    // flicking without letting momentum settle, we'd still hit the hard
+    // edge. So on mobile we have two zones: a "pending" zone one copy from
+    // the edge (deferred), and an "emergency" zone half a copy from the
+    // edge where we teleport immediately even at the cost of breaking
+    // momentum — a reset is still less jarring than slamming into the wall.
+    // Middle copy spans [4*totalHeight, 5*totalHeight) (COPIES=9, index=4).
     if (totalHeight > 0) {
+      const lastCopy = COPIES - 1
       const needsForward = scrollTop < totalHeight
-      const needsBackward = scrollTop > totalHeight * 4
+      const needsBackward = scrollTop > totalHeight * lastCopy
       if (needsForward || needsBackward) {
+        const dir = needsForward ? 1 : -1
         if (isMobileRef.current) {
-          pendingTeleportRef.current = needsForward ? 1 : -1
+          const emergency =
+            scrollTop < totalHeight * 0.5 ||
+            scrollTop > totalHeight * (lastCopy + 0.5)
+          if (emergency) {
+            scrollTop = scrollTop + dir * totalHeight
+            ul.scrollTop = scrollTop
+            lastScrollTopRef.current = scrollTop
+            pendingTeleportRef.current = 0
+          } else {
+            pendingTeleportRef.current = dir
+          }
         } else {
-          const dir = needsForward ? 1 : -1
           scrollTop = scrollTop + dir * totalHeight
           ul.scrollTop = scrollTop
           lastScrollTopRef.current = scrollTop
@@ -421,9 +438,12 @@ export default function ProjectsListPlain({
       ((extendedIndex % items.length) + items.length) % items.length
 
     // Velocity tracking — feeds the image scale loop, mirrors the swiper path.
+    // On desktop we amplify the feed so slow wheel ticks still cross the
+    // dead zone inside useImageScale and produce a visible scale effect.
     const delta = scrollTop - lastScrollTopRef.current
     if (delta !== 0) {
-      velocityRef.current = -delta
+      const desktopBoost = isMobileRef.current ? 1 : 1.8
+      velocityRef.current = -delta * desktopBoost
       startScaleLoop()
     }
     lastScrollTopRef.current = scrollTop

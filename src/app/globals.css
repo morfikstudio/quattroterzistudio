@@ -46,6 +46,10 @@ nav .link-underline-bar {
   z-index: -1000 !important;
 }
 
+.iubenda-cs-brand-badge {
+  display: none !important;
+}
+
 #iubenda-cs-banner,
 #iubenda-cs-banner * {
   cursor: default !important;
