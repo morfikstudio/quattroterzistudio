@@ -1,20 +1,20 @@
 {
   "site": {
-    "name": "Quattro Terzi Studio",
+    "name": "Quattroterzi",
     "defaultDescription": "",
     "locale": "en_US",
     "twitterSite": "",
     "twitterCreator": ""
   },
   "home": {
-    "title": "Quattro Terzi Studio",
-    "description": "Quattro Terzi Studio — portfolio and projects.",
+    "title": "Quattroterzi — Image makers & shadow lovers",
+    "description": "3D rendering studio. We make the unseen feel known.",
     "keywords": [],
     "canonicalPath": "/",
     "openGraph": {
       "type": "website",
       "image": {
-        "url": "/images/og-default.png",
+        "url": "/images/og-default.jpg",
         "width": 1200,
         "height": 630,
         "alt": ""
@@ -22,14 +22,14 @@
     }
   },
   "about": {
-    "title": "About",
-    "description": "Quattro Terzi Studio — who we are and our approach to design.",
+    "title": "The studio",
+    "description": "Identity is built before a word is spoken. We make it visible. Light, then shadows.",
     "keywords": [],
     "canonicalPath": "/about",
     "openGraph": {
       "type": "website",
       "image": {
-        "url": "/images/og-default.png",
+        "url": "/images/og-default.jpg",
         "width": 1200,
         "height": 630,
         "alt": ""
@@ -38,13 +38,13 @@
   },
   "projects": {
     "title": "Projects",
-    "description": "A curated selection of work from Quattro Terzi Studio — portfolio, case studies, and recent projects.",
+    "description": "Selected 3D rendering projects by Quattroterzi. Environments, details, imagery.",
     "keywords": [],
     "canonicalPath": "/projects",
     "openGraph": {
       "type": "website",
       "image": {
-        "url": "/images/og-default.png",
+        "url": "/images/og-default.jpg",
         "width": 1200,
         "height": 630,
         "alt": ""
@@ -53,13 +53,13 @@
   },
   "archive": {
     "title": "Archive",
-    "description": "The full project archive from Quattro Terzi Studio — all work in one place.",
+    "description": "3D rendering projects by Quattroterzi. Environments, details, imagery.",
     "keywords": [],
     "canonicalPath": "/archive",
     "openGraph": {
       "type": "website",
       "image": {
-        "url": "/images/og-default.png",
+        "url": "/images/og-default.jpg",
         "width": 1200,
         "height": 630,
         "alt": ""
