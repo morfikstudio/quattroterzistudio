@@ -982,7 +982,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                 >
                   <Image
                     image={p.coverDetail}
-                    resizeId="cover-detail"
+                    resizeId="cover-thumb"
                     fill
                     fit="cover"
                     priority={i < 2}

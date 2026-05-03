@@ -7,9 +7,13 @@ const imageResizeMap = {
     landscape: "1920x1080", // 16:9
     portrait: "720x1280", // 9:16
   },
-  "cover-detail": {
+  "cover-thumb": {
     landscape: "1920x1440", // 4:3
     portrait: "720x540", // 4:3
+  },
+  "cover-detail": {
+    landscape: "1920x1440", // 4:3
+    portrait: "720x1280", // 9:16
   },
   "media-block-single": {
     landscape: "1500x1000", // 3:2
