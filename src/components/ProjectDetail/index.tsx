@@ -55,6 +55,7 @@ export default function ProjectDetail({
           className={cn(
             "relative",
             "px-[12px] md:px-[24px] pt-[80px] md:pt-[120px]",
+            "max-w-[1440px] mx-auto",
           )}
         >
           <MediaBlocks blocks={blocks} />
