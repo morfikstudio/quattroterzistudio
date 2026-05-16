@@ -3,7 +3,7 @@ import {
   IubendaCookieSolutionBannerConfigInterface,
   i18nDictionaries,
 } from "@mep-agency/next-iubenda"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import localFont from "next/font/local"
 import { Geist_Mono } from "next/font/google"
 
@@ -55,6 +55,10 @@ const allowIndexing = process.env.NEXT_PUBLIC_ALLOW_INDEXING === "true"
 const shouldIndex = process.env.NODE_ENV === "production" && allowIndexing
 
 const siteCfg = siteSeo as SiteSeoConfig
+
+export const viewport: Viewport = {
+  viewportFit: "cover",
+}
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteOrigin()),

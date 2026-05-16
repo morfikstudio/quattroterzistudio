@@ -130,7 +130,13 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       if (!isDesktop) {
         setPreviousPath(window.location.pathname)
         if (!isSnappedRef.current && wrapRef.current) {
-          const targetY = wrapRef.current.offsetTop + index * window.innerHeight
+          const sectionEl = sectionsRefs.current[index]
+          const targetY =
+            sectionEl != null
+              ? Math.round(
+                  sectionEl.getBoundingClientRect().top + window.scrollY,
+                )
+              : wrapRef.current.offsetTop + index * window.innerHeight
           lenis.scrollTo(targetY, {
             duration: 0.3,
             onComplete: () => dispatchCurtainNavigate(url),
@@ -891,7 +897,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         {projects.map((p, i) => (
           <section
             key={p._id}
-            className="relative w-full h-dvh shrink-0"
+            className={cn(
+              "relative w-full shrink-0 overflow-hidden",
+              "md:h-dvh",
+              "max-md:min-h-[calc(100dvh+env(safe-area-inset-bottom,0px)+2px)]",
+            )}
             ref={(el) => {
               sectionsRefs.current[i] = el
             }}
@@ -900,6 +910,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           >
             <Link
               href={`/projects/${p.slug?.current ?? ""}`}
+              className="absolute inset-0 z-0"
               onClick={(e) => {
                 e.preventDefault()
                 handleProjectClick(i, `/projects/${p.slug?.current ?? ""}`)
@@ -909,7 +920,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                 ref={(el) => {
                   bgRefs.current[i] = el
                 }}
-                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                className={cn(
+                  "absolute bg-cover bg-center bg-no-repeat",
+                  "max-md:inset-x-0 max-md:top-0 max-md:bottom-auto max-md:h-[calc(100%+3px)]",
+                  "md:inset-0",
+                )}
                 style={{
                   willChange: "background-position",
                   backgroundImage: `url(${getImageUrl({
@@ -925,7 +940,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
       <div
         ref={fixedLayerRef}
-        className="fixed top-0 left-0 w-full h-dvh z-20 pointer-events-none"
+        className={cn(
+          "fixed top-0 left-0 z-20 w-full pointer-events-none",
+          "md:h-dvh",
+          "max-md:min-h-[calc(100dvh+env(safe-area-inset-bottom,0px)+2px)]",
+        )}
       >
         {/* THUMBS */}
         <div className="absolute inset-0 z-0 isolate pointer-events-none">
