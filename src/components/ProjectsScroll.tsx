@@ -19,7 +19,7 @@ import { cn } from "@/utils/classNames"
 
 import { useBreakpoint } from "@/stores/breakpointStore"
 import { useNavigationStore } from "@/stores/navigationStore"
-import { useIsTouch } from "@/hooks/useIsTouch"
+import { usePointerCoarse } from "@/hooks/usePointerCoarse"
 
 import { useLenis } from "@/components/LenisProvider"
 import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
@@ -47,7 +47,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const router = useRouter()
   const lenis = useLenis()
   const { current: breakpoint } = useBreakpoint()
-  const isTouch = useIsTouch()
+  const coarsePointer = usePointerCoarse()
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
 
   const [firstBgReady, setFirstBgReady] = useState(false)
@@ -315,7 +315,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     const ctx = gsap.context(() => {
       let activeIndex = 0
       let targetIndex = 0
-      const parallaxConfig = isTouch
+      const parallaxConfig = coarsePointer
         ? { parallaxFactor: 0.2, bgScale: 1.025 }
         : { parallaxFactor: 0.5, bgScale: 1 }
 
@@ -616,10 +616,10 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         })
       })
 
-      /* Sections snap
-      (only desktop due to mobile browser bars)
+      /* Sections snap — skip when `(pointer: coarse)` (mobile / tablet UX);
+      touchscreen laptops typically keep `(pointer: fine)` so snap stays on.
       */
-      if (projects.length > 1 && !isTouch) {
+      if (projects.length > 1 && !coarsePointer) {
         ScrollTrigger.create({
           trigger: wrapRef.current,
           start: "top top",
@@ -668,7 +668,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       ctx.revert()
       lenis?.start()
     }
-  }, [breakpoint, isTouch, projects, lenis])
+  }, [breakpoint, coarsePointer, projects, lenis])
 
   /* isSnappedRef: true when scroll is fully at rest (user + snap animation) */
   useEffect(() => {
