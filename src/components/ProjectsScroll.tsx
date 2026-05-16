@@ -91,6 +91,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   )
   const revealPlayedRef = useRef(false)
 
+  /** Scroll-driven thumb index (decoupled reveal animation from scroll scrub). */
+  const lastThumbScrollIndexRef = useRef(0)
+  const thumbRevealTweenRef = useRef<gsap.core.Tween | null>(null)
+  const thumbSyncDuringRefreshRef = useRef(false)
+
   const raf = useRef<number | null>(null)
   const lastWidth = useRef<number>(
     typeof window !== "undefined" ? window.innerWidth : 0,
@@ -165,6 +170,8 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       gsap.killTweensOf(el)
       transitionTweenRef.current?.kill()
       transitionTweenRef.current = null
+      thumbRevealTweenRef.current?.kill()
+      thumbRevealTweenRef.current = null
 
       const doTransition = async () => {
         let previousInlineTransition = ""
@@ -316,7 +323,8 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     if (!breakpoint || projects.length === 0 || !wrapRef.current) return
 
     let textTl: gsap.core.Timeline | null = null
-    let refreshSyncHandler: (() => void) | null = null
+    let onRefreshInit: (() => void) | null = null
+    let onRefreshComplete: (() => void) | null = null
 
     const ctx = gsap.context(() => {
       let activeIndex = 0
@@ -485,46 +493,87 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         }
       }
 
-      function handleThumbs(activeIdx: number, progress: number) {
+      function applyThumbStaticState(activeIdx: number) {
         if (isRevealingRef.current) return
-        const prevIdx = activeIdx - 1
-
-        /*
-          Normalize the inset top percentage to 3 decimal places
-          so it can be used in the clip-path animation
-        */
-        function normalizeInsetTopPerc(value: number) {
-          const clamped = Math.min(100, Math.max(0, value))
-
-          const snapEpsilon = 0.2
-
-          if (clamped <= snapEpsilon) return 0
-          if (clamped >= 100 - snapEpsilon) return 100
-
-          return Math.round(clamped * 1000) / 1000 // 3 decimals rounding
-        }
-
+        thumbRevealTweenRef.current?.kill()
+        thumbRevealTweenRef.current = null
         for (let i = 0; i < projects.length; i++) {
           const thumbClip = thumbClipRefs.current[i]
           const thumbWrap = thumbWrapRefs.current[i]
-
           if (!thumbClip || !thumbWrap) continue
-
           if (i === activeIdx) {
-            /* ACTIVE SECTION */
-            const topPerc = normalizeInsetTopPerc((1 - progress) * 100)
-            gsap.set(thumbClip, { clipPath: `inset(${topPerc}% 0% 0% 0%)` })
-            gsap.set(thumbWrap, { zIndex: 2 })
-          } else if (i === prevIdx) {
-            /* PREVIOUS SECTION */
             gsap.set(thumbClip, { clipPath: "inset(0% 0% 0% 0%)" })
-            gsap.set(thumbWrap, { zIndex: 1 })
+            gsap.set(thumbWrap, { zIndex: 2 })
           } else {
-            /* FUTURE SECTION */
             gsap.set(thumbClip, { clipPath: "inset(100% 0% 0% 0%)" })
             gsap.set(thumbWrap, { zIndex: 0 })
           }
         }
+        lastThumbScrollIndexRef.current = activeIdx
+      }
+
+      function commitThumbReveal(nextIndex: number) {
+        if (isRevealingRef.current) return
+
+        if (thumbSyncDuringRefreshRef.current) {
+          applyThumbStaticState(nextIndex)
+          return
+        }
+
+        if (nextIndex === lastThumbScrollIndexRef.current) {
+          return
+        }
+
+        thumbRevealTweenRef.current?.kill()
+        thumbRevealTweenRef.current = null
+
+        const prevIdx = lastThumbScrollIndexRef.current
+        lastThumbScrollIndexRef.current = nextIndex
+
+        /* Down = reveal from bottom (wipe verso l'alto); up = reveal from top (wipe verso il basso). */
+        const goingDown = nextIndex > prevIdx
+        const incomingHiddenClip = goingDown
+          ? "inset(100% 0% 0% 0%)"
+          : "inset(0% 0% 100% 0%)"
+
+        for (let i = 0; i < projects.length; i++) {
+          const thumbClip = thumbClipRefs.current[i]
+          const thumbWrap = thumbWrapRefs.current[i]
+          if (!thumbClip || !thumbWrap) continue
+
+          if (i === nextIndex) {
+            gsap.set(thumbWrap, { zIndex: 2 })
+            gsap.set(thumbClip, { clipPath: incomingHiddenClip })
+          } else if (i === prevIdx) {
+            gsap.set(thumbWrap, { zIndex: 1 })
+            gsap.set(thumbClip, { clipPath: "inset(0% 0% 0% 0%)" })
+          } else {
+            gsap.set(thumbWrap, { zIndex: 0 })
+            gsap.set(thumbClip, { clipPath: "inset(100% 0% 0% 0%)" })
+          }
+        }
+
+        const incomingClip = thumbClipRefs.current[nextIndex]
+        if (!incomingClip) return
+
+        thumbRevealTweenRef.current = gsap.to(incomingClip, {
+          clipPath: "inset(0% 0% 0% 0%)",
+          duration: 0.55,
+          ease: "cubic-bezier(0.22, 1, 0.36, 1)",
+          onComplete: () => {
+            thumbRevealTweenRef.current = null
+            for (let i = 0; i < projects.length; i++) {
+              if (i === nextIndex) continue
+              const c = thumbClipRefs.current[i]
+              const w = thumbWrapRefs.current[i]
+              if (!c || !w) continue
+              gsap.set(c, { clipPath: "inset(100% 0% 0% 0%)" })
+              gsap.set(w, { zIndex: 0 })
+            }
+            const wActive = thumbWrapRefs.current[nextIndex]
+            if (wActive) gsap.set(wActive, { zIndex: 2 })
+          },
+        })
       }
 
       function getActiveIndexFromProgress() {
@@ -558,16 +607,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           }
         }
 
-        const baseProgress = clamp(sectionProgresses[nextIndex] ?? 0)
-
-        /*
-          Keep the same reveal start, but finish earlier
-          so the thumb stays fully visible longer
-        */
-        const compressedProgress = clamp(baseProgress * 2)
-        /* Thumb animation */
-        handleThumbs(nextIndex, compressedProgress)
-        /* Text animation */
+        commitThumbReveal(nextIndex)
         handleTexts(nextIndex)
       }
 
@@ -644,10 +684,18 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       }
 
       applyTextCanonicalState(0)
-      handleThumbs(0, 1)
-      refreshSyncHandler = syncFromProgress
-      ScrollTrigger.addEventListener("refreshInit", refreshSyncHandler)
-      ScrollTrigger.addEventListener("refresh", refreshSyncHandler)
+      applyThumbStaticState(0)
+
+      onRefreshInit = () => {
+        thumbSyncDuringRefreshRef.current = true
+        syncFromProgress()
+      }
+      onRefreshComplete = () => {
+        syncFromProgress()
+        thumbSyncDuringRefreshRef.current = false
+      }
+      ScrollTrigger.addEventListener("refreshInit", onRefreshInit)
+      ScrollTrigger.addEventListener("refresh", onRefreshComplete)
       syncFromProgress()
     }, wrapRef)
 
@@ -660,10 +708,15 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         window.cancelAnimationFrame(raf.current)
       }
 
-      if (refreshSyncHandler) {
-        ScrollTrigger.removeEventListener("refreshInit", refreshSyncHandler)
-        ScrollTrigger.removeEventListener("refresh", refreshSyncHandler)
+      if (onRefreshInit) {
+        ScrollTrigger.removeEventListener("refreshInit", onRefreshInit)
       }
+      if (onRefreshComplete) {
+        ScrollTrigger.removeEventListener("refresh", onRefreshComplete)
+      }
+
+      thumbRevealTweenRef.current?.kill()
+      thumbRevealTweenRef.current = null
 
       abortRef.current?.abort()
       abortRef.current = null
