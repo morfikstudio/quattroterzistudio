@@ -19,7 +19,7 @@ import { cn } from "@/utils/classNames"
 
 import { useBreakpoint } from "@/stores/breakpointStore"
 import { useNavigationStore } from "@/stores/navigationStore"
-import { useIsTouch } from "@/hooks/useIsTouch"
+import { usePointerCoarse } from "@/hooks/usePointerCoarse"
 
 import { useLenis } from "@/components/LenisProvider"
 import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
@@ -47,7 +47,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const router = useRouter()
   const lenis = useLenis()
   const { current: breakpoint } = useBreakpoint()
-  const isTouch = useIsTouch()
+  const coarsePointer = usePointerCoarse()
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
 
   const [firstBgReady, setFirstBgReady] = useState(false)
@@ -91,6 +91,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   )
   const revealPlayedRef = useRef(false)
 
+  /** Scroll-driven thumb index (decoupled reveal animation from scroll scrub). */
+  const lastThumbScrollIndexRef = useRef(0)
+  const thumbRevealTweenRef = useRef<gsap.core.Tween | null>(null)
+  const thumbSyncDuringRefreshRef = useRef(false)
+
   const raf = useRef<number | null>(null)
   const lastWidth = useRef<number>(
     typeof window !== "undefined" ? window.innerWidth : 0,
@@ -130,7 +135,13 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       if (!isDesktop) {
         setPreviousPath(window.location.pathname)
         if (!isSnappedRef.current && wrapRef.current) {
-          const targetY = wrapRef.current.offsetTop + index * window.innerHeight
+          const sectionEl = sectionsRefs.current[index]
+          const targetY =
+            sectionEl != null
+              ? Math.round(
+                  sectionEl.getBoundingClientRect().top + window.scrollY,
+                )
+              : wrapRef.current.offsetTop + index * window.innerHeight
           lenis.scrollTo(targetY, {
             duration: 0.3,
             onComplete: () => dispatchCurtainNavigate(url),
@@ -159,6 +170,8 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       gsap.killTweensOf(el)
       transitionTweenRef.current?.kill()
       transitionTweenRef.current = null
+      thumbRevealTweenRef.current?.kill()
+      thumbRevealTweenRef.current = null
 
       const doTransition = async () => {
         let previousInlineTransition = ""
@@ -310,12 +323,13 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     if (!breakpoint || projects.length === 0 || !wrapRef.current) return
 
     let textTl: gsap.core.Timeline | null = null
-    let refreshSyncHandler: (() => void) | null = null
+    let onRefreshInit: (() => void) | null = null
+    let onRefreshComplete: (() => void) | null = null
 
     const ctx = gsap.context(() => {
       let activeIndex = 0
       let targetIndex = 0
-      const parallaxConfig = isTouch
+      const parallaxConfig = coarsePointer
         ? { parallaxFactor: 0.2, bgScale: 1.025 }
         : { parallaxFactor: 0.5, bgScale: 1 }
 
@@ -479,46 +493,87 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         }
       }
 
-      function handleThumbs(activeIdx: number, progress: number) {
+      function applyThumbStaticState(activeIdx: number) {
         if (isRevealingRef.current) return
-        const prevIdx = activeIdx - 1
-
-        /*
-          Normalize the inset top percentage to 3 decimal places
-          so it can be used in the clip-path animation
-        */
-        function normalizeInsetTopPerc(value: number) {
-          const clamped = Math.min(100, Math.max(0, value))
-
-          const snapEpsilon = 0.2
-
-          if (clamped <= snapEpsilon) return 0
-          if (clamped >= 100 - snapEpsilon) return 100
-
-          return Math.round(clamped * 1000) / 1000 // 3 decimals rounding
-        }
-
+        thumbRevealTweenRef.current?.kill()
+        thumbRevealTweenRef.current = null
         for (let i = 0; i < projects.length; i++) {
           const thumbClip = thumbClipRefs.current[i]
           const thumbWrap = thumbWrapRefs.current[i]
-
           if (!thumbClip || !thumbWrap) continue
-
           if (i === activeIdx) {
-            /* ACTIVE SECTION */
-            const topPerc = normalizeInsetTopPerc((1 - progress) * 100)
-            gsap.set(thumbClip, { clipPath: `inset(${topPerc}% 0% 0% 0%)` })
-            gsap.set(thumbWrap, { zIndex: 2 })
-          } else if (i === prevIdx) {
-            /* PREVIOUS SECTION */
             gsap.set(thumbClip, { clipPath: "inset(0% 0% 0% 0%)" })
-            gsap.set(thumbWrap, { zIndex: 1 })
+            gsap.set(thumbWrap, { zIndex: 2 })
           } else {
-            /* FUTURE SECTION */
             gsap.set(thumbClip, { clipPath: "inset(100% 0% 0% 0%)" })
             gsap.set(thumbWrap, { zIndex: 0 })
           }
         }
+        lastThumbScrollIndexRef.current = activeIdx
+      }
+
+      function commitThumbReveal(nextIndex: number) {
+        if (isRevealingRef.current) return
+
+        if (thumbSyncDuringRefreshRef.current) {
+          applyThumbStaticState(nextIndex)
+          return
+        }
+
+        if (nextIndex === lastThumbScrollIndexRef.current) {
+          return
+        }
+
+        thumbRevealTweenRef.current?.kill()
+        thumbRevealTweenRef.current = null
+
+        const prevIdx = lastThumbScrollIndexRef.current
+        lastThumbScrollIndexRef.current = nextIndex
+
+        /* Down = reveal from bottom (wipe verso l'alto); up = reveal from top (wipe verso il basso). */
+        const goingDown = nextIndex > prevIdx
+        const incomingHiddenClip = goingDown
+          ? "inset(100% 0% 0% 0%)"
+          : "inset(0% 0% 100% 0%)"
+
+        for (let i = 0; i < projects.length; i++) {
+          const thumbClip = thumbClipRefs.current[i]
+          const thumbWrap = thumbWrapRefs.current[i]
+          if (!thumbClip || !thumbWrap) continue
+
+          if (i === nextIndex) {
+            gsap.set(thumbWrap, { zIndex: 2 })
+            gsap.set(thumbClip, { clipPath: incomingHiddenClip })
+          } else if (i === prevIdx) {
+            gsap.set(thumbWrap, { zIndex: 1 })
+            gsap.set(thumbClip, { clipPath: "inset(0% 0% 0% 0%)" })
+          } else {
+            gsap.set(thumbWrap, { zIndex: 0 })
+            gsap.set(thumbClip, { clipPath: "inset(100% 0% 0% 0%)" })
+          }
+        }
+
+        const incomingClip = thumbClipRefs.current[nextIndex]
+        if (!incomingClip) return
+
+        thumbRevealTweenRef.current = gsap.to(incomingClip, {
+          clipPath: "inset(0% 0% 0% 0%)",
+          duration: 0.55,
+          ease: "cubic-bezier(0.22, 1, 0.36, 1)",
+          onComplete: () => {
+            thumbRevealTweenRef.current = null
+            for (let i = 0; i < projects.length; i++) {
+              if (i === nextIndex) continue
+              const c = thumbClipRefs.current[i]
+              const w = thumbWrapRefs.current[i]
+              if (!c || !w) continue
+              gsap.set(c, { clipPath: "inset(100% 0% 0% 0%)" })
+              gsap.set(w, { zIndex: 0 })
+            }
+            const wActive = thumbWrapRefs.current[nextIndex]
+            if (wActive) gsap.set(wActive, { zIndex: 2 })
+          },
+        })
       }
 
       function getActiveIndexFromProgress() {
@@ -552,16 +607,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           }
         }
 
-        const baseProgress = clamp(sectionProgresses[nextIndex] ?? 0)
-
-        /*
-          Keep the same reveal start, but finish earlier
-          so the thumb stays fully visible longer
-        */
-        const compressedProgress = clamp(baseProgress * 2)
-        /* Thumb animation */
-        handleThumbs(nextIndex, compressedProgress)
-        /* Text animation */
+        commitThumbReveal(nextIndex)
         handleTexts(nextIndex)
       }
 
@@ -616,10 +662,10 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         })
       })
 
-      /* Sections snap
-      (only desktop due to mobile browser bars)
+      /* Sections snap — skip when `(pointer: coarse)` (mobile / tablet UX);
+      touchscreen laptops typically keep `(pointer: fine)` so snap stays on.
       */
-      if (projects.length > 1 && !isTouch) {
+      if (projects.length > 1 && !coarsePointer) {
         ScrollTrigger.create({
           trigger: wrapRef.current,
           start: "top top",
@@ -638,10 +684,18 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       }
 
       applyTextCanonicalState(0)
-      handleThumbs(0, 1)
-      refreshSyncHandler = syncFromProgress
-      ScrollTrigger.addEventListener("refreshInit", refreshSyncHandler)
-      ScrollTrigger.addEventListener("refresh", refreshSyncHandler)
+      applyThumbStaticState(0)
+
+      onRefreshInit = () => {
+        thumbSyncDuringRefreshRef.current = true
+        syncFromProgress()
+      }
+      onRefreshComplete = () => {
+        syncFromProgress()
+        thumbSyncDuringRefreshRef.current = false
+      }
+      ScrollTrigger.addEventListener("refreshInit", onRefreshInit)
+      ScrollTrigger.addEventListener("refresh", onRefreshComplete)
       syncFromProgress()
     }, wrapRef)
 
@@ -654,10 +708,15 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         window.cancelAnimationFrame(raf.current)
       }
 
-      if (refreshSyncHandler) {
-        ScrollTrigger.removeEventListener("refreshInit", refreshSyncHandler)
-        ScrollTrigger.removeEventListener("refresh", refreshSyncHandler)
+      if (onRefreshInit) {
+        ScrollTrigger.removeEventListener("refreshInit", onRefreshInit)
       }
+      if (onRefreshComplete) {
+        ScrollTrigger.removeEventListener("refresh", onRefreshComplete)
+      }
+
+      thumbRevealTweenRef.current?.kill()
+      thumbRevealTweenRef.current = null
 
       abortRef.current?.abort()
       abortRef.current = null
@@ -668,7 +727,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       ctx.revert()
       lenis?.start()
     }
-  }, [breakpoint, isTouch, projects, lenis])
+  }, [breakpoint, coarsePointer, projects, lenis])
 
   /* isSnappedRef: true when scroll is fully at rest (user + snap animation) */
   useEffect(() => {
@@ -891,7 +950,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         {projects.map((p, i) => (
           <section
             key={p._id}
-            className="relative w-full h-dvh shrink-0"
+            className={cn(
+              "relative w-full shrink-0 overflow-hidden",
+              "md:h-dvh",
+              "max-md:min-h-[calc(100dvh+env(safe-area-inset-bottom,0px)+2px)]",
+            )}
             ref={(el) => {
               sectionsRefs.current[i] = el
             }}
@@ -900,6 +963,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           >
             <Link
               href={`/projects/${p.slug?.current ?? ""}`}
+              className="absolute inset-0 z-0"
               onClick={(e) => {
                 e.preventDefault()
                 handleProjectClick(i, `/projects/${p.slug?.current ?? ""}`)
@@ -909,7 +973,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                 ref={(el) => {
                   bgRefs.current[i] = el
                 }}
-                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                className={cn(
+                  "absolute bg-cover bg-center bg-no-repeat",
+                  "max-md:inset-x-0 max-md:top-0 max-md:bottom-auto max-md:h-[calc(100%+3px)]",
+                  "md:inset-0",
+                )}
                 style={{
                   willChange: "background-position",
                   backgroundImage: `url(${getImageUrl({
@@ -925,7 +993,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
       <div
         ref={fixedLayerRef}
-        className="fixed top-0 left-0 w-full h-dvh z-20 pointer-events-none"
+        className={cn(
+          "fixed top-0 left-0 z-20 w-full pointer-events-none",
+          "md:h-dvh",
+          "max-md:min-h-[calc(100dvh+env(safe-area-inset-bottom,0px)+2px)]",
+        )}
       >
         {/* THUMBS */}
         <div className="absolute inset-0 z-0 isolate pointer-events-none">
