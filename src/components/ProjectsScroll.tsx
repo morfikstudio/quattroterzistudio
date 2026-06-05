@@ -1133,7 +1133,15 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                 </div>
               </div>
 
-              <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] pointer-events-none">
+              <a
+                href={`/projects/${p.slug?.current ?? ""}`}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleProjectClick(i, `/projects/${p.slug?.current ?? ""}`)
+                }}
+                className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] max-md:pointer-events-auto md:pointer-events-none cursor-pointer md:cursor-default no-underline text-inherit"
+              >
                 <span className="flex overflow-hidden">
                   <span
                     className="type-caption text-white"
@@ -1141,10 +1149,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                       yearsRefs.current[i] = el
                     }}
                   >
-                    {p.year}
+                    <span className="md:hidden">View</span>
+                    <span className="hidden md:inline">{p.year}</span>
                   </span>
                 </span>
-              </div>
+              </a>
             </div>
           ))}
         </div>

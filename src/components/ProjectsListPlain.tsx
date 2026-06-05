@@ -674,11 +674,24 @@ export default function ProjectsListPlain({
         data-lenis-prevent
         className="relative h-svh md:h-screen md:grid md:grid-cols-2"
       >
-        <div className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-30 pointer-events-none overflow-hidden">
+        <a
+          href={imageHref}
+          onClick={(e) => {
+            if (imageHref === "#") {
+              e.preventDefault()
+              return
+            }
+            e.preventDefault()
+            navigateWithTransition(imageHref)
+          }}
+          aria-label={`Open project: ${getLabel(displayedItem)}`}
+          className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] z-30 max-md:pointer-events-auto md:pointer-events-none overflow-hidden cursor-pointer md:cursor-default no-underline text-inherit"
+        >
           <span ref={yearSpanRef} className="pl-year-span type-caption">
-            {activeYear}
+            <span className="md:hidden">View</span>
+            <span className="hidden md:inline">{activeYear}</span>
           </span>
-        </div>
+        </a>
 
         {/* Mobile image */}
         <div className="md:hidden absolute inset-0">
