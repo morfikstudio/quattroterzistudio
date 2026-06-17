@@ -49,6 +49,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const { current: breakpoint } = useBreakpoint()
   const coarsePointer = usePointerCoarse()
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
+  const setPendingActiveSlug = useNavigationStore((s) => s.setPendingActiveSlug)
 
   const [firstBgReady, setFirstBgReady] = useState(false)
   const [firstThumbReady, setFirstThumbReady] = useState(false)
@@ -847,6 +848,10 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       setIsRouteTransitioning(true)
       lenis.stop()
 
+      const activeSlug =
+        projects[activeSectionIndexRef.current]?.slug?.current ?? null
+      setPendingActiveSlug(activeSlug)
+
       const wrap = wrapRef.current
       if (!wrap) {
         setPreviousPath(window.location.pathname)
@@ -900,7 +905,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         },
       )
     },
-    [router, lenis, setPreviousPath],
+    [router, lenis, setPreviousPath, setPendingActiveSlug, projects],
   )
 
   /* Entry animation for the ListCTA (bottom-left archive button) */

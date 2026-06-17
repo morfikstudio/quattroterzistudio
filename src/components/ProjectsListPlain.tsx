@@ -1,6 +1,13 @@
 "use client"
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import { useRouter } from "next/navigation"
 
 import gsap from "gsap"
@@ -13,6 +20,12 @@ import { useBreakpoint } from "@/stores/breakpointStore"
 import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
 
 const SLIDES_PER_VIEW = 7
+
+/*
+    Module-level cache for the resolved "land here" index.
+    Cleared by a deferred timeout after mounts settle.
+*/
+let pendingTargetCache: { slug: string; index: number } | null = null
 // Number of times the items list is duplicated to simulate an infinite loop
 // with a native scrollable container. The visible viewport always sits inside
 // the middle copy; when the user approaches the first/last copy we silently
@@ -314,8 +327,10 @@ export default function ProjectsListPlain({
   }, [])
 
   // Initialize and maintain scroll position so the first item of the middle
-  // copy starts centered in the viewport.
-  useEffect(() => {
+  // copy starts centered in the viewport. useLayoutEffect so the scrollTop
+  // is set before paint — no flash of index 0 when arriving with a pending
+  // active slug from ProjectsScroll.
+  useLayoutEffect(() => {
     const ul = ulRef.current
     if (!ul || items.length === 0) return
 
@@ -328,15 +343,33 @@ export default function ProjectsListPlain({
 
     recalc()
 
-    // Center first item of middle copy: scrollTop such that
-    // scrollTop + containerHeight/2 falls in the middle of that item.
-    // Middle copy index = floor(COPIES / 2).
+    // If we arrived from ProjectsScroll with a pending active slug, land on
+    // that item already centered (no scroll animation). Otherwise default to
+    // index 0 of the middle copy.
+    const { pendingActiveSlug } = useNavigationStore.getState()
+    let targetIndex = 0
+    if (pendingActiveSlug) {
+      const found = items.findIndex(
+        (it) => it.slug?.current === pendingActiveSlug,
+      )
+      targetIndex = found >= 0 ? found : 0
+      pendingTargetCache = { slug: pendingActiveSlug, index: targetIndex }
+    } else if (pendingTargetCache) {
+      targetIndex = pendingTargetCache.index
+    }
+
     const halfView = Math.floor(SLIDES_PER_VIEW / 2)
     const middleCopyIndex = Math.floor(COPIES / 2)
     const initialScrollTop =
-      (middleCopyIndex * items.length - halfView) * itemHeightRef.current
+      (middleCopyIndex * items.length + targetIndex - halfView) *
+      itemHeightRef.current
     ul.scrollTop = initialScrollTop
     lastScrollTopRef.current = initialScrollTop
+
+    if (targetIndex !== 0) {
+      prevActiveRef.current = targetIndex
+      setActiveIndex(targetIndex)
+    }
 
     const onResize = () => {
       const oldItemHeight = itemHeightRef.current
@@ -352,6 +385,17 @@ export default function ProjectsListPlain({
     window.addEventListener("resize", onResize)
     return () => window.removeEventListener("resize", onResize)
   }, [items.length])
+
+  /*
+    Clear the pending slug + module cache once mounts have settled. The actual clear fires after the final mount.
+  */
+  useEffect(() => {
+    const id = setTimeout(() => {
+      useNavigationStore.getState().setPendingActiveSlug(null)
+      pendingTargetCache = null
+    }, 100)
+    return () => clearTimeout(id)
+  }, [])
 
   // Wheel forwarder: the desktop image sits at z-20 with `pointer-events-auto`
   // on its anchor, so wheel events directly over the image hit the anchor —
