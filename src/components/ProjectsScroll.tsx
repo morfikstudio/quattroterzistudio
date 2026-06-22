@@ -25,6 +25,7 @@ import { useLenis } from "@/components/LenisProvider"
 import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
 import ScrollIndicator from "@/components/ScrollIndicator"
 import Image from "@/components/ui/Image"
+import ViewToggle from "@/components/ViewToggle"
 
 type ProjectsScrollProps = {
   projects: PROJECTS_QUERY_RESULT
@@ -81,11 +82,8 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     typeof window !== "undefined" &&
       useNavigationStore.getState().previousPath === "/archive",
   )
-  /*
-    True when ProjectsScroll is mounted as a direct result of exiting the
-    splash (/ → /projects). Captured once at mount from the navigation store
-    so the flag is stable even if previousPath changes later.
-  */
+  // True when mounted straight from the splash (/ → /projects). Captured once
+  // so it stays stable even if previousPath changes later.
   const fromSplashRef = useRef(
     typeof window !== "undefined" &&
       useNavigationStore.getState().previousPath === "/",
@@ -111,10 +109,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   }, [breakpoint])
 
   const onResize = useCallback(() => {
-    /*
-    Only trigger if the width has changed to avoid
-    mobile browser bars causing vertical resizing
-    */
+    // Only react to width changes (ignore mobile browser-bar height shifts).
     const newWidth = window.innerWidth
     if (newWidth === lastWidth.current) return
 
@@ -184,10 +179,8 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
           previousInlineTransition = innerEl.style.transition
 
-          /*
-            Ensure route transition starts from unscaled media to match destination hero.
-            We temporarily disable CSS transition so scale reset happens immediately.
-          */
+          // Reset scale immediately (no transition) so the transition starts
+          // from unscaled media, matching the destination hero.
           innerEl.style.transition = "none"
           gsap.killTweensOf(innerEl)
           gsap.set(innerEl, { scale: 1, overwrite: true })
@@ -200,10 +193,8 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
           gsap.set(clipEl, { clipPath: "none" })
 
-          // Elevate the thumb above the titles layer, the counter and the CTA.
-          // fixedLayerRef creates a stacking context at z-20; its child
-          // thumbs-container sits at z-0 under the titles-container (z-10).
-          // Raising both makes the expanding thumb paint above everything.
+          // Raise the layer + thumbs container so the expanding thumb paints
+          // above titles, counter and CTA.
           if (fixedLayerRef.current) {
             gsap.set(fixedLayerRef.current, { zIndex: 100 })
           }
@@ -220,9 +211,8 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             overwrite: true,
           })
 
-          // Letters-out on the active title, year, square and counter,
-          // plus fade-out of CTA and scroll indicator. Queued on the same
-          // tick as the thumb expansion so they start exactly together.
+          // Letters-out (title/year/square/counter) + CTA/indicator fade,
+          // queued on the same tick as the thumb expansion.
           const activeLetters = wordsRefs.current[index]?.filter(Boolean) ?? []
           const activeYear = yearsRefs.current[index]
           const activeSquare = squaresRefs.current[index]
@@ -337,10 +327,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       // overall progress of each section
       const sectionProgresses = Array.from({ length: projects.length }, () => 0)
 
-      /*
-        Set default position of text
-        (y: 0% for active section, -110% for previous section, 110% for future section)
-      */
+      // Default text positions: 0% active, -110% past, 110% future.
       function applyTextCanonicalState(activeIdx: number) {
         for (let i = 0; i < projects.length; i++) {
           const letters = wordsRefs.current[i]?.filter(Boolean) ?? []
@@ -663,9 +650,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         })
       })
 
-      /* Sections snap — skip when `(pointer: coarse)` (mobile / tablet UX);
-      touchscreen laptops typically keep `(pointer: fine)` so snap stays on.
-      */
+      /* Sections snap — skipped on coarse pointers (mobile/tablet). */
       if (projects.length > 1 && !coarsePointer) {
         ScrollTrigger.create({
           trigger: wrapRef.current,
@@ -753,13 +738,8 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     }
   }, [lenis])
 
-  /*
-    Splash reveal: scala lo sfondo dal lontano e rivela il thumbnail con
-    clip-path. Triggered self-hosted quando arriviamo da "/" (fromSplashRef)
-    e il wrapper è pronto a mostrarsi (`show` true = immagini caricate).
-    Aspettare `show` evita che l'animazione runni su un wrapper ancora
-    opacity-0 e non venga mai vista dall'utente.
-  */
+  // Splash reveal: scale the bg in and clip-reveal the thumb. Runs only when
+  // arriving from "/" and `show` is true (images loaded, wrapper visible).
   useEffect(() => {
     if (!show || !fromSplashRef.current || revealPlayedRef.current) return
     revealPlayedRef.current = true
@@ -840,73 +820,62 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     }
   }, [show])
 
-  const handleArchiveClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault()
-      if (transitioningRef.current || !lenis) return
-      transitioningRef.current = true
-      setIsRouteTransitioning(true)
-      lenis.stop()
+  const handleArchiveClick = useCallback(() => {
+    if (transitioningRef.current || !lenis) return
+    transitioningRef.current = true
+    setIsRouteTransitioning(true)
+    lenis.stop()
 
-      const activeSlug =
-        projects[activeSectionIndexRef.current]?.slug?.current ?? null
-      setPendingActiveSlug(activeSlug)
+    const activeSlug =
+      projects[activeSectionIndexRef.current]?.slug?.current ?? null
+    setPendingActiveSlug(activeSlug)
 
-      const wrap = wrapRef.current
-      if (!wrap) {
-        setPreviousPath(window.location.pathname)
-        router.push("/archive")
-        return
-      }
+    const wrap = wrapRef.current
+    if (!wrap) {
+      setPreviousPath(window.location.pathname)
+      router.push("/archive")
+      return
+    }
 
-      /*
-        Disable every ScrollTrigger BEFORE changing the layout.
-        Switching wrapRef to position:fixed shrinks the scroll height;
-        if ScrollTrigger is still active it recalculates progress and
-        the component "breaks" visually.
-      */
-      ScrollTrigger.getAll().forEach((st) => st.disable(false))
+    // Disable ScrollTriggers before the layout change: position:fixed shrinks
+    // scroll height and an active trigger would recompute and break visually.
+    ScrollTrigger.getAll().forEach((st) => st.disable(false))
 
-      const scrollY = window.scrollY
+    const scrollY = window.scrollY
 
-      /*
-        Freeze the wrapper to the viewport and create a containing block
-        via transform so that all fixed-positioned children (thumbs, titles,
-        scroll indicator, CTA) are clipped together.
-      */
-      gsap.set(wrap, {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100dvh",
-        overflow: "hidden",
-        transform: "translate3d(0,0,0)",
-        zIndex: 40,
-      })
+    // Freeze the wrapper to the viewport; the transform makes it a containing
+    // block so all fixed children clip together.
+    gsap.set(wrap, {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100dvh",
+      overflow: "hidden",
+      transform: "translate3d(0,0,0)",
+      zIndex: 40,
+    })
 
-      // Offset background sections to preserve visual scroll position
-      const bgContainer = wrap.children[0] as HTMLElement | null
-      if (bgContainer && scrollY > 0) {
-        gsap.set(bgContainer, { y: -scrollY })
-      }
+    // Offset background sections to preserve visual scroll position
+    const bgContainer = wrap.children[0] as HTMLElement | null
+    if (bgContainer && scrollY > 0) {
+      gsap.set(bgContainer, { y: -scrollY })
+    }
 
-      gsap.fromTo(
-        wrap,
-        { clipPath: "inset(0% 0% 0% 0%)" },
-        {
-          clipPath: "inset(0% 0% 100% 0%)",
-          duration: 1.2,
-          ease: "power3.inOut",
-          onComplete: () => {
-            setPreviousPath(window.location.pathname)
-            router.push("/archive")
-          },
+    gsap.fromTo(
+      wrap,
+      { clipPath: "inset(0% 0% 0% 0%)" },
+      {
+        clipPath: "inset(0% 0% 100% 0%)",
+        duration: 1.2,
+        ease: "power3.inOut",
+        onComplete: () => {
+          setPreviousPath(window.location.pathname)
+          router.push("/archive")
         },
-      )
-    },
-    [router, lenis, setPreviousPath, setPendingActiveSlug, projects],
-  )
+      },
+    )
+  }, [router, lenis, setPreviousPath, setPendingActiveSlug, projects])
 
   /* Entry animation for the ListCTA (bottom-left archive button) */
   useEffect(() => {
@@ -1172,9 +1141,15 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         <ScrollIndicator />
       </div>
 
-      {/* LIST CTA */}
+      {/* VIEW TOGGLE */}
       <div ref={listCTAWrapRef} className="fixed bottom-6 left-6 z-30 flex">
-        <ListCTA onArchiveClick={handleArchiveClick} />
+        <ViewToggle
+          active="selected"
+          variant="dark"
+          onSelect={(target) => {
+            if (target === "archive") handleArchiveClick()
+          }}
+        />
       </div>
 
       {/* COUNTER */}
@@ -1187,86 +1162,5 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         </span>
       </div>
     </div>
-  )
-}
-
-function ListCTA({
-  onArchiveClick,
-}: {
-  onArchiveClick: (e: React.MouseEvent) => void
-}) {
-  const Icons = useCallback(() => {
-    return (
-      <div className="flex flex-col items-center gap-[3px]">
-        <span className={cn("flex w-[4px] h-[4px] bg-white")} />
-        <span className={cn("flex w-[4px] h-[4px] bg-white")} />
-      </div>
-    )
-  }, [])
-
-  return (
-    <button
-      onClick={onArchiveClick}
-      className="appearance-none bg-transparent p-0 border-0"
-    >
-      <div
-        className={cn(
-          "group",
-          "relative",
-          "h-[40px] w-[120px]",
-          "border border-white",
-          "flex items-center justify-center",
-          "px-4",
-        )}
-      >
-        <div
-          className={cn(
-            "relative",
-            "h-full w-full",
-            "flex items-center justify-center",
-          )}
-        >
-          <div
-            className={cn(
-              "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-              "inline-flex items-center gap-[10px]",
-            )}
-          >
-            <div
-              className={cn(
-                "translate-x-0",
-                "group-hover:-translate-x-1 group-hover:opacity-0",
-                "transition-all duration-200 ease-in-out",
-              )}
-            >
-              <Icons />
-            </div>
-
-            <div
-              className={cn(
-                "translate-x-0",
-                "group-hover:-translate-x-[19px]",
-                "transition-transform duration-400 ease-out",
-              )}
-            >
-              <span className="type-button-m uppercase text-white">
-                Archive
-              </span>
-            </div>
-          </div>
-
-          <div
-            className={cn(
-              "absolute top-1/2 right-1 -translate-y-1/2 translate-x-1",
-              "opacity-0",
-              "group-hover:translate-x-0 group-hover:opacity-100",
-              "transition-all duration-200 ease-in-out",
-            )}
-          >
-            <Icons />
-          </div>
-        </div>
-      </div>
-    </button>
   )
 }

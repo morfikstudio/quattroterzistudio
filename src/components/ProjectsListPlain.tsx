@@ -18,74 +18,15 @@ import { cn } from "@/utils/classNames"
 import { useNavigationStore } from "@/stores/navigationStore"
 import { useBreakpoint } from "@/stores/breakpointStore"
 import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
+import ViewToggle from "@/components/ViewToggle"
 
 const SLIDES_PER_VIEW = 7
 
-/*
-    Module-level cache for the resolved "land here" index.
-    Cleared by a deferred timeout after mounts settle.
-*/
+// Cache for the resolved "land here" index, cleared after mounts settle.
 let pendingTargetCache: { slug: string; index: number } | null = null
-// Number of times the items list is duplicated to simulate an infinite loop
-// with a native scrollable container. The visible viewport always sits inside
-// the middle copy; when the user approaches the first/last copy we silently
-// jump scrollTop by one full list-length so they remain in the middle copy.
+// List copies for infinite-loop simulation: the viewport stays in the middle
+// copy; nearing an edge we teleport scrollTop by one list-length.
 const COPIES = 9
-
-function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
-  const Icons = () => (
-    <div className="flex flex-col items-center gap-[3px]">
-      <span className="flex w-[4px] h-[4px] bg-black max-md:bg-white" />
-    </div>
-  )
-  return (
-    <button
-      onClick={onNavigate}
-      className="appearance-none bg-transparent p-0 border-0"
-    >
-      <div
-        className={cn(
-          "group relative h-[40px] w-[125px]",
-          "border border-black max-md:bg-black flex items-center justify-center px-4",
-        )}
-      >
-        <div
-          className={cn(
-            "relative h-full w-full",
-            "flex items-center justify-center overflow-hidden",
-          )}
-        >
-          <div
-            className={cn(
-              "absolute top-1/2 left-0",
-              "-translate-y-1/2 group-hover:-translate-x-1 group-hover:opacity-0 transition-all duration-200 ease-in-out",
-            )}
-          >
-            <Icons />
-          </div>
-          <div
-            className={cn(
-              "absolute top-1/2 left-1/2",
-              "-translate-x-[calc(50%-8px)] -translate-y-1/2 group-hover:-translate-x-[calc(50%+5.5px)] transition-transform duration-400 ease-out",
-            )}
-          >
-            <span className="type-button-m uppercase text-black max-md:text-white">
-              selection
-            </span>
-          </div>
-          <div
-            className={cn(
-              "absolute top-1/2 right-0",
-              "-translate-y-1/2 translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200 ease-in-out",
-            )}
-          >
-            <Icons />
-          </div>
-        </div>
-      </div>
-    </button>
-  )
-}
 
 type Props = { projects?: PROJECTS_QUERY_RESULT; onSelectionClick?: () => void }
 
@@ -95,9 +36,8 @@ export default function ProjectsListPlain({
 }: Props) {
   const items = projects ?? []
 
-  // Build the extended list with COPIES copies for infinite-loop simulation.
-  // Each entry knows its original (real) index so active/hover state and
-  // navigation remain consistent across duplicates.
+  // Extended list of COPIES copies; each entry keeps its real index so
+  // active/hover/navigation stay consistent across duplicates.
   const extendedItems = useMemo(() => {
     const result: {
       item: PROJECTS_QUERY_RESULT[number]
@@ -128,9 +68,9 @@ export default function ProjectsListPlain({
   const wordSpansRef = useRef<HTMLElement[]>([])
   const squareSpansRef = useRef<HTMLElement[]>([])
   const yearSpanRef = useRef<HTMLSpanElement | null>(null)
-  // Mobile enter: unlock underline only when word is almost done (0.4s delay + ~0.9s into anim)
+  // Mobile enter: unlock underline only once the word is almost in.
   const [pageEnterDone, setPageEnterDone] = useState(false)
-  // Mobile exit: force active underline to "out" before words animate away
+  // Mobile exit: force active underline "out" before words leave.
   const [underlineExiting, setUnderlineExiting] = useState(false)
   const mobileWrapRef = useRef<HTMLAnchorElement | null>(null)
   const desktopWrapRef = useRef<HTMLAnchorElement | null>(null)
@@ -181,8 +121,7 @@ export default function ProjectsListPlain({
 
   const navigate = useCallback(
     (url: string) => {
-      // Set previousPath BEFORE router.push so SplashMarquee can read it
-      // synchronously during its first render on the destination page.
+      // Set previousPath before push so SplashMarquee reads it on first render.
       setPreviousPath(window.location.pathname)
       exitWithCallback(() => router.push(url))
     },
@@ -196,7 +135,7 @@ export default function ProjectsListPlain({
 
       setPreviousPath(window.location.pathname)
 
-      // Non-desktop: navigate directly (no image expansion), same as ProjectsScroll
+      // Non-desktop: navigate directly, no image expansion.
       if (!isDesktop) {
         dispatchCurtainNavigate(url)
         return
@@ -210,7 +149,7 @@ export default function ProjectsListPlain({
         return
       }
 
-      // Reset hover scale on the inner image layer
+      // Reset hover scale on the inner image layer.
       if (imgEl) {
         const scaleChild = imgEl.firstElementChild as HTMLElement | null
         if (scaleChild) {
@@ -219,13 +158,13 @@ export default function ProjectsListPlain({
         }
       }
 
-      // Hide year — the Hero will show it with letters-in
+      // Hide year — the Hero re-shows it with letters-in.
       const yearContainer = yearSpanRef.current?.parentElement
       if (yearContainer) gsap.set(yearContainer, { autoAlpha: 0 })
 
       const rect = wrapEl.getBoundingClientRect()
 
-      // Cancel CSS keyframe animation so it doesn't fight inline styles
+      // Cancel CSS keyframe so it doesn't fight inline styles.
       wrapEl.style.animation = "none"
 
       gsap.set(wrapEl, {
@@ -238,7 +177,7 @@ export default function ProjectsListPlain({
         zIndex: 100,
       })
 
-      // Image expansion, then navigate (letters-in happens on the project page Hero)
+      // Expand image, then navigate (letters-in runs on the project Hero).
       gsap.to(wrapEl, {
         top: 0,
         left: 0,
@@ -251,13 +190,13 @@ export default function ProjectsListPlain({
     [router, setPreviousPath, isDesktop],
   )
 
-  // Unlock mobile underline when word is almost fully visible
+  // Unlock mobile underline once the word is almost fully visible.
   useEffect(() => {
     const t = setTimeout(() => setPageEnterDone(true), 1300)
     return () => clearTimeout(t)
   }, [])
 
-  // Entry animation for the SelectionCTA (bottom-left)
+  // Entry animation for the toggle (bottom-left).
   useEffect(() => {
     const el = selectionCtaWrapRef.current
     if (!el) return
@@ -292,20 +231,17 @@ export default function ProjectsListPlain({
   const scrollCheckRef = useRef<number>(0)
   const hoverIndexRef = useRef<number | null>(null)
 
-  // Native-scroll bookkeeping (replaces Swiper internals).
+  // Native-scroll bookkeeping.
   const ulRef = useRef<HTMLUListElement | null>(null)
   const sectionRootRef = useRef<HTMLDivElement | null>(null)
   const itemHeightRef = useRef(0)
   const totalHeightRef = useRef(0)
   const lastScrollTopRef = useRef(0)
-  // Pending teleport direction (+1 = add totalHeight, -1 = subtract, 0 = none).
-  // We defer the scrollTop teleport until momentum settles, otherwise setting
-  // scrollTop mid-flick on iOS interrupts the native inertia and causes jank.
+  // Pending teleport direction (+1/-1/0); deferred until momentum settles so
+  // setting scrollTop mid-flick on iOS doesn't kill native inertia.
   const pendingTeleportRef = useRef(0)
 
-  // `mobileImgRef` is intentionally not wired up — on touch we don't want
-  // the image to scale down with scroll velocity. Keeping the ref out of the
-  // JSX means `useImageScale` never applies a transform to the mobile node.
+  // mobileImgRef left unwired on purpose: no velocity scale on touch.
   const { desktopImgRef, startScaleLoop } = useImageScale({
     velocityRef,
     minScale: 0.78,
@@ -326,10 +262,8 @@ export default function ProjectsListPlain({
     return () => mq.removeEventListener("change", (e) => update(e.matches))
   }, [])
 
-  // Initialize and maintain scroll position so the first item of the middle
-  // copy starts centered in the viewport. useLayoutEffect so the scrollTop
-  // is set before paint — no flash of index 0 when arriving with a pending
-  // active slug from ProjectsScroll.
+  // Center the middle-copy target before paint (useLayoutEffect) so there's
+  // no flash of index 0 when arriving with a pending active slug.
   useLayoutEffect(() => {
     const ul = ulRef.current
     if (!ul || items.length === 0) return
@@ -343,9 +277,7 @@ export default function ProjectsListPlain({
 
     recalc()
 
-    // If we arrived from ProjectsScroll with a pending active slug, land on
-    // that item already centered (no scroll animation). Otherwise default to
-    // index 0 of the middle copy.
+    // Land on the pending active slug if present, else index 0 of middle copy.
     const { pendingActiveSlug } = useNavigationStore.getState()
     let targetIndex = 0
     if (pendingActiveSlug) {
@@ -374,7 +306,7 @@ export default function ProjectsListPlain({
     const onResize = () => {
       const oldItemHeight = itemHeightRef.current
       recalc()
-      // Maintain visual position across resize: keep the same item centered.
+      // Keep the same item centered across resize.
       if (oldItemHeight > 0) {
         const ratio = itemHeightRef.current / oldItemHeight
         const next = ul.scrollTop * ratio
@@ -386,9 +318,7 @@ export default function ProjectsListPlain({
     return () => window.removeEventListener("resize", onResize)
   }, [items.length])
 
-  /*
-    Clear the pending slug + module cache once mounts have settled. The actual clear fires after the final mount.
-  */
+  // Clear pending slug + cache once mounts have settled.
   useEffect(() => {
     const id = setTimeout(() => {
       useNavigationStore.getState().setPendingActiveSlug(null)
@@ -397,19 +327,15 @@ export default function ProjectsListPlain({
     return () => clearTimeout(id)
   }, [])
 
-  // Wheel forwarder: the desktop image sits at z-20 with `pointer-events-auto`
-  // on its anchor, so wheel events directly over the image hit the anchor —
-  // which has no scrollable ancestor in its bubble path (the ul is in a
-  // sibling subtree). Forward those wheel events to the ul so scrolling works
-  // anywhere within the section, not just over the visible list area.
+  // Wheel forwarder: the desktop image anchor has no scrollable ancestor, so
+  // forward its wheel events to the ul to scroll anywhere in the section.
   useEffect(() => {
     const root = sectionRootRef.current
     const ul = ulRef.current
     if (!root || !ul) return
 
     const onWheel = (e: WheelEvent) => {
-      // If the wheel is already targeting (or inside) the ul, the browser
-      // will scroll it natively — don't double-scroll.
+      // Inside the ul the browser already scrolls natively — don't double up.
       if (ul.contains(e.target as Node)) return
 
       let deltaPx = e.deltaY
@@ -438,17 +364,10 @@ export default function ProjectsListPlain({
     const itemHeight = itemHeightRef.current
     const totalHeight = totalHeightRef.current
 
-    // Loop reset. On desktop we teleport immediately — native wheel has no
-    // inertia to preserve, and deferring until momentum settles means that
-    // during continuous scrolling the user can reach scrollTop=0 or max and
-    // hit a hard stop. On touch (iOS), deferring is preferred (setting
-    // scrollTop mid-flick kills native inertia) — BUT if the user keeps
-    // flicking without letting momentum settle, we'd still hit the hard
-    // edge. So on mobile we have two zones: a "pending" zone one copy from
-    // the edge (deferred), and an "emergency" zone half a copy from the
-    // edge where we teleport immediately even at the cost of breaking
-    // momentum — a reset is still less jarring than slamming into the wall.
-    // Middle copy spans [4*totalHeight, 5*totalHeight) (COPIES=9, index=4).
+    // Loop reset. Desktop: teleport immediately (no inertia to preserve).
+    // Mobile: defer until momentum settles to avoid killing native inertia,
+    // but force an "emergency" teleport within half a copy of the edge so a
+    // fast flicker never slams into the wall.
     if (totalHeight > 0) {
       const lastCopy = COPIES - 1
       const needsForward = scrollTop < totalHeight
@@ -481,9 +400,8 @@ export default function ProjectsListPlain({
     const realIndex =
       ((extendedIndex % items.length) + items.length) % items.length
 
-    // Velocity tracking — feeds the image scale loop, mirrors the swiper path.
-    // On desktop we amplify the feed so slow wheel ticks still cross the
-    // dead zone inside useImageScale and produce a visible scale effect.
+    // Velocity feeds the image scale loop; amplified on desktop so slow wheel
+    // ticks still cross useImageScale's dead zone.
     const delta = scrollTop - lastScrollTopRef.current
     if (delta !== 0) {
       const desktopBoost = isMobileRef.current ? 1 : 1.8
@@ -492,10 +410,8 @@ export default function ProjectsListPlain({
     }
     lastScrollTopRef.current = scrollTop
 
-    // Coalesce all React state updates into a single rAF tick. Previously we
-    // called setActiveIndex/setIsScrolling/setHoverIndex synchronously on
-    // every scroll event, re-rendering the whole extended list (COPIES×items)
-    // and causing stutter on high-frequency wheel input.
+    // Coalesce React state updates into one rAF tick to avoid re-rendering the
+    // whole extended list on every scroll event.
     pendingActiveRef.current = realIndex
     if (!rafUpdateRef.current) {
       rafUpdateRef.current = requestAnimationFrame(() => {
@@ -537,7 +453,7 @@ export default function ProjectsListPlain({
     scrollCheckRef.current = requestAnimationFrame(check)
   }, [items.length, startScaleLoop])
 
-  // Entry animation for word spans (replaces Swiper's onAfterInit hook).
+  // Entry animation for word spans.
   useEffect(() => {
     if (!listContainerRef.current || items.length === 0) return
     const t = setTimeout(() => {
@@ -692,13 +608,14 @@ export default function ProjectsListPlain({
         }
       `}</style>
 
-      <div ref={selectionCtaWrapRef} className="fixed bottom-5 left-6 z-30">
-        <SelectionCTA
-          onNavigate={
-            onSelectionClick
-              ? () => exitWithCallback(onSelectionClick)
-              : () => navigate("/projects")
-          }
+      <div ref={selectionCtaWrapRef} className="fixed bottom-6 left-6 z-30">
+        <ViewToggle
+          active="archive"
+          onSelect={(target) => {
+            if (target !== "selected") return
+            if (onSelectionClick) exitWithCallback(onSelectionClick)
+            else navigate("/projects")
+          }}
         />
       </div>
 
@@ -711,10 +628,8 @@ export default function ProjectsListPlain({
 
       <div
         ref={sectionRootRef}
-        // `data-lenis-prevent` opts the whole subtree out of the global
-        // LenisProvider's smooth-scroll hijack. Without this, Lenis
-        // preventDefault()s wheel/touch events on <html> and the ul's native
-        // overflow-y-auto never gets a chance to scroll.
+        // Opt the subtree out of Lenis' smooth-scroll hijack so the ul's
+        // native overflow-y-auto can scroll.
         data-lenis-prevent
         className="relative h-svh md:h-screen md:grid md:grid-cols-2"
       >
@@ -882,15 +797,8 @@ export default function ProjectsListPlain({
                       }
                       data-line={
                         isMobile
-                          ? /*
-                              Mobile: the underline is tied strictly to the
-                              settled active item. Previously-active items
-                              (those that passed through center while the
-                              user was scrolling) must NOT trigger the
-                              `pl-line-out` animation — otherwise the
-                              underline flashes under every slide that
-                              scrolls by.
-                            */
+                          ? // Mobile: underline tied to the settled active item
+                            // only — items passed while scrolling must not flash "out".
                             !isScrolling &&
                             pageEnterDone &&
                             !underlineExiting &&
