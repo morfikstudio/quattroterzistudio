@@ -28,6 +28,61 @@ let pendingTargetCache: { slug: string; index: number } | null = null
 // copy; nearing an edge we teleport scrollTop by one list-length.
 const COPIES = 9
 
+function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
+  const Icons = () => (
+    <div className="flex flex-col items-center gap-[3px]">
+      <span className="flex w-[4px] h-[4px] bg-black max-md:bg-white" />
+    </div>
+  )
+  return (
+    <button
+      onClick={onNavigate}
+      className="appearance-none bg-transparent p-0 border-0"
+    >
+      <div
+        className={cn(
+          "group relative h-[40px] w-[125px]",
+          "border border-black max-md:bg-black flex items-center justify-center px-4",
+        )}
+      >
+        <div
+          className={cn(
+            "relative h-full w-full",
+            "flex items-center justify-center overflow-hidden",
+          )}
+        >
+          <div
+            className={cn(
+              "absolute top-1/2 left-0",
+              "-translate-y-1/2 group-hover:-translate-x-1 group-hover:opacity-0 transition-all duration-200 ease-in-out",
+            )}
+          >
+            <Icons />
+          </div>
+          <div
+            className={cn(
+              "absolute top-1/2 left-1/2",
+              "-translate-x-[calc(50%-8px)] -translate-y-1/2 group-hover:-translate-x-[calc(50%+5.5px)] transition-transform duration-400 ease-out",
+            )}
+          >
+            <span className="type-button-m uppercase text-black max-md:text-white">
+              selection
+            </span>
+          </div>
+          <div
+            className={cn(
+              "absolute top-1/2 right-0",
+              "-translate-y-1/2 translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200 ease-in-out",
+            )}
+          >
+            <Icons />
+          </div>
+        </div>
+      </div>
+    </button>
+  )
+}
+
 type Props = { projects?: PROJECTS_QUERY_RESULT; onSelectionClick?: () => void }
 
 export default function ProjectsListPlain({
@@ -609,14 +664,25 @@ export default function ProjectsListPlain({
       `}</style>
 
       <div ref={selectionCtaWrapRef} className="fixed bottom-6 left-6 z-30">
-        <ViewToggle
-          active="archive"
-          onSelect={(target) => {
-            if (target !== "selected") return
-            if (onSelectionClick) exitWithCallback(onSelectionClick)
-            else navigate("/projects")
-          }}
-        />
+        <div className="md:hidden">
+          <SelectionCTA
+            onNavigate={
+              onSelectionClick
+                ? () => exitWithCallback(onSelectionClick)
+                : () => navigate("/projects")
+            }
+          />
+        </div>
+        <div className="hidden md:block">
+          <ViewToggle
+            active="archive"
+            onSelect={(target) => {
+              if (target !== "selected") return
+              if (onSelectionClick) exitWithCallback(onSelectionClick)
+              else navigate("/projects")
+            }}
+          />
+        </div>
       </div>
 
       <div className="fixed bottom-6 right-6 z-30 pointer-events-none overflow-hidden">

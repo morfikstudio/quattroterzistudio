@@ -1141,15 +1141,20 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         <ScrollIndicator />
       </div>
 
-      {/* VIEW TOGGLE */}
+      {/* VIEW TOGGLE (desktop) / ARCHIVE BUTTON (mobile) */}
       <div ref={listCTAWrapRef} className="fixed bottom-6 left-6 z-30 flex">
-        <ViewToggle
-          active="selected"
-          variant="dark"
-          onSelect={(target) => {
-            if (target === "archive") handleArchiveClick()
-          }}
-        />
+        <div className="md:hidden">
+          <ListCTA onArchiveClick={handleArchiveClick} />
+        </div>
+        <div className="hidden md:block">
+          <ViewToggle
+            active="selected"
+            variant="dark"
+            onSelect={(target) => {
+              if (target === "archive") handleArchiveClick()
+            }}
+          />
+        </div>
       </div>
 
       {/* COUNTER */}
@@ -1162,5 +1167,86 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         </span>
       </div>
     </div>
+  )
+}
+
+function ListCTA({
+  onArchiveClick,
+}: {
+  onArchiveClick: (e: React.MouseEvent) => void
+}) {
+  const Icons = useCallback(() => {
+    return (
+      <div className="flex flex-col items-center gap-[3px]">
+        <span className={cn("flex w-[4px] h-[4px] bg-white")} />
+        <span className={cn("flex w-[4px] h-[4px] bg-white")} />
+      </div>
+    )
+  }, [])
+
+  return (
+    <button
+      onClick={onArchiveClick}
+      className="appearance-none bg-transparent p-0 border-0"
+    >
+      <div
+        className={cn(
+          "group",
+          "relative",
+          "h-[40px] w-[120px]",
+          "border border-white",
+          "flex items-center justify-center",
+          "px-4",
+        )}
+      >
+        <div
+          className={cn(
+            "relative",
+            "h-full w-full",
+            "flex items-center justify-center",
+          )}
+        >
+          <div
+            className={cn(
+              "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+              "inline-flex items-center gap-[10px]",
+            )}
+          >
+            <div
+              className={cn(
+                "translate-x-0",
+                "group-hover:-translate-x-1 group-hover:opacity-0",
+                "transition-all duration-200 ease-in-out",
+              )}
+            >
+              <Icons />
+            </div>
+
+            <div
+              className={cn(
+                "translate-x-0",
+                "group-hover:-translate-x-[19px]",
+                "transition-transform duration-400 ease-out",
+              )}
+            >
+              <span className="type-button-m uppercase text-white">
+                Archive
+              </span>
+            </div>
+          </div>
+
+          <div
+            className={cn(
+              "absolute top-1/2 right-1 -translate-y-1/2 translate-x-1",
+              "opacity-0",
+              "group-hover:translate-x-0 group-hover:opacity-100",
+              "transition-all duration-200 ease-in-out",
+            )}
+          >
+            <Icons />
+          </div>
+        </div>
+      </div>
+    </button>
   )
 }
