@@ -724,7 +724,7 @@ export default function ProjectsListPlain({
             ref={mobileWrapRef}
             href={imageHref}
             className={cn(
-              "pl-img-clip grou absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[60vw]",
+              "pl-img-clip grou absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw] max-md:landscape:w-[50vw]",
               "block cursor-pointer no-underline text-inherit focus-visible:outline-none",
             )}
             data-clip={clipState}
