@@ -24,7 +24,7 @@
 
 /* ─── Typography ───────────────────────────────────────────────────────────── */
 
-/* Display XL: 60 → 140 → 170px | 90% lh | -2%/-4%/-4% ls | Medium */
+/* Display XL: 60 → 140 → 170 → 210px | 90% lh | -2%/-4%/-4% ls | Medium */
 @utility type-display-xl {
   font-size: 60px;
   line-height: 0.9;
@@ -38,6 +38,10 @@
 
   @media (width >= 1024px) {
     font-size: 170px;
+  }
+
+  @media (width >= 1920px) {
+    font-size: 210px;
   }
 }
 
@@ -58,7 +62,7 @@
   }
 }
 
-/* H1: 40 → 60 → 64px | 90% lh | 0/-2%/-2% ls | Regular → Light */
+/* H1: 40 → 60 → 64 → 72px | 90% lh | 0/-2%/-2% ls | Regular → Light */
 @utility type-h1 {
   font-size: 40px;
   line-height: 0.9;
@@ -74,9 +78,13 @@
   @media (width >= 1024px) {
     font-size: 64px;
   }
+
+  @media (width >= 1920px) {
+    font-size: 72px;
+  }
 }
 
-/* H2: 32 → 50 → 64px | 100% lh | 0 ls | Medium */
+/* H2: 32 → 50 → 64 → 72px | 100% lh | 0 ls | Medium */
 @utility type-h2 {
   font-size: 32px;
   line-height: 1;
@@ -90,9 +98,13 @@
   @media (width >= 1024px) {
     font-size: 64px;
   }
+
+  @media (width >= 1920px) {
+    font-size: 72px;
+  }
 }
 
-/* H3: 40 → 40 → 60px | 100% lh | -2% ls | Light */
+/* H3: 40 → 40 → 60 → 70px | 100% lh | -2% ls | Light */
 @utility type-h3 {
   font-size: 40px;
   line-height: 1;
@@ -102,9 +114,13 @@
   @media (width >= 1024px) {
     font-size: 60px;
   }
+
+  @media (width >= 1920px) {
+    font-size: 70px;
+  }
 }
 
-/* Body L: 34px | 102% lh | 0 ls | Medium → Regular */
+/* Body L: 34 → 38px | 102% lh | 0 ls | Medium → Regular */
 @utility type-body-l {
   font-size: 34px;
   line-height: 1.02;
@@ -114,9 +130,13 @@
   @media (width >= 768px) {
     font-weight: 400;
   }
+
+  @media (width >= 1920px) {
+    font-size: 38px;
+  }
 }
 
-/* Body M: 18 → 22 → 24px | 120% lh | 0 ls | Medium */
+/* Body M: 18 → 22 → 24 → 28px | 120% lh | 0 ls | Medium */
 @utility type-body-m {
   font-size: 18px;
   line-height: 1.2;
@@ -130,9 +150,13 @@
   @media (width >= 1024px) {
     font-size: 24px;
   }
+
+  @media (width >= 1920px) {
+    font-size: 28px;
+  }
 }
 
-/* Body S: 14 → 16 → 16px | 140% lh | 0 ls | Medium */
+/* Body S: 14 → 16 → 16 → 18px | 140% lh | 0 ls | Medium */
 @utility type-body-s {
   font-size: 14px;
   line-height: 1.4;
@@ -142,17 +166,25 @@
   @media (width >= 768px) {
     font-size: 16px;
   }
+
+  @media (width >= 1920px) {
+    font-size: 18px;
+  }
 }
 
-/* Menu: 16px | 140% lh | 0 ls | Regular */
+/* Menu: 16 → 18px | 140% lh | 0 ls | Regular */
 @utility type-menu {
   font-size: 16px;
   line-height: 1.4;
   letter-spacing: 0;
   font-weight: 400;
+
+  @media (width >= 1920px) {
+    font-size: 18px;
+  }
 }
 
-/* Caption: 12px | 140% lh | 2%/4%/4% ls | Medium | Geist Mono */
+/* Caption: 12 → 14px | 140% lh | 2%/4%/4% ls | Medium | Geist Mono */
 @utility type-caption {
   font-size: 12px;
   line-height: 1.4;
@@ -163,6 +195,10 @@
 
   @media (width >= 768px) {
     letter-spacing: 0.04em;
+  }
+
+  @media (width >= 1920px) {
+    font-size: 14px;
   }
 }
 
@@ -178,7 +214,7 @@
   }
 }
 
-/* Button XL: 34 → 52 → 78px | 90% lh | 0 ls | Regular */
+/* Button XL: 34 → 52 → 78 → 86px | 90% lh | 0 ls | Regular */
 @utility type-button-xl {
   font-size: 34px;
   line-height: 0.9;
@@ -192,9 +228,13 @@
   @media (width >= 1024px) {
     font-size: 78px;
   }
+
+  @media (width >= 1920px) {
+    font-size: 86px;
+  }
 }
 
-/* Button L: 18 → 20 → 22px | 100% lh | 0 ls | Medium */
+/* Button L: 18 → 20 → 22 → 26px | 100% lh | 0 ls | Medium */
 @utility type-button-l {
   font-size: 18px;
   line-height: 1;
@@ -208,15 +248,23 @@
   @media (width >= 1024px) {
     font-size: 22px;
   }
+
+  @media (width >= 1920px) {
+    font-size: 26px;
+  }
 }
 
-/* Button M: 12px | 120% lh | 12% ls | Medium | Geist Mono */
+/* Button M: 12 → 14px | 120% lh | 12% ls | Medium | Geist Mono */
 @utility type-button-m {
   font-size: 12px;
   line-height: 1.2;
   letter-spacing: 0.12em;
   font-weight: 500;
   font-family: var(--font-mono);
+
+  @media (width >= 1920px) {
+    font-size: 14px;
+  }
 }
 
 /* ─── Underline hover animation ─────────────────────────────────────────────── */
