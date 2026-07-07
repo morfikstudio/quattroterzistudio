@@ -7,7 +7,6 @@ import { buildHomeMetadata } from "@/lib/seo/page-metadata"
 import siteSeo from "@/data/site-seo.json"
 
 import { JsonLd } from "@/components/seo/JsonLd"
-import SplashMarquee from "@/components/SplashMarquee"
 
 const siteCfg = siteSeo as SiteSeoConfig
 
@@ -20,12 +19,9 @@ export default function Page() {
   return (
     <>
       <JsonLd data={buildHomeJsonLd(siteCfg)} />
-      <main>
-        <SplashMarquee
-          title="Welcome to Quattroterzi Studio"
-          ctaText="Click anywhere to enter"
-        />
-      </main>
+      {/* SplashMarquee is rendered once in the frontend layout (persistent
+          across routes); the "/" route only needs its JSON-LD here. */}
+      <main />
     </>
   )
 }

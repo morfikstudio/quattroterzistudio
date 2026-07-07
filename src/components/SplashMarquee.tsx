@@ -17,49 +17,6 @@ import { useIsTouch } from "@/hooks/useIsTouch"
 
 const MARQUEE_X_OFFSET = -0.75
 
-// Max time the splash waits for /projects before dissolving anyway, so it never
-// stays stuck if the first images fail or are very slow to load.
-const CONTENT_READY_TIMEOUT = 4000
-
-/*
-  Coordination between the splash and /projects: the exit dissolve waits until
-  the destination view signals its first images are painted, so we never reveal
-  a blank/white frame before the selection view pops in.
-*/
-let contentReady = false
-let readyWaiter: (() => void) | null = null
-
-/** Reset the latch when the splash (re)appears. */
-function resetSplashContentReady() {
-  contentReady = false
-  readyWaiter = null
-}
-
-/** Called by /projects (ProjectsScroll) when its first view is ready. */
-export function signalSplashContentReady() {
-  contentReady = true
-  const waiter = readyWaiter
-  readyWaiter = null
-  waiter?.()
-}
-
-/** Run `cb` once /projects is ready, or after a fallback timeout. */
-function whenSplashContentReady(cb: () => void) {
-  if (contentReady) {
-    cb()
-    return
-  }
-  let done = false
-  const finish = () => {
-    if (done) return
-    done = true
-    readyWaiter = null
-    cb()
-  }
-  readyWaiter = finish
-  window.setTimeout(finish, CONTENT_READY_TIMEOUT)
-}
-
 type SplashProps = {
   title: string
   ctaText: string
@@ -85,8 +42,6 @@ export default function Splash({ title, ctaText }: SplashProps) {
     if (pathname === "/") {
       isLeavingRef.current = false
       setVisible(true)
-      // Reset so the next exit waits for /projects to be ready again.
-      resetSplashContentReady()
     }
   }, [pathname])
 
@@ -302,23 +257,18 @@ export default function Splash({ title, ctaText }: SplashProps) {
       })
     }
 
-    // 4. Entire wrap (bg + rect) fades out to reveal /projects. Same dissolve
-    //    as before, but it only starts once /projects has signalled its first
-    //    view is ready — the expanding black rect covers the screen while we
-    //    wait, so we never reveal a blank/white frame. Fallback timeout inside
-    //    whenSplashContentReady keeps it from ever hanging.
-    const dissolve = () =>
-      gsap.to(wrap, {
-        opacity: 0,
-        duration: expandDuration,
-        ease: "power2.inOut",
-        onComplete: () => {
-          setCursor(false)
-          setVisible(false)
-        },
-      })
-
-    gsap.delayedCall(fadeDelay, () => whenSplashContentReady(dissolve))
+    // 4. Entire wrap (bg + rect) fades out with a small delay relative to
+    //    the expansion, so the rect remains full at the beginning and starts
+    gsap.to(wrap, {
+      opacity: 0,
+      duration: expandDuration,
+      delay: fadeDelay,
+      ease: "power2.inOut",
+      onComplete: () => {
+        setCursor(false)
+        setVisible(false)
+      },
+    })
 
     // ProjectsScroll will trigger the reveal animation when `show`
     // becomes true and previousPath is "/", so here we don't need to dispatch.
