@@ -108,36 +108,31 @@ export default function ViewToggle({
             active === "selected" ? "cursor-default" : "cursor-pointer",
           )}
         >
-          <span
-            className={cn(
-              "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-              "inline-flex items-center gap-[10px]",
-            )}
-          >
+          <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
             <span
               className={cn(
-                "translate-x-0 group-hover:-translate-x-1 group-hover:opacity-0",
-                "transition-all duration-200 ease-in-out",
+                "relative inline-block type-button-m uppercase",
+                "translate-x-[7px] group-hover:-translate-x-[7px] transition-transform duration-400 ease-out",
               )}
             >
-              <SingleIcon />
+              selected
+              <span
+                className={cn(
+                  "absolute right-full top-1/2 mr-[10px] -translate-y-1/2",
+                  "group-hover:-translate-x-1 group-hover:opacity-0 transition-all duration-200 ease-in-out",
+                )}
+              >
+                <SingleIcon />
+              </span>
+              <span
+                className={cn(
+                  "absolute left-full top-1/2 ml-[10px] -translate-y-1/2 translate-x-1 opacity-0",
+                  "group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200 ease-in-out",
+                )}
+              >
+                <SingleIcon />
+              </span>
             </span>
-            <span
-              className={cn(
-                "translate-x-0 group-hover:-translate-x-[15px]",
-                "transition-transform duration-400 ease-out",
-              )}
-            >
-              <span className="type-button-m uppercase">selected</span>
-            </span>
-          </span>
-          <span
-            className={cn(
-              "absolute top-1/2 right-2 -translate-y-1/2 translate-x-1 opacity-0",
-              "group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200 ease-in-out",
-            )}
-          >
-            <SingleIcon />
           </span>
         </button>
 
@@ -152,36 +147,31 @@ export default function ViewToggle({
             active === "archive" ? "cursor-default" : "cursor-pointer",
           )}
         >
-          <span
-            className={cn(
-              "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-              "inline-flex items-center gap-[10px]",
-            )}
-          >
+          <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
             <span
               className={cn(
-                "translate-x-0 group-hover:-translate-x-1 group-hover:opacity-0",
-                "transition-all duration-200 ease-in-out",
+                "relative inline-block type-button-m uppercase",
+                "translate-x-[7px] group-hover:-translate-x-[7px] transition-transform duration-400 ease-out",
               )}
             >
-              <DoubleIcon />
+              archive
+              <span
+                className={cn(
+                  "absolute right-full top-1/2 mr-[10px] -translate-y-1/2",
+                  "group-hover:-translate-x-1 group-hover:opacity-0 transition-all duration-200 ease-in-out",
+                )}
+              >
+                <DoubleIcon />
+              </span>
+              <span
+                className={cn(
+                  "absolute left-full top-1/2 ml-[10px] -translate-y-1/2 translate-x-1 opacity-0",
+                  "group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200 ease-in-out",
+                )}
+              >
+                <DoubleIcon />
+              </span>
             </span>
-            <span
-              className={cn(
-                "translate-x-0 group-hover:-translate-x-[19px]",
-                "transition-transform duration-400 ease-out",
-              )}
-            >
-              <span className="type-button-m uppercase">archive</span>
-            </span>
-          </span>
-          <span
-            className={cn(
-              "absolute top-1/2 right-2 -translate-y-1/2 translate-x-1 opacity-0",
-              "group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200 ease-in-out",
-            )}
-          >
-            <DoubleIcon />
           </span>
         </button>
       </div>
