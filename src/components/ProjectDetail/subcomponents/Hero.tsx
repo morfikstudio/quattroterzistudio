@@ -9,6 +9,7 @@ import { useNavigationStore } from "@/stores/navigationStore"
 
 import Image from "@/components/ui/Image"
 import ScrollIndicator from "@/components/ScrollIndicator"
+import { signalCurtainContentReady } from "@/components/CurtainTransition"
 
 type HeroProps = {
   cover: NonNullable<PROJECT_QUERY_RESULT>["coverDetail"]
@@ -86,12 +87,13 @@ export default function Hero({ cover, title, year }: HeroProps) {
   return (
     <div className="relative">
       {/* COVER IMAGE */}
-      <div className="relative bg-black">
+      <div className="relative">
         <Image
           image={cover}
           resizeId="cover-detail"
           className="w-full"
           priority
+          onLoad={() => signalCurtainContentReady()}
         />
 
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
