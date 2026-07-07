@@ -86,7 +86,7 @@ export default function Hero({ cover, title, year }: HeroProps) {
   return (
     <div className="relative">
       {/* COVER IMAGE */}
-      <div className="relative">
+      <div className="relative bg-black">
         <Image
           image={cover}
           resizeId="cover-detail"
