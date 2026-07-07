@@ -24,6 +24,7 @@ export default function Header() {
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
   const navRef = useRef<HTMLDivElement>(null)
   const logoRef = useRef<HTMLDivElement>(null)
+  const bgRef = useRef<HTMLDivElement>(null)
   const splashEntryPlayedRef = useRef(false)
 
   useEffect(() => {
@@ -60,8 +61,19 @@ export default function Header() {
       reveals them, and the user would miss the transition.
     */
     const entryDelay = 0.5
+    const bgDelay = 0.2
 
     const ctx = gsap.context(() => {
+      if (bgRef.current) {
+        gsap.set(bgRef.current, { clipPath: "inset(0 0 100% 0)" })
+        gsap.to(bgRef.current, {
+          clipPath: "inset(0 0 0% 0)",
+          duration: 0.9,
+          delay: bgDelay,
+          ease: "power3.inOut",
+        })
+      }
+
       if (logoRef.current) {
         gsap.set(logoRef.current, { yPercent: 100, opacity: 0 })
         gsap.to(logoRef.current, {
@@ -111,18 +123,21 @@ export default function Header() {
 
   return (
     <>
-      <nav
-        className={cn("fixed top-0 left-0 w-full z-50", "mix-blend-difference")}
-      >
+      <nav className={cn("fixed top-0 left-0 w-full z-50")}>
+        <div
+          ref={bgRef}
+          aria-hidden
+          className={cn("absolute inset-0 bg-white pointer-events-none")}
+        />
         <div
           className={cn(
-            "flex justify-between items-center",
-            "mx-auto p-3 md:px-6 md:py-4",
+            "relative flex justify-between items-center",
+            "mx-auto p-3 md:px-6 md:py-3",
           )}
         >
           <Link
             href="/"
-            className="block text-white overflow-hidden"
+            className="block text-black overflow-hidden"
             onClick={() => setPreviousPath("/")}
           >
             <div
@@ -133,6 +148,7 @@ export default function Header() {
                 className={cn(
                   "rect bg-transparent relative",
                   "w-[44px] h-[33px] border-3 border-current",
+                  "min-[1920px]:w-[50px] min-[1920px]:h-[37px]",
                 )}
               >
                 <div
@@ -147,6 +163,7 @@ export default function Header() {
                 className={cn(
                   "text-container overflow-hidden",
                   "flex flex-col w-[120px]  pl-2",
+                  "min-[1920px]:w-[135px]",
                 )}
               >
                 <span
@@ -154,6 +171,7 @@ export default function Header() {
                     "text-1",
                     "uppercase text-[14px] font-medium",
                     "h-[16px] -translate-x-[120px] group-hover:translate-x-0",
+                    "min-[1920px]:text-[16px] min-[1920px]:h-[18px] min-[1920px]:-translate-x-[135px]",
                     "transition-transform duration-1500 delay-100 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
                   )}
                 >
@@ -164,6 +182,7 @@ export default function Header() {
                     "text-2",
                     "uppercase text-[14px] font-medium",
                     "h-[16px] -translate-x-[120px] group-hover:translate-x-0",
+                    "min-[1920px]:text-[16px] min-[1920px]:h-[18px] min-[1920px]:-translate-x-[135px]",
                     "transition-transform duration-1500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
                   )}
                 >
@@ -174,7 +193,7 @@ export default function Header() {
           </Link>
           <div
             ref={navRef}
-            className={cn("flex gap-2", "type-menu text-white")}
+            className={cn("flex gap-2", "type-menu text-black")}
           >
             {navItems.map((item) => {
               const needsCurtain =
@@ -187,7 +206,7 @@ export default function Header() {
                   href={item.href}
                   className={cn(
                     navLinkClass,
-                    item.isActive && "text-active-link pointer-events-none",
+                    item.isActive && "text-black/55 pointer-events-none",
                   )}
                   onClick={(e) => {
                     if (needsCurtain && !item.isActive) {
