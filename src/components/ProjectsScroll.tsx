@@ -26,6 +26,7 @@ import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
 import ScrollIndicator from "@/components/ScrollIndicator"
 import Image from "@/components/ui/Image"
 import ViewToggle from "@/components/ViewToggle"
+import { signalSplashContentReady } from "@/components/SplashMarquee"
 
 type ProjectsScrollProps = {
   projects: PROJECTS_QUERY_RESULT
@@ -291,6 +292,12 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     () => firstBgReady && firstThumbReady,
     [firstBgReady, firstThumbReady],
   )
+
+  // Tell the splash the first view is ready so its exit dissolve can start
+  // without revealing a blank frame.
+  useEffect(() => {
+    if (show) signalSplashContentReady()
+  }, [show])
 
   /* Clip-path entrance when coming from /archive — hide before first paint */
   useIsomorphicLayoutEffect(() => {
