@@ -13,9 +13,13 @@ import { create } from "zustand"
 type NavigationStore = {
   previousPath: string | null
   setPreviousPath: (path: string | null) => void
+  pendingActiveSlug: string | null
+  setPendingActiveSlug: (slug: string | null) => void
 }
 
 export const useNavigationStore = create<NavigationStore>((set) => ({
   previousPath: null,
   setPreviousPath: (path) => set({ previousPath: path }),
+  pendingActiveSlug: null,
+  setPendingActiveSlug: (slug) => set({ pendingActiveSlug: slug }),
 }))

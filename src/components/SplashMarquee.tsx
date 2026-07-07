@@ -59,7 +59,7 @@ export default function Splash({ title, ctaText }: SplashProps) {
         <div
           className={cn(
             "inline-block px-[0.25em]",
-            "font-[Helvetica] text-[clamp(3rem,15vw,10rem)] font-medium uppercase leading-none",
+            "font-[Helvetica] text-[clamp(3rem,15vw,10rem)] min-[1920px]:text-[12rem] font-medium uppercase leading-none",
           )}
         >
           {titleWords.map((word, wordIndex) => (
