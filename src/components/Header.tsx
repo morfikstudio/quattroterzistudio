@@ -148,6 +148,7 @@ export default function Header() {
                 className={cn(
                   "rect bg-transparent relative",
                   "w-[44px] h-[33px] border-3 border-current",
+                  "min-[1920px]:w-[50px] min-[1920px]:h-[37px]",
                 )}
               >
                 <div
@@ -162,6 +163,7 @@ export default function Header() {
                 className={cn(
                   "text-container overflow-hidden",
                   "flex flex-col w-[120px]  pl-2",
+                  "min-[1920px]:w-[135px]",
                 )}
               >
                 <span
@@ -169,6 +171,7 @@ export default function Header() {
                     "text-1",
                     "uppercase text-[14px] font-medium",
                     "h-[16px] -translate-x-[120px] group-hover:translate-x-0",
+                    "min-[1920px]:text-[16px] min-[1920px]:h-[18px] min-[1920px]:-translate-x-[135px]",
                     "transition-transform duration-1500 delay-100 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
                   )}
                 >
@@ -179,6 +182,7 @@ export default function Header() {
                     "text-2",
                     "uppercase text-[14px] font-medium",
                     "h-[16px] -translate-x-[120px] group-hover:translate-x-0",
+                    "min-[1920px]:text-[16px] min-[1920px]:h-[18px] min-[1920px]:-translate-x-[135px]",
                     "transition-transform duration-1500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)]",
                   )}
                 >

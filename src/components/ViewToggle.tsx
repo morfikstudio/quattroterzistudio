@@ -63,7 +63,7 @@ export default function ViewToggle({
   }
 
   const segmentBase = cn(
-    "group relative h-full w-1/2 appearance-none border-0 bg-transparent p-0 px-4",
+    "group relative h-full w-1/2 appearance-none border-0 bg-transparent p-0 px-4 min-[1920px]:px-5",
     "flex items-center justify-center overflow-hidden",
     isDark && "transition-colors ease-out",
   )
@@ -72,6 +72,7 @@ export default function ViewToggle({
     <div
       className={cn(
         "isolate relative flex h-[40px] w-[260px] overflow-hidden border",
+        "min-[1920px]:h-[47px] min-[1920px]:w-[300px]",
         isDark ? "border-white bg-transparent" : "border-black bg-white",
       )}
     >
@@ -109,19 +110,26 @@ export default function ViewToggle({
         >
           <span
             className={cn(
-              "absolute top-1/2 left-2 -translate-y-1/2",
-              "group-hover:-translate-x-1 group-hover:opacity-0 transition-all duration-200 ease-in-out",
+              "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+              "inline-flex items-center gap-[10px]",
             )}
           >
-            <SingleIcon />
-          </span>
-          <span
-            className={cn(
-              "absolute top-1/2 left-1/2 -translate-y-1/2",
-              "-translate-x-[calc(50%-8px)] group-hover:-translate-x-[calc(50%+5.5px)] transition-transform duration-400 ease-out",
-            )}
-          >
-            <span className="type-button-m uppercase">selected</span>
+            <span
+              className={cn(
+                "translate-x-0 group-hover:-translate-x-1 group-hover:opacity-0",
+                "transition-all duration-200 ease-in-out",
+              )}
+            >
+              <SingleIcon />
+            </span>
+            <span
+              className={cn(
+                "translate-x-0 group-hover:-translate-x-[15px]",
+                "transition-transform duration-400 ease-out",
+              )}
+            >
+              <span className="type-button-m uppercase">selected</span>
+            </span>
           </span>
           <span
             className={cn(

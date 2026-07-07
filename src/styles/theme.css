@@ -60,6 +60,9 @@
   @media (width >= 1024px) {
     font-size: 118px;
   }
+  @media (width >= 1920px) {
+    font-size: 136px;
+  }
 }
 
 /* H1: 40 → 60 → 64 → 72px | 90% lh | 0/-2%/-2% ls | Regular → Light */
