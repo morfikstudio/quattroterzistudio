@@ -856,7 +856,11 @@ export default function ProjectsListPlain({
                       className={cn(
                         "pl-item-link",
                         "type-h1 text-secondary no-underline focus-visible:outline-none",
-                        "relative inline-flex items-center leading-tight cursor-pointer",
+                        "inline-flex items-center cursor-pointer",
+                        // Desktop: fill the whole row so the hover/click hit
+                        // area reaches the midpoint between adjacent items
+                        // (rows are equal-height and the text is centered).
+                        "md:h-full md:w-full",
                       )}
                       data-active={
                         hoverIndex === i || activeIndex === i ? "true" : "false"
@@ -897,30 +901,34 @@ export default function ProjectsListPlain({
                       }}
                       aria-label={getLabel(p)}
                     >
-                      {/* QUADRATINO — decommentare per riabilitare
+                      {/* Inner wrapper sized to the text: keeps the underline
+                          under the letters while the anchor fills the full row. */}
+                      <span className="relative inline-flex items-center leading-tight">
+                        {/* QUADRATINO — decommentare per riabilitare
                       <span className="overflow-hidden block w-[10px] h-[10px] flex-shrink-0 mr-4 -translate-y-[5px]">
                         <span className="pl-square-inner block w-[10px] h-[10px] bg-current" />
                       </span>
                       */}
-                      {getLabel(p)
-                        .split(" ")
-                        .map((word, j, arr) => (
-                          <span
-                            key={j}
-                            className="overflow-hidden inline-block align-bottom"
-                          >
-                            <span className="pl-word-inner">
-                              {word}
-                              {j < arr.length - 1 ? "\u00A0" : ""}
+                        {getLabel(p)
+                          .split(" ")
+                          .map((word, j, arr) => (
+                            <span
+                              key={j}
+                              className="overflow-hidden inline-block align-bottom"
+                            >
+                              <span className="pl-word-inner">
+                                {word}
+                                {j < arr.length - 1 ? "\u00A0" : ""}
+                              </span>
                             </span>
-                          </span>
-                        ))}
-                      <span
-                        className={cn(
-                          "pl-underline",
-                          "absolute left-0 w-full h-0.5 bg-current bottom-[0.1em]",
-                        )}
-                      />
+                          ))}
+                        <span
+                          className={cn(
+                            "pl-underline",
+                            "absolute left-0 w-full h-0.5 bg-current bottom-[0.1em]",
+                          )}
+                        />
+                      </span>
                     </a>
                   </li>
                 )
