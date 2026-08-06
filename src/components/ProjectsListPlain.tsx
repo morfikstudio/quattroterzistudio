@@ -755,7 +755,7 @@ export default function ProjectsListPlain({
                   >
                     <Image
                       image={p.coverDetail}
-                      resizeId="cover-detail"
+                      resizeId="cover-thumb"
                       fill
                       fit="cover"
                       priority
@@ -807,7 +807,7 @@ export default function ProjectsListPlain({
                   >
                     <Image
                       image={p.coverDetail}
-                      resizeId="cover-detail"
+                      resizeId="cover-thumb"
                       fill
                       fit="cover"
                       priority
