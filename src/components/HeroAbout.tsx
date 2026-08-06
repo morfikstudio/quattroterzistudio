@@ -89,7 +89,7 @@ export default function HeroAbout() {
               className="block pt-[0.08em]"
               style={{ visibility: "hidden" }}
             >
-              fell unknown
+              fell known
             </span>
           </div>
         </div>

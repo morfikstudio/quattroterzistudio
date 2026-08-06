@@ -30,40 +30,68 @@ export default function ScrollMarquee({
     const bottomTrack = bottomTrackRef.current
     if (!container || !topTrack || !bottomTrack) return
 
+    // ≥1024: start flush to edges. <1024: only ~10% visible off the sides.
+    const isDesktop = () => window.innerWidth >= 1024
+    const visibleRatio = 0.1
+
     const makeTriggerConfig = () => ({
       trigger: container,
       start: "top bottom+=200",
-      end: "bottom top",
-      scrub: 1.5,
+      // Longer scroll below desktop so the text moves slower and stays readable
+      end: () => (isDesktop() ? "bottom top" : "bottom+=120% top"),
+      scrub: isDesktop() ? 1.5 : 2,
       invalidateOnRefresh: true,
     })
 
-    // Row 1
+    const flushRight = (track: HTMLElement) =>
+      container.offsetWidth - track.offsetWidth
+
+    // 10% of the text peeking in from the right / left edge
+    const peekFromRight = (track: HTMLElement) =>
+      container.offsetWidth - track.offsetWidth * visibleRatio
+    const peekFromLeft = (track: HTMLElement) =>
+      -track.offsetWidth * (1 - visibleRatio)
+
+    // Desktop: short parallax from the edges.
+
+    const travel = (track: HTMLElement) => {
+      const viewW = container.offsetWidth
+      const overflow = Math.max(0, track.offsetWidth - viewW)
+      return overflow * 0.5 + viewW * 0.12
+    }
+
+    // Row 1: desktop flush right → left;
     const topTween = gsap.fromTo(
       topTrack,
-      { x: 200 },
       {
-        x: -300,
+        x: () => (isDesktop() ? flushRight(topTrack) : peekFromRight(topTrack)),
+      },
+      {
+        x: () =>
+          isDesktop()
+            ? flushRight(topTrack) - travel(topTrack)
+            : peekFromLeft(topTrack),
         ease: "none",
         force3D: true,
         scrollTrigger: makeTriggerConfig(),
       },
     )
 
-    // Row 2
-    const isMobile = () => window.innerWidth < 768
+    // Row 2: desktop flush left → right;
     const bottomTween = gsap.fromTo(
       bottomTrack,
-      { x: () => (isMobile() ? -100 : -150) },
       {
-        x: () => (isMobile() ? 50 : 250),
+        x: () => (isDesktop() ? 0 : peekFromLeft(bottomTrack)),
+      },
+      {
+        x: () =>
+          isDesktop() ? travel(bottomTrack) : peekFromRight(bottomTrack),
         ease: "none",
         force3D: true,
         scrollTrigger: makeTriggerConfig(),
       },
     )
 
-    // Ensure positions are computed after layout is stable
     const refreshId = requestAnimationFrame(() => ScrollTrigger.refresh())
 
     return () => {
@@ -81,20 +109,20 @@ export default function ScrollMarquee({
       ref={containerRef}
       className={cn("w-full overflow-hidden py-24", className)}
     >
-      {/* Row 1: left-aligned */}
+      {/* Row 1: starts at right edge */}
       <div
         ref={topTrackRef}
-        className="type-display-l uppercase whitespace-nowrap"
+        className="type-display-l uppercase whitespace-nowrap w-max"
         style={{ willChange: "transform" }}
       >
         {topText}
       </div>
 
-      {/* Row 2: right-aligned */}
+      {/* Row 2: starts at left edge */}
       <div
         ref={bottomTrackRef}
-        className="type-display-l uppercase whitespace-nowrap pt-[0.3em]"
-        style={{ willChange: "transform", textAlign: "right" }}
+        className="type-display-l uppercase whitespace-nowrap w-max pt-[0.3em]"
+        style={{ willChange: "transform" }}
       >
         {bottomText}
       </div>
