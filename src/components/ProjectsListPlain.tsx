@@ -20,7 +20,20 @@ import { useBreakpoint } from "@/stores/breakpointStore"
 import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
 import ViewToggle from "@/components/ViewToggle"
 
-const SLIDES_PER_VIEW = 7
+const SLIDES_PER_VIEW_DEFAULT = 7
+/** Fewer rows in short landscape viewports so items have more breathing room. */
+const SLIDES_PER_VIEW_LANDSCAPE_NARROW = 5
+/** Matches theme `--breakpoint-phone-lg` (max-phone-lg ≈ ≤932px). */
+const PHONE_LG_MAX = 932
+
+function getSlidesPerView() {
+  if (typeof window === "undefined") return SLIDES_PER_VIEW_DEFAULT
+  const narrow = window.innerWidth <= PHONE_LG_MAX
+  const landscape = window.matchMedia("(orientation: landscape)").matches
+  return narrow && landscape
+    ? SLIDES_PER_VIEW_LANDSCAPE_NARROW
+    : SLIDES_PER_VIEW_DEFAULT
+}
 
 // Cache for the resolved "land here" index, cleared after mounts settle.
 let pendingTargetCache: { slug: string; index: number } | null = null
@@ -280,6 +293,8 @@ export default function ProjectsListPlain({
   const prevActiveRef = useRef(0)
   const isMobileRef = useRef(false)
   const [isMobile, setIsMobile] = useState(false)
+  const slidesPerViewRef = useRef(SLIDES_PER_VIEW_DEFAULT)
+  const [slidesPerView, setSlidesPerView] = useState(SLIDES_PER_VIEW_DEFAULT)
 
   const velocityRef = useRef(0)
   const isScrollingRef = useRef(false)
@@ -317,6 +332,22 @@ export default function ProjectsListPlain({
     return () => mq.removeEventListener("change", (e) => update(e.matches))
   }, [])
 
+  useEffect(() => {
+    const syncSlidesPerView = () => {
+      const next = getSlidesPerView()
+      slidesPerViewRef.current = next
+      setSlidesPerView(next)
+    }
+    syncSlidesPerView()
+    const mqLandscape = window.matchMedia("(orientation: landscape)")
+    mqLandscape.addEventListener("change", syncSlidesPerView)
+    window.addEventListener("resize", syncSlidesPerView)
+    return () => {
+      mqLandscape.removeEventListener("change", syncSlidesPerView)
+      window.removeEventListener("resize", syncSlidesPerView)
+    }
+  }, [])
+
   // Center the middle-copy target before paint (useLayoutEffect) so there's
   // no flash of index 0 when arriving with a pending active slug.
   useLayoutEffect(() => {
@@ -325,7 +356,7 @@ export default function ProjectsListPlain({
 
     const recalc = () => {
       const containerHeight = ul.clientHeight
-      const itemHeight = containerHeight / SLIDES_PER_VIEW
+      const itemHeight = containerHeight / slidesPerViewRef.current
       itemHeightRef.current = itemHeight
       totalHeightRef.current = items.length * itemHeight
     }
@@ -345,7 +376,7 @@ export default function ProjectsListPlain({
       targetIndex = pendingTargetCache.index
     }
 
-    const halfView = Math.floor(SLIDES_PER_VIEW / 2)
+    const halfView = Math.floor(slidesPerViewRef.current / 2)
     const middleCopyIndex = Math.floor(COPIES / 2)
     const initialScrollTop =
       (middleCopyIndex * items.length + targetIndex - halfView) *
@@ -360,6 +391,8 @@ export default function ProjectsListPlain({
 
     const onResize = () => {
       const oldItemHeight = itemHeightRef.current
+      slidesPerViewRef.current = getSlidesPerView()
+      setSlidesPerView(slidesPerViewRef.current)
       recalc()
       // Keep the same item centered across resize.
       if (oldItemHeight > 0) {
@@ -724,7 +757,7 @@ export default function ProjectsListPlain({
             ref={mobileWrapRef}
             href={imageHref}
             className={cn(
-              "pl-img-clip grou absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw] max-md:landscape:w-[50vw]",
+              "pl-img-clip grou absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw] max-md:landscape:w-[36vw]",
               "block cursor-pointer no-underline text-inherit focus-visible:outline-none",
             )}
             data-clip={clipState}
@@ -773,7 +806,7 @@ export default function ProjectsListPlain({
             ref={desktopWrapRef}
             href={imageHref}
             className={cn(
-              "pl-img-clip group pointer-events-auto absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] lg:w-[35vw]",
+              "pl-img-clip group pointer-events-auto absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] max-phone-lg:landscape:left-[4vw] max-phone-lg:landscape:w-[32vw] lg:w-[35vw]",
               "block cursor-pointer no-underline text-inherit focus-visible:outline-none",
             )}
             data-clip={clipState}
@@ -847,7 +880,7 @@ export default function ProjectsListPlain({
                     key={key}
                     className="flex items-center px-6 md:pl-[calc(50%+2.5rem)] md:pr-10"
                     style={{
-                      height: `calc(100% / ${SLIDES_PER_VIEW})`,
+                      height: `calc(100% / ${slidesPerView})`,
                       scrollSnapAlign: isMobile ? "center" : undefined,
                     }}
                   >
