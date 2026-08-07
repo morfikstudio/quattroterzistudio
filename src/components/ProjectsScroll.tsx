@@ -123,6 +123,21 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     })
   }, [])
 
+  /**
+   * Document Y of a section, measured from the DOM. On mobile sections are
+   * deliberately taller than the viewport (`min-h-[calc(100dvh+safe-area+2px)]`),
+   * so deriving positions from `innerHeight` drifts cumulatively.
+   */
+  const getSectionTop = useCallback((index: number) => {
+    const sectionEl = sectionsRefs.current[index]
+
+    if (sectionEl) {
+      return Math.round(sectionEl.getBoundingClientRect().top + window.scrollY)
+    }
+
+    return (wrapRef.current?.offsetTop ?? 0) + index * window.innerHeight
+  }, [])
+
   const handleProjectClick = useCallback(
     async (index: number, url: string) => {
       if (transitioningRef.current || !lenis) return
@@ -131,14 +146,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       if (!isDesktop) {
         setPreviousPath(window.location.pathname)
         if (!isSnappedRef.current && wrapRef.current) {
-          const sectionEl = sectionsRefs.current[index]
-          const targetY =
-            sectionEl != null
-              ? Math.round(
-                  sectionEl.getBoundingClientRect().top + window.scrollY,
-                )
-              : wrapRef.current.offsetTop + index * window.innerHeight
-          lenis.scrollTo(targetY, {
+          lenis.scrollTo(getSectionTop(index), {
             duration: 0.3,
             onComplete: () => dispatchCurtainNavigate(url),
           })
@@ -275,8 +283,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       }
 
       if (!isSnappedRef.current && wrapRef.current) {
-        const targetY = wrapRef.current.offsetTop + index * window.innerHeight
-        lenis.scrollTo(targetY, {
+        lenis.scrollTo(getSectionTop(index), {
           duration: 0.3,
           onComplete: () => doTransition(),
         })
@@ -284,7 +291,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         doTransition()
       }
     },
-    [lenis, router, isDesktop, setPreviousPath],
+    [lenis, router, isDesktop, setPreviousPath, getSectionTop],
   )
 
   const show = useMemo(
@@ -650,12 +657,18 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         })
       })
 
-      /* Sections snap — skipped on coarse pointers (mobile/tablet). */
-      if (projects.length > 1 && !coarsePointer) {
+      /* Sections snap — enabled on coarse pointers too. It was originally
+      limited to fine pointers because mobile browser bars resized the viewport
+      mid-gesture; Lenis now runs with `syncTouch: true` (see LenisProvider), so
+      it drives the scroll position itself. The browser never sees a native
+      scroll gesture, the URL bar stays put and there is no native momentum to
+      fight, which removes both causes. */
+      if (projects.length > 1) {
         ScrollTrigger.create({
           trigger: wrapRef.current,
           start: "top top",
-          end: () => `+=${window.innerHeight * (projects.length - 1)}`,
+          end: () =>
+            `+=${getSectionTop(projects.length - 1) - getSectionTop(0)}`,
           snap: {
             snapTo: 1 / (projects.length - 1),
             directional: false,
@@ -664,6 +677,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             duration: { min: 0.2, max: 0.35 },
             ease: "power1.out",
           },
+          invalidateOnRefresh: true,
           onUpdate: syncFromProgress,
           onRefresh: syncFromProgress,
         })
@@ -713,7 +727,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       ctx.revert()
       lenis?.start()
     }
-  }, [breakpoint, coarsePointer, projects, lenis])
+  }, [breakpoint, coarsePointer, projects, lenis, getSectionTop])
 
   /* isSnappedRef: true when scroll is fully at rest (user + snap animation) */
   useEffect(() => {
