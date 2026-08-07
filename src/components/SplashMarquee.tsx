@@ -59,7 +59,7 @@ export default function Splash({ title, ctaText }: SplashProps) {
         <div
           className={cn(
             "inline-block px-[0.25em]",
-            "font-[Helvetica] text-[clamp(3rem,15vw,10rem)] min-[1920px]:text-[12rem] font-medium uppercase leading-none",
+            "font-[Helvetica] text-[clamp(3rem,15vw,10rem)] min-[1920px]:text-[12rem] phone-landscape:text-[16dvh] font-medium uppercase leading-none",
           )}
         >
           {titleWords.map((word, wordIndex) => (
@@ -286,7 +286,7 @@ export default function Splash({ title, ctaText }: SplashProps) {
         ref={rectRef}
         className={cn(
           "absolute aspect-4/3 bg-black",
-          "w-full max-w-[65vw] md:max-w-[75vw] lg:max-w-[35vw]",
+          "w-full max-w-[65vw] md:max-w-[75vw] lg:max-w-[35vw] phone-landscape:max-w-[80dvh]",
           "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
         )}
         style={{ opacity: 0 }}
@@ -302,7 +302,7 @@ export default function Splash({ title, ctaText }: SplashProps) {
           style={{ visibility: "hidden" }}
         >
           {/* 0.5em/1em -> center letters vertically to compensate for the Helvetica line height */}
-          <div className="flex translate-y-[0.5em] lg:translate-y-[1em]">
+          <div className="flex translate-y-[0.5em] phone-landscape:translate-y-[0.5em] lg:translate-y-[1em]">
             {renderTitleWords("title-1")}
             {renderTitleWords("title-2")}
             {renderTitleWords("title-3")}
@@ -313,7 +313,7 @@ export default function Splash({ title, ctaText }: SplashProps) {
       {isTouch && (
         <span
           className={cn(
-            "absolute bottom-25 left-1/2 -translate-x-1/2",
+            "absolute bottom-25 phone-landscape:bottom-6 left-1/2 -translate-x-1/2",
             "font-[Helvetica] text-[12px] font-medium uppercase text-black",
           )}
         >

@@ -16,6 +16,16 @@
   --breakpoint-desktop: 1024px;
 }
 
+/* A phone held in landscape: wide enough to trigger `md:` (most current iPhones
+   are 812–932px wide when rotated) but far too short for the desktop layout.
+   Keyed on height rather than width, since tablets in landscape stay above
+   744px tall. Declared after the built-ins so it wins over `md:`/`lg:`. */
+@custom-variant phone-landscape {
+  @media (orientation: landscape) and (height <= 600px) {
+    @slot;
+  }
+}
+
 /* Text selection highlight */
 ::selection {
   background-color: #000;

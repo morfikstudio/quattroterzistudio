@@ -2,6 +2,10 @@
 @import "../styles/theme.css";
 @plugin "@tailwindcss/typography";
 
+body:has([data-page="dark"]) {
+  background-color: #000;
+}
+
 /* Lenis smooth scroll */
 html.lenis,
 html.lenis body {

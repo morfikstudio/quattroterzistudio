@@ -123,6 +123,21 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     })
   }, [])
 
+  /**
+   * Document Y of a section, measured from the DOM. On mobile sections are
+   * deliberately taller than the viewport (`min-h-[calc(100dvh+safe-area+2px)]`),
+   * so deriving positions from `innerHeight` drifts cumulatively.
+   */
+  const getSectionTop = useCallback((index: number) => {
+    const sectionEl = sectionsRefs.current[index]
+
+    if (sectionEl) {
+      return Math.round(sectionEl.getBoundingClientRect().top + window.scrollY)
+    }
+
+    return (wrapRef.current?.offsetTop ?? 0) + index * window.innerHeight
+  }, [])
+
   const handleProjectClick = useCallback(
     async (index: number, url: string) => {
       if (transitioningRef.current || !lenis) return
@@ -131,14 +146,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       if (!isDesktop) {
         setPreviousPath(window.location.pathname)
         if (!isSnappedRef.current && wrapRef.current) {
-          const sectionEl = sectionsRefs.current[index]
-          const targetY =
-            sectionEl != null
-              ? Math.round(
-                  sectionEl.getBoundingClientRect().top + window.scrollY,
-                )
-              : wrapRef.current.offsetTop + index * window.innerHeight
-          lenis.scrollTo(targetY, {
+          lenis.scrollTo(getSectionTop(index), {
             duration: 0.3,
             onComplete: () => dispatchCurtainNavigate(url),
           })
@@ -275,8 +283,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       }
 
       if (!isSnappedRef.current && wrapRef.current) {
-        const targetY = wrapRef.current.offsetTop + index * window.innerHeight
-        lenis.scrollTo(targetY, {
+        lenis.scrollTo(getSectionTop(index), {
           duration: 0.3,
           onComplete: () => doTransition(),
         })
@@ -284,7 +291,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         doTransition()
       }
     },
-    [lenis, router, isDesktop, setPreviousPath],
+    [lenis, router, isDesktop, setPreviousPath, getSectionTop],
   )
 
   const show = useMemo(
@@ -650,12 +657,18 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         })
       })
 
-      /* Sections snap — skipped on coarse pointers (mobile/tablet). */
-      if (projects.length > 1 && !coarsePointer) {
+      /* Sections snap — enabled on coarse pointers too. It was originally
+      limited to fine pointers because mobile browser bars resized the viewport
+      mid-gesture; Lenis now runs with `syncTouch: true` (see LenisProvider), so
+      it drives the scroll position itself. The browser never sees a native
+      scroll gesture, the URL bar stays put and there is no native momentum to
+      fight, which removes both causes. */
+      if (projects.length > 1) {
         ScrollTrigger.create({
           trigger: wrapRef.current,
           start: "top top",
-          end: () => `+=${window.innerHeight * (projects.length - 1)}`,
+          end: () =>
+            `+=${getSectionTop(projects.length - 1) - getSectionTop(0)}`,
           snap: {
             snapTo: 1 / (projects.length - 1),
             directional: false,
@@ -664,6 +677,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             duration: { min: 0.2, max: 0.35 },
             ease: "power1.out",
           },
+          invalidateOnRefresh: true,
           onUpdate: syncFromProgress,
           onRefresh: syncFromProgress,
         })
@@ -713,7 +727,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       ctx.revert()
       lenis?.start()
     }
-  }, [breakpoint, coarsePointer, projects, lenis])
+  }, [breakpoint, coarsePointer, projects, lenis, getSectionTop])
 
   /* isSnappedRef: true when scroll is fully at rest (user + snap animation) */
   useEffect(() => {
@@ -912,6 +926,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   return (
     <div
       ref={wrapRef}
+      data-page="dark"
       className={cn(
         "overflow-x-clip max-md:touch-pan-y",
         "transition-opacity duration-500 ease-out",
@@ -928,6 +943,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
               "relative w-full shrink-0 overflow-hidden",
               "md:h-dvh",
               "max-md:min-h-[calc(100dvh+env(safe-area-inset-bottom,0px)+2px)]",
+              "phone-landscape:h-auto phone-landscape:min-h-[calc(100dvh+env(safe-area-inset-bottom,0px)+2px)]",
             )}
             ref={(el) => {
               sectionsRefs.current[i] = el
@@ -951,6 +967,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                   "absolute bg-cover bg-center bg-no-repeat",
                   "max-md:inset-x-0 max-md:top-0 max-md:bottom-auto max-md:h-[calc(100%+3px)]",
                   "md:inset-0",
+                  "phone-landscape:inset-x-0 phone-landscape:top-0 phone-landscape:bottom-auto phone-landscape:h-[calc(100%+3px)]",
                 )}
                 style={{
                   willChange: "background-position",
@@ -971,6 +988,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           "fixed top-0 left-0 z-20 w-full pointer-events-none",
           "md:h-dvh",
           "max-md:min-h-[calc(100dvh+env(safe-area-inset-bottom,0px)+2px)]",
+          "phone-landscape:h-auto phone-landscape:min-h-[calc(100dvh+env(safe-area-inset-bottom,0px)+2px)]",
         )}
       >
         {/* THUMBS */}
@@ -985,7 +1003,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
               }
               className={cn(
                 "group absolute top-1/2 left-1/2 md:left-[7vw] -translate-y-1/2 -translate-x-1/2 md:translate-x-0",
-                "w-[70vw] max-md:landscape:w-[50vw] md:w-[50vw] lg:w-[35vw]",
+                "phone-landscape:left-1/2 phone-landscape:-translate-x-1/2",
+                // Sized off the viewport height in landscape: `vw` is the long
+                // edge there, so a width-based thumb overflows vertically.
+                // 64dvh × 3/4 (aspect-4/3) = 48dvh tall.
+                "w-[70vw] md:w-[50vw] lg:w-[35vw] phone-landscape:w-[64dvh]",
                 "pointer-events-none cursor-pointer outline-none",
                 "data-[active=true]:pointer-events-auto",
               )}
@@ -1056,7 +1078,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
               aria-label={p.title ?? undefined}
             >
               <div
-                className="title-hover text-white absolute top-1/2 -translate-y-[calc(50%-4px)] md:-translate-y-[calc(50%-6px)] left-[14px] md:left-[calc(50%)] pointer-events-auto cursor-pointer flex items-center"
+                className="title-hover text-white absolute top-1/2 -translate-y-[calc(50%-4px)] md:-translate-y-[calc(50%-6px)] phone-landscape:-translate-y-[calc(50%-4px)] left-[14px] md:left-[calc(50%)] phone-landscape:left-[14px] pointer-events-auto cursor-pointer flex items-center"
                 id={projectTitleId(p)}
                 data-route-transitioning={
                   isRouteTransitioning ? "true" : undefined
@@ -1093,7 +1115,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                     {(p.title ?? "").split("").map((char, j) => (
                       <span
                         key={`${p._id}-${j}`}
-                        className="inline-block type-h1 leading-none text-white"
+                        className="inline-block type-h1 leading-none text-white phone-landscape:text-[40px] phone-landscape:font-normal phone-landscape:tracking-normal"
                         ref={(el) => {
                           if (!wordsRefs.current[i]) wordsRefs.current[i] = []
                           wordsRefs.current[i][j] = el
@@ -1114,7 +1136,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                   e.stopPropagation()
                   handleProjectClick(i, `/projects/${p.slug?.current ?? ""}`)
                 }}
-                className="absolute top-1/2 -translate-y-1/2 right-[14px] md:right-[24px] max-md:pointer-events-auto md:pointer-events-none cursor-pointer md:cursor-default no-underline text-inherit"
+                className="absolute top-1/2 -translate-y-1/2 right-3.5 md:right-6 phone-landscape:right-3.5 max-md:pointer-events-auto md:pointer-events-none phone-landscape:pointer-events-auto cursor-pointer md:cursor-default phone-landscape:cursor-pointer no-underline text-inherit"
               >
                 <span className="flex overflow-hidden">
                   <span
@@ -1123,8 +1145,12 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                       yearsRefs.current[i] = el
                     }}
                   >
-                    <span className="md:hidden">View</span>
-                    <span className="hidden md:inline">{p.year}</span>
+                    <span className="md:hidden phone-landscape:inline">
+                      View
+                    </span>
+                    <span className="hidden md:inline phone-landscape:hidden">
+                      {p.year}
+                    </span>
                   </span>
                 </span>
               </a>
@@ -1143,10 +1169,10 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
       {/* VIEW TOGGLE (desktop) / ARCHIVE BUTTON (mobile) */}
       <div ref={listCTAWrapRef} className="fixed bottom-6 left-6 z-30 flex">
-        <div className="md:hidden">
+        <div className="md:hidden phone-landscape:block">
           <ListCTA onArchiveClick={handleArchiveClick} />
         </div>
-        <div className="hidden md:block">
+        <div className="hidden md:block phone-landscape:hidden">
           <ViewToggle
             active="selected"
             variant="dark"
