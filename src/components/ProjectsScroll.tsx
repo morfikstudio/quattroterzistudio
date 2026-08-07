@@ -926,7 +926,6 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   return (
     <div
       ref={wrapRef}
-      data-page="dark"
       className={cn(
         "overflow-x-clip max-md:touch-pan-y",
         "transition-opacity duration-500 ease-out",

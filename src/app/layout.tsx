@@ -58,6 +58,11 @@ const siteCfg = siteSeo as SiteSeoConfig
 
 export const viewport: Viewport = {
   viewportFit: "cover",
+  // Pin the mobile browser bar to white. Without an explicit value Safari samples
+  themeColor: "#ffffff",
+  // The site has no dark theme: opt out so the browser does not darken
+  // UA-controlled surfaces (the bar included) when iOS is in Dark Mode.
+  colorScheme: "light",
 }
 
 export const metadata: Metadata = {
