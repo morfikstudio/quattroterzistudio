@@ -6,6 +6,7 @@ const TABLET_MAX = 1023
 const DESKTOP_MIN = 1024
 const DESKTOP_LARGE_MIN = 1280
 const TABLET_TOUCH_MAX = 1366
+const PHONE_LG_MAX = 932 // theme phone-lg
 
 export const BREAKPOINT_THRESHOLDS = {
   mobileMax: MOBILE_MAX,
@@ -14,6 +15,7 @@ export const BREAKPOINT_THRESHOLDS = {
   tabletTouchMax: TABLET_TOUCH_MAX,
   desktopMin: DESKTOP_MIN,
   desktopLargeMin: DESKTOP_LARGE_MIN,
+  phoneLgMax: PHONE_LG_MAX,
 } as const
 
 export type BreakpointName =
