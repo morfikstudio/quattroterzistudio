@@ -28,12 +28,13 @@ let pendingTargetCache: { slug: string; index: number } | null = null
 // copy; nearing an edge we teleport scrollTop by one list-length.
 const COPIES = 9
 
+const Icons = () => (
+  <div className="flex flex-col items-center gap-[3px]">
+    <span className="flex w-[4px] h-[4px] bg-black max-md:bg-white" />
+  </div>
+)
+
 function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
-  const Icons = () => (
-    <div className="flex flex-col items-center gap-[3px]">
-      <span className="flex w-[4px] h-[4px] bg-black max-md:bg-white" />
-    </div>
-  )
   return (
     <button
       onClick={onNavigate}

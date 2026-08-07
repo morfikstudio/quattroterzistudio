@@ -26,10 +26,25 @@ type MediaBlocksProps = {
  * @param type - The type of media block.
  * @param variant - The variant of the media block (e.g. "float-left-l", "50-50", etc.)
  */
+type DoubleMediaLayout = {
+  landscapeLayout1: string
+  landscapeLayout2: string
+  portraitLayout1: string
+  portraitLayout2: string
+}
+
+function getMediaLayoutByVariant(
+  type: "projectMediaSingle",
+  variant: string | null | undefined,
+): string
+function getMediaLayoutByVariant(
+  type: "projectMediaDouble",
+  variant: string | null | undefined,
+): DoubleMediaLayout
 function getMediaLayoutByVariant(
   type: "projectMediaSingle" | "projectMediaDouble",
   variant: string | null | undefined,
-): any {
+): string | DoubleMediaLayout {
   switch (type) {
     case "projectMediaSingle":
       return (

@@ -8,12 +8,12 @@ import {
   getImageUrl,
   isWidthOnlyResize,
 } from "@/utils/media"
-import type { ImageResizeId } from "@/utils/media"
+import type { ImageResizeId, ResponsiveImage } from "@/utils/media"
 
 import { useBreakpoint } from "@/stores/breakpointStore"
 
 interface ImageProps {
-  image: any
+  image: ResponsiveImage | null | undefined
   resizeId?: ImageResizeId
   fill?: boolean
   fit?: "cover" | "contain" | "fill" | "none" | "scale-down"
@@ -58,7 +58,7 @@ export default function Image({
   return url ? (
     <NextImage.default
       src={url}
-      alt={image.alt ?? ""}
+      alt={image?.alt ?? ""}
       fill={fill}
       {...(dimensions && {
         width: dimensions.width,
