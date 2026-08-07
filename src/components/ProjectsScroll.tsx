@@ -1077,7 +1077,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
               aria-label={p.title ?? undefined}
             >
               <div
-                className="title-hover text-white absolute top-1/2 -translate-y-[calc(50%-4px)] md:-translate-y-[calc(50%-6px)] phone-landscape:-translate-y-[calc(50%-4px)] left-[14px] md:left-[calc(50%)] phone-landscape:left-[14px] pointer-events-auto cursor-pointer flex items-center"
+                className="title-hover text-white absolute top-1/2 -translate-y-[calc(50%-4px)] md:-translate-y-[calc(50%-6px)] phone-landscape:-translate-y-[calc(50%-4px)] left-3.5 md:left-[calc(50%)] phone-landscape:left-3.5 pointer-events-auto cursor-pointer flex items-center"
                 id={projectTitleId(p)}
                 data-route-transitioning={
                   isRouteTransitioning ? "true" : undefined
@@ -1195,20 +1195,18 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   )
 }
 
+const Icons = () => (
+  <div className="flex flex-col items-center gap-0.75">
+    <span className={cn("flex w-1 h-1 bg-white")} />
+    <span className={cn("flex w-1 h-1 bg-white")} />
+  </div>
+)
+
 function ListCTA({
   onArchiveClick,
 }: {
   onArchiveClick: (e: React.MouseEvent) => void
 }) {
-  const Icons = useCallback(() => {
-    return (
-      <div className="flex flex-col items-center gap-[3px]">
-        <span className={cn("flex w-[4px] h-[4px] bg-white")} />
-        <span className={cn("flex w-[4px] h-[4px] bg-white")} />
-      </div>
-    )
-  }, [])
-
   return (
     <button
       onClick={onArchiveClick}
@@ -1218,7 +1216,7 @@ function ListCTA({
         className={cn(
           "group",
           "relative",
-          "h-[40px] w-[120px]",
+          "h-10 w-30",
           "border border-white",
           "flex items-center justify-center",
           "px-4",
@@ -1234,7 +1232,7 @@ function ListCTA({
           <div
             className={cn(
               "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-              "inline-flex items-center gap-[10px]",
+              "inline-flex items-center gap-2.5",
             )}
           >
             <div
@@ -1250,7 +1248,7 @@ function ListCTA({
             <div
               className={cn(
                 "translate-x-0",
-                "group-hover:-translate-x-[19px]",
+                "group-hover:-translate-x-4.75",
                 "transition-transform duration-400 ease-out",
               )}
             >

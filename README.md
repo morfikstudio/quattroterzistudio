@@ -101,15 +101,15 @@ Crea i progetti da **Sanity Studio** (http://localhost:3000/studio con `npm run 
 
 ## Scripts
 
-| Comando            | Descrizione                    |
-| ------------------ | ------------------------------ |
-| `npm run dev`      | Avvia il server di sviluppo    |
-| `npm run build`    | Build di produzione            |
-| `npm run start`    | Avvia il server di produzione  |
-| `npm run typegen`         | Rigenera i tipi Sanity              |
+| Comando                       | Descrizione                                               |
+| ----------------------------- | --------------------------------------------------------- |
+| `npm run dev`                 | Avvia il server di sviluppo                               |
+| `npm run build`               | Build di produzione                                       |
+| `npm run start`               | Avvia il server di produzione                             |
+| `npm run typegen`             | Rigenera i tipi Sanity                                    |
 | `npm run promote:dev-to-prod` | Copia dataset development → production (sovrascrive prod) |
-| `npm run lint`     | Esegue ESLint                  |
-| `npm run format`   | Formatta con Prettier          |
+| `npm run lint`                | Esegue ESLint                                             |
+| `npm run format`              | Formatta con Prettier                                     |
 
 ## Struttura progetto
 

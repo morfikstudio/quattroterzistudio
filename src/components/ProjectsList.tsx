@@ -17,12 +17,13 @@ import { useBreakpoint } from "@/stores/breakpointStore"
 
 const SLIDES_PER_VIEW = 7
 
+const Icons = () => (
+  <div className="flex flex-col items-center gap-[3px]">
+    <span className="flex w-[4px] h-[4px] bg-black max-md:bg-white" />
+  </div>
+)
+
 function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
-  const Icons = () => (
-    <div className="flex flex-col items-center gap-[3px]">
-      <span className="flex w-[4px] h-[4px] bg-black max-md:bg-white" />
-    </div>
-  )
   return (
     <button
       onClick={onNavigate}

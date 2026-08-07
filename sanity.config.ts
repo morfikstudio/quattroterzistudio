@@ -30,7 +30,10 @@ export default defineConfig({
     presentationTool({
       resolve,
       previewUrl: {
-        origin: typeof window !== "undefined" ? window.location.origin : "http://localhost:3000",
+        origin:
+          typeof window !== "undefined"
+            ? window.location.origin
+            : "http://localhost:3000",
       },
     }),
   ],

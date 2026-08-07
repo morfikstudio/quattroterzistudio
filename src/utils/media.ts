@@ -1,6 +1,27 @@
+import type { SanityImageSource } from "@sanity/image-url/lib/types/types"
+
 import { getSanityImageUrl } from "@/lib/sanity"
 
 import type { BreakpointName } from "@/stores/breakpointStore"
+
+/**
+ * An image asset as projected by the project queries: a Sanity image source,
+ * optionally carrying the dimension metadata used for fluid-height resizes.
+ */
+type ImageAsset = SanityImageSource & {
+  metadata?: { dimensions?: { width: number; height: number } }
+}
+
+/**
+ * Either a plain image (`asset`) or a responsive one holding a separate asset
+ * per orientation, which is how `coverList` / `coverDetail` are modelled.
+ */
+export type ResponsiveImage = {
+  asset?: ImageAsset
+  portrait?: { asset?: ImageAsset }
+  landscape?: { asset?: ImageAsset }
+  alt?: string
+}
 
 const imageResizeMap = {
   default: {
@@ -62,15 +83,7 @@ export function getImageDimensions({
 }: {
   resizeId?: keyof typeof imageResizeMap
   breakpoint?: BreakpointName | null
-  image?: {
-    asset?: { metadata?: { dimensions?: { width: number; height: number } } }
-    portrait?: {
-      asset?: { metadata?: { dimensions?: { width: number; height: number } } }
-    }
-    landscape?: {
-      asset?: { metadata?: { dimensions?: { width: number; height: number } } }
-    }
-  }
+  image?: ResponsiveImage | null
 }): { width: number; height: number } {
   const resizeName = imageResizeMap[resizeId] || imageResizeMap.default
   const bpName = breakpointToImageOrientation(breakpoint)
@@ -98,7 +111,7 @@ export function getImageUrl({
   resizeId = "default",
   breakpoint = null,
 }: {
-  image: any
+  image: ResponsiveImage | null | undefined
   resizeId?: keyof typeof imageResizeMap
   breakpoint?: BreakpointName | null
 }) {
