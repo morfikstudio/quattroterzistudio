@@ -13,6 +13,7 @@
 
   /* Breakpoints */
   --breakpoint-tablet: 768px;
+  --breakpoint-phone-lg: 933px;
   --breakpoint-desktop: 1024px;
 }
 

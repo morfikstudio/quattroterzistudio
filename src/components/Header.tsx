@@ -123,7 +123,13 @@ export default function Header() {
 
   return (
     <>
-      <nav className={cn("fixed top-0 left-0 w-full z-50")}>
+      {/*
+        z-[70] stays above CurtainTransition (z-60) so the header remains
+        fixed and visible during every page transition. Splash (z-9999) and
+        Contact (z-100) still cover it when needed; on "/" the header is
+        not rendered at all.
+      */}
+      <nav className={cn("fixed top-0 left-0 w-full z-[70]")}>
         <div
           ref={bgRef}
           aria-hidden
@@ -193,7 +199,7 @@ export default function Header() {
           </Link>
           <div
             ref={navRef}
-            className={cn("flex gap-2", "type-menu text-black")}
+            className={cn("relative z-10 flex gap-2", "type-menu text-black")}
           >
             {navItems.map((item) => {
               const needsCurtain =
@@ -206,6 +212,8 @@ export default function Header() {
                   href={item.href}
                   className={cn(
                     navLinkClass,
+                    // Hit area più ampia senza padding (che sposterebbe la underline).
+                    "before:absolute before:content-[''] before:-inset-y-3 before:-inset-x-1",
                     item.isActive && "text-black/55 pointer-events-none",
                   )}
                   onClick={(e) => {
@@ -232,8 +240,13 @@ export default function Header() {
               )
             })}
             <button
+              type="button"
               onClick={() => openContact()}
-              className={cn(navLinkClass, "cursor-pointer")}
+              className={cn(
+                navLinkClass,
+                "cursor-pointer",
+                "before:absolute before:content-[''] before:-inset-y-3 before:-inset-x-1",
+              )}
               onMouseEnter={(e) => {
                 e.currentTarget.dataset.line = "in"
               }}

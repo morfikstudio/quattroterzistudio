@@ -40,7 +40,8 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
       gsap.set(lines, { yPercent: 110 })
       if (marqueeEl) gsap.set(marqueeEl, { yPercent: 100 })
 
-      gsap.set(el, { pointerEvents: "auto" })
+      // Ripristina hit-testing prima dell'apertura (l'overlay sta sopra l'header).
+      gsap.set(el, { pointerEvents: "auto", visibility: "visible" })
 
       const tl = gsap.timeline()
       tlRef.current = tl
@@ -79,9 +80,12 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
         splits.forEach((s) => s.revert())
       }
     } else {
+      // Subito: non bloccare i tap sull'header durante la chiusura (soprattutto landscape).
+      gsap.set(el, { pointerEvents: "none" })
+
       const tl = gsap.timeline({
         onComplete: () => {
-          gsap.set(el, { pointerEvents: "none" })
+          gsap.set(el, { visibility: "hidden" })
           if (marqueeEl) gsap.set(marqueeEl, { yPercent: 100 })
         },
       })
@@ -103,9 +107,12 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
     <div
       ref={containerRef}
       style={{ clipPath: "inset(0% 0% 100% 0%)", pointerEvents: "none" }}
+      // Overlay full-screen sopra l'header: quando chiuso non deve intercettare i tap.
+      inert={!isOpen}
+      aria-hidden={!isOpen}
       className={cn(
         "bg-black text-white",
-        "fixed inset-0 z-[100]  flex flex-col",
+        "fixed inset-0 z-[100] flex flex-col",
       )}
     >
       {/* Header interno */}
@@ -122,6 +129,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
             onClick={onClose}
             size="l"
             variant="close"
+            className="relative before:absolute before:content-[''] before:-inset-y-3 before:-inset-x-2"
           />
         </div>
       </div>

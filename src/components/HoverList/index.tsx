@@ -9,8 +9,9 @@ export type { HoverListItem } from "./types"
 
 export default function HoverList(props: HoverListProps) {
   const { viewportWidth } = useBreakpoint()
+  // Mobile pin through phone-lg (≤932)
   const isDesktop =
-    viewportWidth !== null && viewportWidth >= BREAKPOINT_THRESHOLDS.tabletMin
+    viewportWidth !== null && viewportWidth > BREAKPOINT_THRESHOLDS.phoneLgMax
 
   if (viewportWidth === null) return null
 
