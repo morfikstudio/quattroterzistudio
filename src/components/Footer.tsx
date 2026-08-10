@@ -116,20 +116,25 @@ export default function Footer() {
   }, [lenis])
 
   return (
-    <footer className={cn("footer bg-black text-white h-svh")}>
+    <footer
+      className={cn(
+        "footer relative bg-black text-white h-svh",
+        "phone-landscape:h-auto phone-landscape:min-h-svh",
+      )}
+    >
       <div
         className={cn(
           "md:px-6 md:py-8 p-4 flex flex-col justify-between h-full",
-          // Clear fixed header + fit short landscape viewports (≤932)
-          "max-phone-lg:landscape:pt-16 max-phone-lg:landscape:pb-4",
+          "phone-landscape:min-h-svh phone-landscape:gap-6 phone-landscape:py-4",
         )}
       >
         <div
           ref={logoRef}
           className={cn(
-            "uppercase text-[12.5vw] lg:text-[13vw] w-full tracking-[-0.015em] overflow-hidden",
-            "max-phone-lg:landscape:text-[min(15vw,27vh)]",
+            "uppercase text-[12.5vw] md:text-[13vw] w-full tracking-[-0.015em] overflow-hidden shrink-0",
             "flex flex-col items-end justify-end",
+            "phone-landscape:sticky phone-landscape:top-0 phone-landscape:z-10 phone-landscape:bg-black",
+            "phone-landscape:text-[clamp(2.5rem,14dvh,8rem)]",
           )}
         >
           <span data-split className="leading-none font-medium">
@@ -137,7 +142,7 @@ export default function Footer() {
           </span>
           <span
             data-split
-            className="leading-none font-thin -mt-[1vw] max-phone-lg:landscape:-mt-[0.5vh]"
+            className="leading-none font-thin -mt-[1vw] phone-landscape:-mt-[0.5dvh]"
           >
             studio
           </span>
@@ -148,7 +153,7 @@ export default function Footer() {
             "footer-bottom",
             "flex flex-col gap-16",
             "md:gap-20",
-            "max-phone-lg:landscape:gap-8",
+            "phone-landscape:gap-6",
           )}
         >
           <div
@@ -156,17 +161,23 @@ export default function Footer() {
               "contact",
               "flex flex-col gap-12",
               "md:flex-row md:items-center md:gap-8",
-              "max-phone-lg:landscape:gap-6",
+              "phone-landscape:flex-row phone-landscape:items-center phone-landscape:gap-6",
             )}
           >
-            <div className={cn("type-body-l uppercase md:flex-1")}>
+            <div
+              className={cn(
+                "type-body-l uppercase md:flex-1",
+                "phone-landscape:flex-1",
+              )}
+            >
               <span data-split data-ready-trigger>
                 Tell us what you see.
               </span>
             </div>
             <div
               className={cn(
-                "button max-h-[80px] md:flex-1 md:flex md:justify-start ",
+                "button max-h-[80px] md:flex-1 md:flex md:justify-start",
+                "phone-landscape:flex-1 phone-landscape:flex phone-landscape:justify-start",
               )}
               data-button-reveal
             >
@@ -189,9 +200,10 @@ export default function Footer() {
               "type-caption uppercase",
               "flex flex-col-reverse gap-2",
               "md:flex-row md:items-center md:gap-8",
+              "phone-landscape:flex-row phone-landscape:items-center phone-landscape:gap-8",
             )}
           >
-            <div className="copyright md:flex-1">
+            <div className="copyright md:flex-1 phone-landscape:flex-1">
               <span>Copyright © quattroterzi 2026</span>
             </div>
             <div
@@ -199,6 +211,7 @@ export default function Footer() {
                 "terms",
                 "flex flex-col gap-2",
                 "md:flex-1 md:flex-row md:justify-start md:items-center md:gap-10",
+                "phone-landscape:flex-1 phone-landscape:flex-row phone-landscape:items-center phone-landscape:gap-10",
               )}
             >
               <a href="https://www.iubenda.com/privacy-policy/23047240">
@@ -216,7 +229,7 @@ export default function Footer() {
         onClick={() => lenis?.scrollTo(0, { duration: 1.5 })}
         className={cn(
           "btt",
-          "md:hidden block absolute bottom-4.5 right-4",
+          "md:hidden phone-landscape:flex absolute bottom-4.5 right-4",
           "flex items-center gap-2 cursor-pointer",
         )}
       >

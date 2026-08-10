@@ -717,7 +717,9 @@ export default function ProjectsListPlain({
             ref={mobileWrapRef}
             href={imageHref}
             className={cn(
-              "pl-img-clip grou absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw] max-md:landscape:w-[36vw]",
+              "pl-img-clip group absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw]",
+              // Height-based in landscape: vw is the long edge and overflows.
+              "phone-landscape:w-[64dvh]",
               "block cursor-pointer no-underline text-inherit focus-visible:outline-none",
             )}
             data-clip={clipState}
@@ -765,7 +767,9 @@ export default function ProjectsListPlain({
             ref={desktopWrapRef}
             href={imageHref}
             className={cn(
-              "pl-img-clip group pointer-events-auto absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] max-phone-lg:landscape:left-[4vw] max-phone-lg:landscape:w-[32vw] lg:w-[35vw]",
+              "pl-img-clip group pointer-events-auto absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] lg:w-[35vw]",
+              // Phone landscape hits `md:` by width; size/center off height instead.
+              "phone-landscape:left-1/2 phone-landscape:-translate-x-1/2 phone-landscape:w-[64dvh]",
               "block cursor-pointer no-underline text-inherit focus-visible:outline-none",
             )}
             data-clip={clipState}
