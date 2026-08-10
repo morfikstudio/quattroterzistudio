@@ -117,30 +117,46 @@ export default function Footer() {
 
   return (
     <footer className={cn("footer bg-black text-white h-svh")}>
-      <div className="md:px-6 md:py-8 p-4 flex flex-col justify-between h-full">
+      <div
+        className={cn(
+          "md:px-6 md:py-8 p-4 flex flex-col justify-between h-full",
+          // Clear fixed header + fit short landscape viewports (≤932)
+          "max-phone-lg:landscape:pt-16 max-phone-lg:landscape:pb-4",
+        )}
+      >
         <div
           ref={logoRef}
           className={cn(
-            "uppercase text-[12.5vw] md:text-[13vw] w-full tracking-[-0.015em] overflow-hidden",
+            "uppercase text-[12.5vw] lg:text-[13vw] w-full tracking-[-0.015em] overflow-hidden",
+            "max-phone-lg:landscape:text-[min(15vw,27vh)]",
             "flex flex-col items-end justify-end",
           )}
         >
           <span data-split className="leading-none font-medium">
             quattroterzi
           </span>
-          <span data-split className="leading-none font-thin -mt-[1vw]">
+          <span
+            data-split
+            className="leading-none font-thin -mt-[1vw] max-phone-lg:landscape:-mt-[0.5vh]"
+          >
             studio
           </span>
         </div>
         <div
           ref={bottomRef}
-          className={cn("footer-bottom", "flex flex-col gap-16", "md:gap-20")}
+          className={cn(
+            "footer-bottom",
+            "flex flex-col gap-16",
+            "md:gap-20",
+            "max-phone-lg:landscape:gap-8",
+          )}
         >
           <div
             className={cn(
               "contact",
               "flex flex-col gap-12",
               "md:flex-row md:items-center md:gap-8",
+              "max-phone-lg:landscape:gap-6",
             )}
           >
             <div className={cn("type-body-l uppercase md:flex-1")}>

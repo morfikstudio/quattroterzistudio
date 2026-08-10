@@ -20,13 +20,21 @@ import { useBreakpoint } from "@/stores/breakpointStore"
 import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
 import ViewToggle from "@/components/ViewToggle"
 
-const SLIDES_PER_VIEW = 7
+const SLIDES_PER_VIEW_DEFAULT = 7
+const SLIDES_PER_VIEW_LANDSCAPE_NARROW = 5 // ≤932 landscape
+const PHONE_LG_MAX = 932
 
-// Cache for the resolved "land here" index, cleared after mounts settle.
+function getSlidesPerView() {
+  if (typeof window === "undefined") return SLIDES_PER_VIEW_DEFAULT
+  const narrow = window.innerWidth <= PHONE_LG_MAX
+  const landscape = window.matchMedia("(orientation: landscape)").matches
+  return narrow && landscape
+    ? SLIDES_PER_VIEW_LANDSCAPE_NARROW
+    : SLIDES_PER_VIEW_DEFAULT
+}
+
 let pendingTargetCache: { slug: string; index: number } | null = null
-// List copies for infinite-loop simulation: the viewport stays in the middle
-// copy; nearing an edge we teleport scrollTop by one list-length.
-const COPIES = 9
+const COPIES = 9 // infinite scroll copies
 
 const Icons = () => (
   <div className="flex flex-col items-center gap-[3px]">
@@ -92,8 +100,6 @@ export default function ProjectsListPlain({
 }: Props) {
   const items = projects ?? []
 
-  // Extended list of COPIES copies; each entry keeps its real index so
-  // active/hover/navigation stay consistent across duplicates.
   const extendedItems = useMemo(() => {
     const result: {
       item: PROJECTS_QUERY_RESULT[number]
@@ -124,9 +130,7 @@ export default function ProjectsListPlain({
   const wordSpansRef = useRef<HTMLElement[]>([])
   const squareSpansRef = useRef<HTMLElement[]>([])
   const yearSpanRef = useRef<HTMLSpanElement | null>(null)
-  // Mobile enter: unlock underline only once the word is almost in.
   const [pageEnterDone, setPageEnterDone] = useState(false)
-  // Mobile exit: force active underline "out" before words leave.
   const [underlineExiting, setUnderlineExiting] = useState(false)
   const mobileWrapRef = useRef<HTMLAnchorElement | null>(null)
   const desktopWrapRef = useRef<HTMLAnchorElement | null>(null)
@@ -177,7 +181,6 @@ export default function ProjectsListPlain({
 
   const navigate = useCallback(
     (url: string) => {
-      // Set previousPath before push so SplashMarquee reads it on first render.
       setPreviousPath(window.location.pathname)
       exitWithCallback(() => router.push(url))
     },
@@ -191,7 +194,6 @@ export default function ProjectsListPlain({
 
       setPreviousPath(window.location.pathname)
 
-      // Non-desktop: navigate directly, no image expansion.
       if (!isDesktop) {
         dispatchCurtainNavigate(url)
         return
@@ -205,7 +207,6 @@ export default function ProjectsListPlain({
         return
       }
 
-      // Reset hover scale on the inner image layer.
       if (imgEl) {
         const scaleChild = imgEl.firstElementChild as HTMLElement | null
         if (scaleChild) {
@@ -214,13 +215,11 @@ export default function ProjectsListPlain({
         }
       }
 
-      // Hide year — the Hero re-shows it with letters-in.
       const yearContainer = yearSpanRef.current?.parentElement
       if (yearContainer) gsap.set(yearContainer, { autoAlpha: 0 })
 
       const rect = wrapEl.getBoundingClientRect()
 
-      // Cancel CSS keyframe so it doesn't fight inline styles.
       wrapEl.style.animation = "none"
 
       gsap.set(wrapEl, {
@@ -233,7 +232,6 @@ export default function ProjectsListPlain({
         zIndex: 100,
       })
 
-      // Expand image, then navigate (letters-in runs on the project Hero).
       gsap.to(wrapEl, {
         top: 0,
         left: 0,
@@ -246,13 +244,11 @@ export default function ProjectsListPlain({
     [router, setPreviousPath, isDesktop],
   )
 
-  // Unlock mobile underline once the word is almost fully visible.
   useEffect(() => {
     const t = setTimeout(() => setPageEnterDone(true), 1300)
     return () => clearTimeout(t)
   }, [])
 
-  // Entry animation for the toggle (bottom-left).
   useEffect(() => {
     const el = selectionCtaWrapRef.current
     if (!el) return
@@ -281,23 +277,21 @@ export default function ProjectsListPlain({
   const prevActiveRef = useRef(0)
   const isMobileRef = useRef(false)
   const [isMobile, setIsMobile] = useState(false)
+  const slidesPerViewRef = useRef(SLIDES_PER_VIEW_DEFAULT)
+  const [slidesPerView, setSlidesPerView] = useState(SLIDES_PER_VIEW_DEFAULT)
 
   const velocityRef = useRef(0)
   const isScrollingRef = useRef(false)
   const scrollCheckRef = useRef<number>(0)
   const hoverIndexRef = useRef<number | null>(null)
 
-  // Native-scroll bookkeeping.
   const ulRef = useRef<HTMLUListElement | null>(null)
   const sectionRootRef = useRef<HTMLDivElement | null>(null)
   const itemHeightRef = useRef(0)
   const totalHeightRef = useRef(0)
   const lastScrollTopRef = useRef(0)
-  // Pending teleport direction (+1/-1/0); deferred until momentum settles so
-  // setting scrollTop mid-flick on iOS doesn't kill native inertia.
-  const pendingTeleportRef = useRef(0)
+  const pendingTeleportRef = useRef(0) // deferred loop teleport on iOS
 
-  // mobileImgRef left unwired on purpose: no velocity scale on touch.
   const { desktopImgRef, startScaleLoop } = useImageScale({
     velocityRef,
     minScale: 0.78,
@@ -318,22 +312,35 @@ export default function ProjectsListPlain({
     return () => mq.removeEventListener("change", (e) => update(e.matches))
   }, [])
 
-  // Center the middle-copy target before paint (useLayoutEffect) so there's
-  // no flash of index 0 when arriving with a pending active slug.
+  useEffect(() => {
+    const syncSlidesPerView = () => {
+      const next = getSlidesPerView()
+      slidesPerViewRef.current = next
+      setSlidesPerView(next)
+    }
+    syncSlidesPerView()
+    const mqLandscape = window.matchMedia("(orientation: landscape)")
+    mqLandscape.addEventListener("change", syncSlidesPerView)
+    window.addEventListener("resize", syncSlidesPerView)
+    return () => {
+      mqLandscape.removeEventListener("change", syncSlidesPerView)
+      window.removeEventListener("resize", syncSlidesPerView)
+    }
+  }, [])
+
   useLayoutEffect(() => {
     const ul = ulRef.current
     if (!ul || items.length === 0) return
 
     const recalc = () => {
       const containerHeight = ul.clientHeight
-      const itemHeight = containerHeight / SLIDES_PER_VIEW
+      const itemHeight = containerHeight / slidesPerViewRef.current
       itemHeightRef.current = itemHeight
       totalHeightRef.current = items.length * itemHeight
     }
 
     recalc()
 
-    // Land on the pending active slug if present, else index 0 of middle copy.
     const { pendingActiveSlug } = useNavigationStore.getState()
     let targetIndex = 0
     if (pendingActiveSlug) {
@@ -346,7 +353,7 @@ export default function ProjectsListPlain({
       targetIndex = pendingTargetCache.index
     }
 
-    const halfView = Math.floor(SLIDES_PER_VIEW / 2)
+    const halfView = Math.floor(slidesPerViewRef.current / 2)
     const middleCopyIndex = Math.floor(COPIES / 2)
     const initialScrollTop =
       (middleCopyIndex * items.length + targetIndex - halfView) *
@@ -361,8 +368,9 @@ export default function ProjectsListPlain({
 
     const onResize = () => {
       const oldItemHeight = itemHeightRef.current
+      slidesPerViewRef.current = getSlidesPerView()
+      setSlidesPerView(slidesPerViewRef.current)
       recalc()
-      // Keep the same item centered across resize.
       if (oldItemHeight > 0) {
         const ratio = itemHeightRef.current / oldItemHeight
         const next = ul.scrollTop * ratio
@@ -374,7 +382,6 @@ export default function ProjectsListPlain({
     return () => window.removeEventListener("resize", onResize)
   }, [items.length])
 
-  // Clear pending slug + cache once mounts have settled.
   useEffect(() => {
     const id = setTimeout(() => {
       useNavigationStore.getState().setPendingActiveSlug(null)
@@ -383,19 +390,16 @@ export default function ProjectsListPlain({
     return () => clearTimeout(id)
   }, [])
 
-  // Wheel forwarder: the desktop image anchor has no scrollable ancestor, so
-  // forward its wheel events to the ul to scroll anywhere in the section.
+  // Forward wheel on the image area to the list
   useEffect(() => {
     const root = sectionRootRef.current
     const ul = ulRef.current
     if (!root || !ul) return
 
     const onWheel = (e: WheelEvent) => {
-      // Inside the ul the browser already scrolls natively — don't double up.
       if (ul.contains(e.target as Node)) return
 
       let deltaPx = e.deltaY
-      // Normalize delta units to pixels.
       if (e.deltaMode === 1) deltaPx *= 16
       else if (e.deltaMode === 2) deltaPx *= ul.clientHeight
 
@@ -420,10 +424,7 @@ export default function ProjectsListPlain({
     const itemHeight = itemHeightRef.current
     const totalHeight = totalHeightRef.current
 
-    // Loop reset. Desktop: teleport immediately (no inertia to preserve).
-    // Mobile: defer until momentum settles to avoid killing native inertia,
-    // but force an "emergency" teleport within half a copy of the edge so a
-    // fast flicker never slams into the wall.
+    // Infinite loop teleport
     if (totalHeight > 0) {
       const lastCopy = COPIES - 1
       const needsForward = scrollTop < totalHeight
@@ -450,14 +451,11 @@ export default function ProjectsListPlain({
       }
     }
 
-    // Active = item whose center is closest to viewport center.
     const centerY = scrollTop + containerHeight / 2
     const extendedIndex = Math.floor(centerY / itemHeight)
     const realIndex =
       ((extendedIndex % items.length) + items.length) % items.length
 
-    // Velocity feeds the image scale loop; amplified on desktop so slow wheel
-    // ticks still cross useImageScale's dead zone.
     const delta = scrollTop - lastScrollTopRef.current
     if (delta !== 0) {
       const desktopBoost = isMobileRef.current ? 1 : 1.8
@@ -466,8 +464,6 @@ export default function ProjectsListPlain({
     }
     lastScrollTopRef.current = scrollTop
 
-    // Coalesce React state updates into one rAF tick to avoid re-rendering the
-    // whole extended list on every scroll event.
     pendingActiveRef.current = realIndex
     if (!rafUpdateRef.current) {
       rafUpdateRef.current = requestAnimationFrame(() => {
@@ -509,7 +505,6 @@ export default function ProjectsListPlain({
     scrollCheckRef.current = requestAnimationFrame(check)
   }, [items.length, startScaleLoop])
 
-  // Entry animation for word spans.
   useEffect(() => {
     if (!listContainerRef.current || items.length === 0) return
     const t = setTimeout(() => {
@@ -695,8 +690,6 @@ export default function ProjectsListPlain({
 
       <div
         ref={sectionRootRef}
-        // Opt the subtree out of Lenis' smooth-scroll hijack so the ul's
-        // native overflow-y-auto can scroll.
         data-lenis-prevent
         className="relative h-svh md:h-screen md:grid md:grid-cols-2"
       >
@@ -719,13 +712,12 @@ export default function ProjectsListPlain({
           </span>
         </a>
 
-        {/* Mobile image */}
         <div className="md:hidden absolute inset-0">
           <a
             ref={mobileWrapRef}
             href={imageHref}
             className={cn(
-              "pl-img-clip grou absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw] max-md:landscape:w-[50vw]",
+              "pl-img-clip grou absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw] max-md:landscape:w-[36vw]",
               "block cursor-pointer no-underline text-inherit focus-visible:outline-none",
             )}
             data-clip={clipState}
@@ -768,13 +760,12 @@ export default function ProjectsListPlain({
           </a>
         </div>
 
-        {/* Desktop: above the list to receive hover; only the image box has pointer-events */}
         <div className="hidden md:block relative h-screen z-20 pointer-events-none">
           <a
             ref={desktopWrapRef}
             href={imageHref}
             className={cn(
-              "pl-img-clip group pointer-events-auto absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] lg:w-[35vw]",
+              "pl-img-clip group pointer-events-auto absolute top-1/2 left-[7vw] -translate-y-1/2 w-[50vw] max-phone-lg:landscape:left-[4vw] max-phone-lg:landscape:w-[32vw] lg:w-[35vw]",
               "block cursor-pointer no-underline text-inherit focus-visible:outline-none",
             )}
             data-clip={clipState}
@@ -820,7 +811,6 @@ export default function ProjectsListPlain({
           </a>
         </div>
 
-        {/* Lista */}
         <div
           className="relative h-svh md:h-screen md:absolute md:inset-0 md:z-10"
           role="region"
@@ -848,7 +838,7 @@ export default function ProjectsListPlain({
                     key={key}
                     className="flex items-center px-6 md:pl-[calc(50%+2.5rem)] md:pr-10"
                     style={{
-                      height: `calc(100% / ${SLIDES_PER_VIEW})`,
+                      height: `calc(100% / ${slidesPerView})`,
                       scrollSnapAlign: isMobile ? "center" : undefined,
                     }}
                   >
@@ -858,9 +848,6 @@ export default function ProjectsListPlain({
                         "pl-item-link",
                         "type-h1 text-secondary no-underline focus-visible:outline-none",
                         "inline-flex items-center cursor-pointer",
-                        // Desktop: fill the whole row so the hover/click hit
-                        // area reaches the midpoint between adjacent items
-                        // (rows are equal-height and the text is centered).
                         "md:h-full md:w-full",
                       )}
                       data-active={
@@ -868,9 +855,7 @@ export default function ProjectsListPlain({
                       }
                       data-line={
                         isMobile
-                          ? // Mobile: underline tied to the settled active item
-                            // only — items passed while scrolling must not flash "out".
-                            !isScrolling &&
+                          ? !isScrolling &&
                             pageEnterDone &&
                             !underlineExiting &&
                             activeIndex === i
@@ -878,8 +863,7 @@ export default function ProjectsListPlain({
                             : underlineExiting && activeIndex === i
                               ? "out"
                               : undefined
-                          : /* Desktop: hover-driven, unchanged. */
-                            !isScrolling && hoverIndex === i
+                          : !isScrolling && hoverIndex === i
                             ? "in"
                             : interactedItemsRef.current.has(i)
                               ? "out"
@@ -902,10 +886,8 @@ export default function ProjectsListPlain({
                       }}
                       aria-label={getLabel(p)}
                     >
-                      {/* Inner wrapper sized to the text: keeps the underline
-                          under the letters while the anchor fills the full row. */}
                       <span className="relative inline-flex items-center leading-tight">
-                        {/* QUADRATINO — decommentare per riabilitare
+                        {/* QUADRATINO
                       <span className="overflow-hidden block w-[10px] h-[10px] flex-shrink-0 mr-4 -translate-y-[5px]">
                         <span className="pl-square-inner block w-[10px] h-[10px] bg-current" />
                       </span>
@@ -937,7 +919,6 @@ export default function ProjectsListPlain({
             </ul>
           </div>
 
-          {/* Fade top/bottom */}
           <div
             aria-hidden="true"
             className={cn(
