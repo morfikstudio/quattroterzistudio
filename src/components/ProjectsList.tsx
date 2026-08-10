@@ -199,7 +199,7 @@ export default function ProjectsList({ projects, onSelectionClick }: Props) {
         width: rect.width,
         transform: "none",
         clipPath: "none",
-        zIndex: 100,
+        zIndex: 50, // below header (z-70)
       })
 
       // Image expansion, then navigate (letters-in happens on the project page Hero)
