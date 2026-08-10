@@ -32,6 +32,11 @@ nav .link-underline-bar {
   bottom: 1px;
 }
 
+nav .link-underline > *,
+nav .logo * {
+  pointer-events: none;
+}
+
 .contact-grid .link-underline-bar {
   bottom: 1px;
 }

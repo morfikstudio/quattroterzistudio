@@ -40,6 +40,7 @@ function getLenisOptions(): LenisOptions {
     syncTouch: true,
     anchors: true,
     smoothWheel: !prefersReducedMotion,
+    prevent: (node) => node instanceof Element && node.closest("nav") !== null,
   }
 }
 
