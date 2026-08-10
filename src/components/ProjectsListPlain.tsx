@@ -838,7 +838,10 @@ export default function ProjectsListPlain({
         </div>
 
         <div
-          className="relative h-svh md:h-screen md:absolute md:inset-0 md:z-10"
+          className={cn(
+            "relative h-svh md:h-screen md:absolute md:inset-0 md:z-10",
+            "phone-landscape:top-14 phone-landscape:h-[calc(100%-3.5rem)]",
+          )}
           role="region"
           aria-label="Lista progetti"
         >

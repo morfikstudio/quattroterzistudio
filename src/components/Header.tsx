@@ -124,8 +124,10 @@ export default function Header() {
   return (
     <>
       <nav
+        data-lenis-prevent
+        data-lenis-prevent-touch
         className={cn(
-          "fixed top-0 left-0 w-full z-[70] isolate [transform:translateZ(0)]",
+          "fixed top-0 left-0 w-full z-[70] isolate [transform:translateZ(0)] pointer-events-auto touch-manipulation",
         )}
       >
         <div
