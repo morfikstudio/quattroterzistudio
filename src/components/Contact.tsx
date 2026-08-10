@@ -20,6 +20,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const marqueeRef = useRef<HTMLDivElement>(null)
   const tlRef = useRef<GSAPTimeline | null>(null)
+  const wasOpenRef = useRef(false)
 
   useEffect(() => {
     const el = containerRef.current
@@ -32,6 +33,8 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
     const marqueeEl = marqueeRef.current
 
     if (isOpen) {
+      wasOpenRef.current = true
+
       const splits = Array.from(textEls).map(
         (el) => new SplitText(el, { type: "lines", mask: "lines" }),
       )
@@ -80,8 +83,17 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
         splits.forEach((s) => s.revert())
       }
     } else {
-      // Subito: non bloccare i tap sull'header durante la chiusura (soprattutto landscape).
+      // Chiuso: sotto l'header (z-70) così i tap non restano bloccati su mobile landscape.
       gsap.set(el, { pointerEvents: "none" })
+
+      if (!wasOpenRef.current) {
+        gsap.set(el, {
+          visibility: "hidden",
+          clipPath: "inset(0% 0% 100% 0%)",
+        })
+        if (marqueeEl) gsap.set(marqueeEl, { yPercent: 100 })
+        return
+      }
 
       const tl = gsap.timeline({
         onComplete: () => {
@@ -106,13 +118,18 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
   return (
     <div
       ref={containerRef}
-      style={{ clipPath: "inset(0% 0% 100% 0%)", pointerEvents: "none" }}
+      style={{
+        clipPath: "inset(0% 0% 100% 0%)",
+        pointerEvents: "none",
+        visibility: "hidden",
+      }}
       // Overlay full-screen sopra l'header: quando chiuso non deve intercettare i tap.
       inert={!isOpen}
       aria-hidden={!isOpen}
       className={cn(
         "bg-black text-white",
-        "fixed inset-0 z-[100] flex flex-col",
+        "fixed inset-0 flex flex-col",
+        isOpen ? "z-[100]" : "z-[50]",
       )}
     >
       {/* Header interno */}
