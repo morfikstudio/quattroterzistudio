@@ -218,28 +218,48 @@ export default function ProjectsListPlain({
       const yearContainer = yearSpanRef.current?.parentElement
       if (yearContainer) gsap.set(yearContainer, { autoAlpha: 0 })
 
-      const rect = wrapEl.getBoundingClientRect()
+      const fadeOutTargets = [
+        selectionCtaWrapRef.current,
+        counterSpanRef.current?.parentElement,
+      ].filter(Boolean) as HTMLElement[]
 
-      wrapEl.style.animation = "none"
+      const startExpand = () => {
+        const rect = wrapEl.getBoundingClientRect()
 
-      gsap.set(wrapEl, {
-        position: "fixed",
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        transform: "none",
-        clipPath: "none",
-        zIndex: 100,
-      })
+        wrapEl.style.animation = "none"
 
-      gsap.to(wrapEl, {
-        top: 0,
-        left: 0,
-        width: "100%",
-        duration: 1.5,
-        ease: "power3.out",
-        onComplete: () => router.push(url),
-      })
+        gsap.set(wrapEl, {
+          position: "fixed",
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          transform: "none",
+          clipPath: "none",
+          zIndex: 50, // below header (z-70)
+        })
+
+        gsap.to(wrapEl, {
+          top: 0,
+          left: 0,
+          width: "100%",
+          duration: 1.5,
+          ease: "power3.out",
+          onComplete: () => router.push(url),
+        })
+      }
+
+      if (fadeOutTargets.length) {
+        gsap.to(fadeOutTargets, {
+          y: -20,
+          opacity: 0,
+          duration: 0.45,
+          ease: "power3.in",
+          overwrite: true,
+          onComplete: startExpand,
+        })
+      } else {
+        startExpand()
+      }
     },
     [router, setPreviousPath, isDesktop],
   )

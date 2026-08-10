@@ -201,10 +201,9 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
           gsap.set(clipEl, { clipPath: "none" })
 
-          // Raise the layer + thumbs container so the expanding thumb paints
-          // above titles, counter and CTA.
+          // Above titles/CTA (z-30), below header (z-70).
           if (fixedLayerRef.current) {
-            gsap.set(fixedLayerRef.current, { zIndex: 100 })
+            gsap.set(fixedLayerRef.current, { zIndex: 50 })
           }
           const thumbsContainer = el.parentElement
           if (thumbsContainer) {
@@ -215,7 +214,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             top: rect.top,
             left: rect.left,
             width: rect.width,
-            zIndex: 100,
+            zIndex: 50,
             overwrite: true,
           })
 
