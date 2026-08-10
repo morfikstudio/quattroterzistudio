@@ -244,8 +244,9 @@ export default function Header() {
               onClick={() => openContact()}
               className={cn(
                 navLinkClass,
-                "cursor-pointer",
+                "relative z-20 cursor-pointer touch-manipulation",
                 "before:absolute before:content-[''] before:-inset-y-3 before:-inset-x-1",
+                "max-phone-lg:landscape:before:-inset-x-2",
               )}
               onMouseEnter={(e) => {
                 e.currentTarget.dataset.line = "in"
