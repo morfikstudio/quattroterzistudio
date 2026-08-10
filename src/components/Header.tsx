@@ -123,27 +123,25 @@ export default function Header() {
 
   return (
     <>
-      {/*
-        z-[70] stays above CurtainTransition (z-60) so the header remains
-        fixed and visible during every page transition. Splash (z-9999) and
-        Contact (z-100) still cover it when needed; on "/" the header is
-        not rendered at all.
-      */}
-      <nav className={cn("fixed top-0 left-0 w-full z-[70]")}>
+      <nav
+        className={cn(
+          "fixed top-0 left-0 w-full z-[70] isolate [transform:translateZ(0)]",
+        )}
+      >
         <div
           ref={bgRef}
           aria-hidden
-          className={cn("absolute inset-0 bg-white pointer-events-none")}
+          className={cn("absolute inset-0 bg-white")}
         />
         <div
           className={cn(
-            "relative flex justify-between items-center",
+            "relative z-10 flex justify-between items-center",
             "mx-auto p-3 md:px-6 md:py-3",
           )}
         >
           <Link
             href="/"
-            className="block text-black overflow-hidden"
+            className="block text-black overflow-hidden touch-manipulation"
             onClick={() => setPreviousPath("/")}
           >
             <div
@@ -212,6 +210,7 @@ export default function Header() {
                   href={item.href}
                   className={cn(
                     navLinkClass,
+                    "touch-manipulation",
                     // Hit area più ampia senza padding (che sposterebbe la underline).
                     "before:absolute before:content-[''] before:-inset-y-3 before:-inset-x-1",
                     item.isActive && "text-black/55 pointer-events-none",

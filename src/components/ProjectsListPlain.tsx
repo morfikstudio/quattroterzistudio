@@ -75,7 +75,7 @@ function SelectionCTA({ onNavigate }: { onNavigate: () => void }) {
             )}
           >
             <span className="type-button-m uppercase text-black max-md:text-white">
-              selection
+              selected
             </span>
           </div>
           <div
@@ -660,7 +660,7 @@ export default function ProjectsListPlain({
       `}</style>
 
       <div ref={selectionCtaWrapRef} className="fixed bottom-6 left-6 z-30">
-        <div className="md:hidden">
+        <div className="md:hidden phone-landscape:block">
           <SelectionCTA
             onNavigate={
               onSelectionClick
@@ -669,7 +669,7 @@ export default function ProjectsListPlain({
             }
           />
         </div>
-        <div className="hidden md:block">
+        <div className="hidden md:block phone-landscape:hidden">
           <ViewToggle
             active="archive"
             onSelect={(target) => {
@@ -691,7 +691,7 @@ export default function ProjectsListPlain({
       <div
         ref={sectionRootRef}
         data-lenis-prevent
-        className="relative h-svh md:h-screen md:grid md:grid-cols-2"
+        className="relative isolate h-svh md:h-screen md:grid md:grid-cols-2"
       >
         <a
           href={imageHref}
@@ -712,12 +712,14 @@ export default function ProjectsListPlain({
           </span>
         </a>
 
-        <div className="md:hidden absolute inset-0">
+        {/* Wrapper is pointer-events-none so the full-bleed layer cannot steal
+            taps meant for the fixed header above. */}
+        <div className="md:hidden absolute inset-0 pointer-events-none">
           <a
             ref={mobileWrapRef}
             href={imageHref}
             className={cn(
-              "pl-img-clip group absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw]",
+              "pl-img-clip group pointer-events-auto absolute top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2 w-[70vw]",
               // Height-based in landscape: vw is the long edge and overflows.
               "phone-landscape:w-[64dvh]",
               "block cursor-pointer no-underline text-inherit focus-visible:outline-none",

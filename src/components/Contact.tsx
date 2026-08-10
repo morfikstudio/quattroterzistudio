@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import gsap from "gsap"
 import { SplitText } from "gsap/SplitText"
 
@@ -21,6 +21,8 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
   const marqueeRef = useRef<HTMLDivElement>(null)
   const tlRef = useRef<GSAPTimeline | null>(null)
   const wasOpenRef = useRef(false)
+  // Stay above the page while the close clip-path animates; drop only after.
+  const [layerActive, setLayerActive] = useState(false)
 
   useEffect(() => {
     const el = containerRef.current
@@ -34,6 +36,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
 
     if (isOpen) {
       wasOpenRef.current = true
+      setLayerActive(true)
 
       const splits = Array.from(textEls).map(
         (el) => new SplitText(el, { type: "lines", mask: "lines" }),
@@ -83,7 +86,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
         splits.forEach((s) => s.revert())
       }
     } else {
-      // Chiuso: sotto l'header (z-70) così i tap non restano bloccati su mobile landscape.
+      // Chiuso: niente hit-testing. Lo z-index resta alto fino a fine animazione.
       gsap.set(el, { pointerEvents: "none" })
 
       if (!wasOpenRef.current) {
@@ -92,6 +95,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
           clipPath: "inset(0% 0% 100% 0%)",
         })
         if (marqueeEl) gsap.set(marqueeEl, { yPercent: 100 })
+        setLayerActive(false)
         return
       }
 
@@ -99,6 +103,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
         onComplete: () => {
           gsap.set(el, { visibility: "hidden" })
           if (marqueeEl) gsap.set(marqueeEl, { yPercent: 100 })
+          setLayerActive(false)
         },
       })
       tlRef.current = tl
@@ -129,7 +134,8 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
       className={cn(
         "bg-black text-white",
         "fixed inset-0 flex flex-col",
-        isOpen ? "z-[100]" : "z-[50]",
+        // Elevated only while open or closing; idle sits under the page.
+        layerActive ? "z-[100]" : "-z-10 pointer-events-none",
       )}
     >
       {/* Header interno */}

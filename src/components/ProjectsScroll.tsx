@@ -952,7 +952,9 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           >
             <Link
               href={`/projects/${p.slug?.current ?? ""}`}
-              className="absolute inset-0 z-0"
+              // Keep the top strip free on mobile so taps reach the fixed header
+              // (full-bleed links otherwise sit under the nav and steal hits).
+              className="absolute inset-0 z-0 max-md:top-14 phone-landscape:top-14"
               onClick={(e) => {
                 e.preventDefault()
                 handleProjectClick(i, `/projects/${p.slug?.current ?? ""}`)
