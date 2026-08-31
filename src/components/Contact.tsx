@@ -231,7 +231,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                 contact
               </span>
               <a
-                href="mailto:info@quattroterzi.com"
+                href="mailto:info@quattroterzistudio.com"
                 className={cn("link-underline w-fit")}
                 onMouseEnter={(e) => {
                   e.currentTarget.dataset.line = "in"
@@ -240,7 +240,7 @@ export default function Contact({ isOpen, onClose }: ContactProps) {
                   e.currentTarget.dataset.line = "out"
                 }}
               >
-                <span data-split>info@quattroterzi.com</span>
+                <span data-split>info@quattroterzistudio.com</span>
                 <span className={cn("link-underline-bar")} />
               </a>
               <a
