@@ -354,13 +354,8 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       }
 
       function handleTexts(nextIndex: number) {
-        if (
-          /* If the text is already being animated to the next index, do nothing */
-          (textTl && targetIndex === nextIndex) ||
-          /* If the next index is the same as the active index, do nothing */
-          nextIndex === activeIndex
-        )
-          return
+        /* Already showing, or already animating towards, the next index */
+        if (nextIndex === (textTl ? targetIndex : activeIndex)) return
 
         /* If text is already being animated, kill it and reset the active index */
         if (textTl) {

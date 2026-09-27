@@ -21,17 +21,19 @@ const CONFIG = {
   },
   wheel: {
     idleMs: 180,
-    minImpulseGapMs: 120,
+    minImpulseGapMs: 250,
     /** A delta below peak × decayRatio marks the gesture as decaying (momentum tail). */
-    decayRatio: 0.7,
+    decayRatio: 0.5,
     /** While decaying, a delta above trough × riseFactor is a new swipe. */
     riseFactor: 2.5,
     riseMinDelta: 8,
+    /** ...and it must also reach this fraction of the previous peak. */
+    riseMinPeakRatio: 0.4,
     /** Once landed, a delta still at peak × sustainRatio means the user is still scrolling. */
     sustainRatio: 0.9,
     /** Summed |delta| within strongWindowMs of a gesture that adds 1 or 2 extra steps. */
     strongWindowMs: 250,
-    strong: [900, 1800],
+    strong: [1800, 3600],
   },
   touch: {
     slopPx: 6,
@@ -227,7 +229,8 @@ export function useSectionPager({
         dir !== gesture.dir ||
         (gesture.decayed &&
           abs > gesture.trough * wheel.riseFactor &&
-          abs - gesture.trough > wheel.riseMinDelta)
+          abs - gesture.trough > wheel.riseMinDelta &&
+          abs >= gesture.peak * wheel.riseMinPeakRatio)
       const isSustained =
         !isNewGesture &&
         tweenRef.current === null &&
