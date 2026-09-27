@@ -37,6 +37,7 @@ export default function Splash({ title, ctaText }: SplashProps) {
       - at animation end, `setVisible(false)` unmounts the DOM
   */
   const [visible, setVisible] = useState(() => pathname === "/")
+  const [leaving, setLeaving] = useState(false)
 
   useEffect(() => {
     if (pathname === "/") {
@@ -189,13 +190,13 @@ export default function Splash({ title, ctaText }: SplashProps) {
   }, [marqueeX])
 
   /**
-   * Show custom text cursor while splash is visible
+   * Show custom text cursor while splash is visible, until the click that leaves it
    */
   useEffect(() => {
-    if (!visible) return
+    if (!visible || leaving) return
     setCursor(true)
     return () => setCursor(false)
-  }, [setCursor, visible])
+  }, [setCursor, visible, leaving])
 
   /**
    * Splash exit animation — /projects is mounted immediately under the wrap
@@ -207,6 +208,7 @@ export default function Splash({ title, ctaText }: SplashProps) {
   const handleEnter = useCallback(() => {
     if (isLeavingRef.current || !rectRef.current || !wrapRef.current) return
     isLeavingRef.current = true
+    setLeaving(true)
 
     // 1. Pre-load /projects: it starts loading in the background
     //    while the splash is dissolving above.
@@ -265,14 +267,14 @@ export default function Splash({ title, ctaText }: SplashProps) {
       delay: fadeDelay,
       ease: "power2.inOut",
       onComplete: () => {
-        setCursor(false)
         setVisible(false)
+        setLeaving(false)
       },
     })
 
     // ProjectsScroll will trigger the reveal animation when `show`
     // becomes true and previousPath is "/", so here we don't need to dispatch.
-  }, [setCursor, router])
+  }, [router])
 
   if (!visible) return null
 
