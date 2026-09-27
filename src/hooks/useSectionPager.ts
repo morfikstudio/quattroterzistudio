@@ -11,7 +11,7 @@ import {
 import gsap from "gsap"
 
 const CONFIG = {
-  /** Max sections a single movement can travel away from where it started. */
+  /** Max sections the target can run ahead of the section on screen. */
   maxSteps: 3,
   duration: {
     base: 0.9,
@@ -24,11 +24,9 @@ const CONFIG = {
     minImpulseGapMs: 250,
     /** A delta below peak × decayRatio marks the gesture as decaying (momentum tail). */
     decayRatio: 0.5,
-    /** While decaying, a delta above trough × riseFactor is a new swipe. */
-    riseFactor: 2.5,
-    riseMinDelta: 8,
-    /** ...and it must also reach this fraction of the previous peak. */
-    riseMinPeakRatio: 0.4,
+    /** While decaying, recent deltas this much above the previous ones mean a new swipe. */
+    accelFactor: 1.5,
+    accelMinDelta: 4,
     /** Once landed, a delta still at peak × sustainRatio means the user is still scrolling. */
     sustainRatio: 0.9,
     /** Summed |delta| within strongWindowMs of a gesture that adds 1 or 2 extra steps. */
@@ -100,7 +98,6 @@ export function useSectionPager({
   const heightRef = useRef(0)
   const indexRef = useRef(0)
   const targetRef = useRef(0)
-  const anchorRef = useRef(0)
   const tweenRef = useRef<gsap.core.Tween | null>(null)
   const draggingRef = useRef(false)
   const enabledRef = useRef(enabled)
@@ -136,7 +133,6 @@ export function useSectionPager({
       const distance = Math.abs(target - state.pos)
       if (distance < 0.001) {
         state.pos = target
-        anchorRef.current = target
         apply(target)
         onComplete?.()
         return
@@ -152,7 +148,6 @@ export function useSectionPager({
         onUpdate: () => apply(state.pos),
         onComplete: () => {
           tweenRef.current = null
-          anchorRef.current = target
           onComplete?.()
         },
       })
@@ -163,17 +158,12 @@ export function useSectionPager({
   const step = useCallback(
     (delta: number) => {
       const total = countRef.current
-      const moving = tweenRef.current !== null
-      if (!moving) {
-        anchorRef.current = clampIndex(Math.round(stateRef.current.pos), total)
-      }
-
-      const anchor = anchorRef.current
-      const base = moving ? targetRef.current : anchor
+      const current = clampIndex(Math.round(stateRef.current.pos), total)
+      const base = tweenRef.current ? targetRef.current : current
       const next = clampIndex(
         Math.min(
-          anchor + CONFIG.maxSteps,
-          Math.max(anchor - CONFIG.maxSteps, base + delta),
+          current + CONFIG.maxSteps,
+          Math.max(current - CONFIG.maxSteps, base + delta),
         ),
         total,
       )
@@ -206,8 +196,23 @@ export function useSectionPager({
       sum: 0,
       bonus: 0,
       peak: 0,
-      trough: Infinity,
+      recent: [] as number[],
       decayed: false,
+    }
+
+    const average = (values: number[]) =>
+      values.reduce((sum, v) => sum + v, 0) / values.length
+
+    // Momentum tails only slow down: a rise over the previous deltas is a new swipe
+    const isAccelerating = (abs: number) => {
+      const { recent } = gesture
+      if (recent.length < 4) return false
+      const newer = average([recent[recent.length - 1], abs])
+      const older = average(recent.slice(-4, -1))
+      return (
+        newer > older * CONFIG.wheel.accelFactor &&
+        newer - older > CONFIG.wheel.accelMinDelta
+      )
     }
 
     const onWheel = (e: WheelEvent) => {
@@ -224,13 +229,14 @@ export function useSectionPager({
       const dir = Math.sign(delta)
       const abs = Math.abs(delta)
 
-      const isNewGesture =
-        now - gesture.lastTime > wheel.idleMs ||
-        dir !== gesture.dir ||
-        (gesture.decayed &&
-          abs > gesture.trough * wheel.riseFactor &&
-          abs - gesture.trough > wheel.riseMinDelta &&
-          abs >= gesture.peak * wheel.riseMinPeakRatio)
+      const canImpulse = now - gesture.lastImpulse >= wheel.minImpulseGapMs
+      const isIdle = now - gesture.lastTime > wheel.idleMs
+      // Held back until the gap has passed, so the signal is not reset and lost
+      const isNewSwipe =
+        canImpulse &&
+        (dir !== gesture.dir ||
+          (gesture.decayed && (isAccelerating(abs) || abs > gesture.peak)))
+      const isNewGesture = isIdle || isNewSwipe
       const isSustained =
         !isNewGesture &&
         tweenRef.current === null &&
@@ -244,24 +250,22 @@ export function useSectionPager({
         gesture.sum = 0
         gesture.bonus = 0
         gesture.peak = 0
-        gesture.trough = Infinity
+        gesture.recent = []
         gesture.decayed = false
       }
 
       gesture.sum += abs
+      gesture.recent.push(abs)
+      if (gesture.recent.length > 6) gesture.recent.shift()
       if (abs > gesture.peak) {
         gesture.peak = abs
         gesture.decayed = false
-        gesture.trough = Infinity
       } else if (abs < gesture.peak * wheel.decayRatio) {
         gesture.decayed = true
       }
-      if (gesture.decayed) gesture.trough = Math.min(gesture.trough, abs)
 
-      if (
-        (isNewGesture || isSustained) &&
-        now - gesture.lastImpulse >= wheel.minImpulseGapMs
-      ) {
+      // After a real pause the input is deliberate (e.g. slow wheel notches): skip the gap
+      if (isIdle || ((isNewSwipe || isSustained) && canImpulse)) {
         gesture.lastImpulse = now
         step(dir)
       }
