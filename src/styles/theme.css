@@ -27,6 +27,15 @@
   }
 }
 
+/* Viewports served landscape images; keep in sync with LANDSCAPE_MEDIA in utils/media.ts */
+@custom-variant image-landscape {
+  @media (min-width: 1367px),
+    (min-width: 1024px) and (pointer: fine),
+    (min-width: 1024px) and (pointer: none) {
+    @slot;
+  }
+}
+
 /* Text selection highlight */
 ::selection {
   background-color: #000;

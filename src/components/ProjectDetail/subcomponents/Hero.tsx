@@ -90,6 +90,7 @@ export default function Hero({ cover, title, year }: HeroProps) {
         <Image
           image={cover}
           resizeId="cover-detail"
+          sizes="100vw"
           className="w-full"
           priority
         />

@@ -136,3 +136,22 @@ export function getMediaVariantTitle(
 
   return ""
 }
+
+function getColSpan(classes: string, prefix = ""): number | null {
+  const match = classes.match(new RegExp(`(?:^|\\s)${prefix}col-span-(\\d+)`))
+  return match ? Number(match[1]) : null
+}
+
+/** `sizes` for a media block from its layout classes, on the `grid-cols-13 md:grid-cols-12` grid. */
+export function getGridSizes(
+  mobileClasses: string,
+  desktopClasses: string = mobileClasses,
+): string {
+  const mobile = getColSpan(mobileClasses) ?? 13
+  const desktop = Math.min(
+    12,
+    getColSpan(desktopClasses, "md:") ?? getColSpan(desktopClasses) ?? 12,
+  )
+
+  return `(min-width: 768px) ${Math.ceil((desktop / 12) * 100)}vw, ${Math.ceil((mobile / 13) * 100)}vw`
+}

@@ -9,6 +9,7 @@ import type { PROJECT_QUERY_RESULT } from "@/sanity/types"
 import {
   SINGLE_MEDIA_VARIANTS,
   DOUBLE_MEDIA_VARIANTS,
+  getGridSizes,
 } from "@/constants/projectMediaVariants"
 import { cn } from "@/utils/classNames"
 
@@ -400,6 +401,9 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
                     <Image
                       image={block.image}
                       resizeId="media-block-single"
+                      sizes={getGridSizes(
+                        getMediaLayoutByVariant(block._type, block.variant),
+                      )}
                       className="w-full"
                     />
                   </div>
@@ -437,6 +441,7 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
                           alt: block.media1.alt ?? "",
                         }}
                         resizeId="media-block-double"
+                        sizes={getGridSizes(portraitLayout1, landscapeLayout1)}
                         className="w-full"
                       />
                     </div>
@@ -459,6 +464,7 @@ export default function MediaBlocks({ blocks }: MediaBlocksProps) {
                           alt: block.media2.alt ?? "",
                         }}
                         resizeId="media-block-double"
+                        sizes={getGridSizes(portraitLayout2, landscapeLayout2)}
                         className="w-full"
                       />
                     </div>

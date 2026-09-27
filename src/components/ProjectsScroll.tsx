@@ -11,15 +11,16 @@ import {
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import gsap from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
 
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
-import { getImageUrl } from "@/utils/media"
+import { getImageSources, getImageUrl, THUMB_SIZES } from "@/utils/media"
 import { cn } from "@/utils/classNames"
 
-import { useBreakpoint } from "@/stores/breakpointStore"
+import { useBreakpointStore } from "@/stores/breakpointStore"
+import { useContactStore } from "@/stores/contactStore"
 import { useNavigationStore } from "@/stores/navigationStore"
 import { usePointerCoarse } from "@/hooks/usePointerCoarse"
+import { useSectionPager } from "@/hooks/useSectionPager"
 
 import { useLenis } from "@/components/LenisProvider"
 import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
@@ -31,31 +32,44 @@ type ProjectsScrollProps = {
   projects: PROJECTS_QUERY_RESULT
 }
 
-gsap.registerPlugin(ScrollTrigger)
-
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect
-
-function clamp(value: number) {
-  return Math.min(1, Math.max(0, value))
-}
 
 function projectTitleId(project: PROJECTS_QUERY_RESULT[number]) {
   return `project-${project._id}-title`
 }
 
+// Matches the pager's maxSteps, so a multi-section jump lands on already loaded images
+const WARM_RANGE = 3
+
+function addWarmRange(warm: Set<number>, index: number, count: number) {
+  const start = Math.max(0, index - WARM_RANGE)
+  const end = Math.min(count - 1, index + WARM_RANGE)
+  let next = warm
+  for (let i = start; i <= end; i++) {
+    if (next.has(i)) continue
+    if (next === warm) next = new Set(warm)
+    next.add(i)
+  }
+  return next
+}
+
 export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const router = useRouter()
   const lenis = useLenis()
-  const { current: breakpoint } = useBreakpoint()
+  const breakpoint = useBreakpointStore((s) => s.current)
   const coarsePointer = usePointerCoarse()
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
   const setPendingActiveSlug = useNavigationStore((s) => s.setPendingActiveSlug)
+  const isContactOpen = useContactStore((s) => s.isOpen)
 
   const [firstBgReady, setFirstBgReady] = useState(false)
   const [firstThumbReady, setFirstThumbReady] = useState(false)
   const [isRouteTransitioning, setIsRouteTransitioning] = useState(false)
-  const scrollDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [warm, setWarm] = useState(() =>
+    addWarmRange(new Set(), 0, projects.length),
+  )
 
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const sectionsRefs = useRef<(HTMLElement | null)[]>([])
@@ -76,7 +90,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const transitioningRef = useRef(false)
   const transitionTweenRef = useRef<gsap.core.Tween | null>(null)
   const abortRef = useRef<AbortController | null>(null)
-  const isSnappedRef = useRef(true) // true when scroll is fully at rest (user + snap animation)
+  const syncIndexRef = useRef<((index: number) => void) | null>(null)
   const isRevealingRef = useRef(false) // true during splash reveal thumb animation
   const fromArchiveRef = useRef(
     typeof window !== "undefined" &&
@@ -93,12 +107,48 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   /** Scroll-driven thumb index (decoupled reveal animation from scroll scrub). */
   const lastThumbScrollIndexRef = useRef(0)
   const thumbRevealTweenRef = useRef<gsap.core.Tween | null>(null)
-  const thumbSyncDuringRefreshRef = useRef(false)
 
-  const raf = useRef<number | null>(null)
-  const lastWidth = useRef<number>(
-    typeof window !== "undefined" ? window.innerWidth : 0,
+  const parallaxConfig = coarsePointer
+    ? { parallaxFactor: 0.2, bgScale: 1.025 }
+    : { parallaxFactor: 0.5, bgScale: 1 }
+
+  const hasFirstBg = Boolean(getImageSources(projects[0]?.coverList))
+  const hasFirstThumb = Boolean(
+    getImageSources(projects[0]?.coverDetail, "cover-thumb"),
   )
+  const show =
+    (firstBgReady || !hasFirstBg) && (firstThumbReady || !hasFirstThumb)
+
+  const renderPosition = useCallback(
+    (pos: number, height: number) => {
+      const parallaxOffset = height * parallaxConfig.parallaxFactor
+
+      sectionsRefs.current.forEach((section, i) => {
+        if (!section) return
+        const offset = i - pos
+        section.style.transform = `translate3d(0, ${offset * 100}%, 0)`
+
+        const bg = bgRefs.current[i]
+        if (bg) {
+          const clamped = Math.max(-1, Math.min(1, offset))
+          bg.style.backgroundPosition = `50% ${-clamped * parallaxOffset}px`
+        }
+      })
+    },
+    [parallaxConfig.parallaxFactor],
+  )
+
+  const pager = useSectionPager({
+    count: projects.length,
+    stageRef: wrapRef,
+    enabled: show && !isRouteTransitioning && !isContactOpen,
+    onRender: renderPosition,
+    onIndexChange: (index) => {
+      syncIndexRef.current?.(index)
+      setActiveIndex(index)
+      setWarm((prev) => addWarmRange(prev, index, projects.length))
+    },
+  })
 
   const isDesktop = useMemo(() => {
     return (
@@ -108,45 +158,16 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     )
   }, [breakpoint])
 
-  const onResize = useCallback(() => {
-    // Only react to width changes (ignore mobile browser-bar height shifts).
-    const newWidth = window.innerWidth
-    if (newWidth === lastWidth.current) return
-
-    lastWidth.current = newWidth
-
-    if (raf.current !== null) return
-
-    raf.current = window.requestAnimationFrame(() => {
-      raf.current = null
-      ScrollTrigger.refresh()
-    })
-  }, [])
-
-  /**
-   * Document Y of a section, measured from the DOM. On mobile sections are
-   * deliberately taller than the viewport (`min-h-[calc(100dvh+safe-area+2px)]`),
-   * so deriving positions from `innerHeight` drifts cumulatively.
-   */
-  const getSectionTop = useCallback((index: number) => {
-    const sectionEl = sectionsRefs.current[index]
-
-    if (sectionEl) {
-      return Math.round(sectionEl.getBoundingClientRect().top + window.scrollY)
-    }
-
-    return (wrapRef.current?.offsetTop ?? 0) + index * window.innerHeight
-  }, [])
-
   const handleProjectClick = useCallback(
     async (index: number, url: string) => {
-      if (transitioningRef.current || !lenis) return
+      if (transitioningRef.current) return
       transitioningRef.current = true
 
       if (!isDesktop) {
+        setIsRouteTransitioning(true)
         setPreviousPath(window.location.pathname)
-        if (!isSnappedRef.current && wrapRef.current) {
-          lenis.scrollTo(getSectionTop(index), {
+        if (pager.isMoving()) {
+          pager.goTo(index, {
             duration: 0.3,
             onComplete: () => dispatchCurtainNavigate(url),
           })
@@ -182,8 +203,6 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         let didNavigate = false
         try {
           if (signal.aborted) return
-
-          lenis.stop()
 
           previousInlineTransition = innerEl.style.transition
 
@@ -281,8 +300,8 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         }
       }
 
-      if (!isSnappedRef.current && wrapRef.current) {
-        lenis.scrollTo(getSectionTop(index), {
+      if (pager.isMoving()) {
+        pager.goTo(index, {
           duration: 0.3,
           onComplete: () => doTransition(),
         })
@@ -290,12 +309,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         doTransition()
       }
     },
-    [lenis, router, isDesktop, setPreviousPath, getSectionTop],
-  )
-
-  const show = useMemo(
-    () => firstBgReady && firstThumbReady,
-    [firstBgReady, firstThumbReady],
+    [router, isDesktop, setPreviousPath, pager],
   )
 
   /* Clip-path entrance when coming from /archive — hide before first paint */
@@ -320,18 +334,11 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     if (!breakpoint || projects.length === 0 || !wrapRef.current) return
 
     let textTl: gsap.core.Timeline | null = null
-    let onRefreshInit: (() => void) | null = null
-    let onRefreshComplete: (() => void) | null = null
 
     const ctx = gsap.context(() => {
-      let activeIndex = 0
-      let targetIndex = 0
-      const parallaxConfig = coarsePointer
-        ? { parallaxFactor: 0.2, bgScale: 1.025 }
-        : { parallaxFactor: 0.5, bgScale: 1 }
-
-      // overall progress of each section
-      const sectionProgresses = Array.from({ length: projects.length }, () => 0)
+      const initialIndex = pager.getIndex()
+      let activeIndex = initialIndex
+      let targetIndex = initialIndex
 
       // Default text positions: 0% active, -110% past, 110% future.
       function applyTextCanonicalState(activeIdx: number) {
@@ -347,13 +354,8 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       }
 
       function handleTexts(nextIndex: number) {
-        if (
-          /* If the text is already being animated to the next index, do nothing */
-          (textTl && targetIndex === nextIndex) ||
-          /* If the next index is the same as the active index, do nothing */
-          nextIndex === activeIndex
-        )
-          return
+        /* Already showing, or already animating towards, the next index */
+        if (nextIndex === (textTl ? targetIndex : activeIndex)) return
 
         /* If text is already being animated, kill it and reset the active index */
         if (textTl) {
@@ -509,11 +511,6 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       function commitThumbReveal(nextIndex: number) {
         if (isRevealingRef.current) return
 
-        if (thumbSyncDuringRefreshRef.current) {
-          applyThumbStaticState(nextIndex)
-          return
-        }
-
         if (nextIndex === lastThumbScrollIndexRef.current) {
           return
         }
@@ -570,15 +567,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         })
       }
 
-      function getActiveIndexFromProgress() {
-        for (let i = projects.length - 1; i >= 0; i--) {
-          if (sectionProgresses[i] > 0) return i
-        }
-        return 0
-      }
-
-      const syncFromProgress = () => {
-        const nextIndex = getActiveIndexFromProgress()
+      const syncFromIndex = (nextIndex: number) => {
         activeSectionIndexRef.current = nextIndex
 
         // Update fixed counter text
@@ -587,6 +576,10 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         }
 
         for (let i = 0; i < projects.length; i++) {
+          // Keeps Tab and screen readers off the off-screen projects.
+          const section = sectionsRefs.current[i]
+          if (section) section.inert = i !== nextIndex
+
           const group = copyGroupRefs.current[i]
           if (group) {
             group.style.zIndex = i === nextIndex ? "30" : "0"
@@ -605,114 +598,24 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         handleTexts(nextIndex)
       }
 
-      sectionsRefs.current.forEach((s, i) => {
-        const bg = bgRefs.current[i]
-        const { innerHeight: wh } = window
-        const parallaxOffset = wh * parallaxConfig.parallaxFactor
-
-        if (!s || !bg) return
-
-        const isFirst = i === 0
-
+      bgRefs.current.forEach((bg) => {
+        if (!bg) return
         gsap.set(bg, {
           scale: parallaxConfig.bgScale,
           transformOrigin: "50% 50%",
         })
-
-        /* Background parallax */
-        gsap.fromTo(
-          bg,
-          {
-            backgroundPosition: () =>
-              isFirst ? "50% 0px" : `50% ${-parallaxOffset}px`,
-          },
-          {
-            backgroundPosition: () => `50% ${parallaxOffset}px`,
-            ease: "none",
-            scrollTrigger: {
-              trigger: s,
-              start: () => (isFirst ? "top top" : "top bottom"),
-              end: "bottom top",
-              scrub: true,
-              invalidateOnRefresh: true,
-            },
-          },
-        )
-
-        /* Section main progress */
-        ScrollTrigger.create({
-          trigger: s,
-          start: "top center",
-          end: "bottom center",
-          scrub: true,
-          onUpdate: ({ progress }) => {
-            sectionProgresses[i] = clamp(progress)
-            syncFromProgress()
-          },
-          onRefresh: ({ progress }) => {
-            sectionProgresses[i] = clamp(progress)
-            syncFromProgress()
-          },
-        })
       })
 
-      /* Sections snap — enabled on coarse pointers too. It was originally
-      limited to fine pointers because mobile browser bars resized the viewport
-      mid-gesture; Lenis now runs with `syncTouch: true` (see LenisProvider), so
-      it drives the scroll position itself. The browser never sees a native
-      scroll gesture, the URL bar stays put and there is no native momentum to
-      fight, which removes both causes. */
-      if (projects.length > 1) {
-        ScrollTrigger.create({
-          trigger: wrapRef.current,
-          start: "top top",
-          end: () =>
-            `+=${getSectionTop(projects.length - 1) - getSectionTop(0)}`,
-          snap: {
-            snapTo: 1 / (projects.length - 1),
-            directional: false,
-            inertia: true,
-            delay: 0,
-            duration: { min: 0.2, max: 0.35 },
-            ease: "power1.out",
-          },
-          invalidateOnRefresh: true,
-          onUpdate: syncFromProgress,
-          onRefresh: syncFromProgress,
-        })
-      }
+      applyTextCanonicalState(initialIndex)
+      applyThumbStaticState(initialIndex)
 
-      applyTextCanonicalState(0)
-      applyThumbStaticState(0)
-
-      onRefreshInit = () => {
-        thumbSyncDuringRefreshRef.current = true
-        syncFromProgress()
-      }
-      onRefreshComplete = () => {
-        syncFromProgress()
-        thumbSyncDuringRefreshRef.current = false
-      }
-      ScrollTrigger.addEventListener("refreshInit", onRefreshInit)
-      ScrollTrigger.addEventListener("refresh", onRefreshComplete)
-      syncFromProgress()
+      syncIndexRef.current = syncFromIndex
+      syncFromIndex(initialIndex)
+      pager.render()
     }, wrapRef)
 
-    window.addEventListener("resize", onResize)
-
     return () => {
-      window.removeEventListener("resize", onResize)
-
-      if (raf.current !== null) {
-        window.cancelAnimationFrame(raf.current)
-      }
-
-      if (onRefreshInit) {
-        ScrollTrigger.removeEventListener("refreshInit", onRefreshInit)
-      }
-      if (onRefreshComplete) {
-        ScrollTrigger.removeEventListener("refresh", onRefreshComplete)
-      }
+      syncIndexRef.current = null
 
       thumbRevealTweenRef.current?.kill()
       thumbRevealTweenRef.current = null
@@ -724,31 +627,13 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       setIsRouteTransitioning(false)
 
       ctx.revert()
-      lenis?.start()
     }
-  }, [breakpoint, coarsePointer, projects, lenis, getSectionTop])
+  }, [breakpoint, projects, pager, parallaxConfig.bgScale])
 
-  /* isSnappedRef: true when scroll is fully at rest (user + snap animation) */
   useEffect(() => {
     if (!lenis) return
-
-    const handleScroll = () => {
-      isSnappedRef.current = false
-      if (scrollDebounceRef.current) {
-        clearTimeout(scrollDebounceRef.current)
-      }
-      scrollDebounceRef.current = setTimeout(() => {
-        isSnappedRef.current = true
-      }, 50)
-    }
-
-    lenis.on("scroll", handleScroll)
-    return () => {
-      lenis.off("scroll", handleScroll)
-      if (scrollDebounceRef.current) {
-        clearTimeout(scrollDebounceRef.current)
-      }
-    }
+    lenis.stop()
+    return () => lenis.start()
   }, [lenis])
 
   // Splash reveal: scale the bg in and clip-reveal the thumb. Runs only when
@@ -834,10 +719,9 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   }, [show])
 
   const handleArchiveClick = useCallback(() => {
-    if (transitioningRef.current || !lenis) return
+    if (transitioningRef.current) return
     transitioningRef.current = true
     setIsRouteTransitioning(true)
-    lenis.stop()
 
     const activeSlug =
       projects[activeSectionIndexRef.current]?.slug?.current ?? null
@@ -850,30 +734,8 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
       return
     }
 
-    // Disable ScrollTriggers before the layout change: position:fixed shrinks
-    // scroll height and an active trigger would recompute and break visually.
-    ScrollTrigger.getAll().forEach((st) => st.disable(false))
-
-    const scrollY = window.scrollY
-
-    // Freeze the wrapper to the viewport; the transform makes it a containing
-    // block so all fixed children clip together.
-    gsap.set(wrap, {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100dvh",
-      overflow: "hidden",
-      transform: "translate3d(0,0,0)",
-      zIndex: 40,
-    })
-
-    // Offset background sections to preserve visual scroll position
-    const bgContainer = wrap.children[0] as HTMLElement | null
-    if (bgContainer && scrollY > 0) {
-      gsap.set(bgContainer, { y: -scrollY })
-    }
+    // The transform makes the wrapper the containing block, so all fixed children clip together.
+    gsap.set(wrap, { transform: "translate3d(0,0,0)", zIndex: 40 })
 
     gsap.fromTo(
       wrap,
@@ -888,7 +750,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         },
       },
     )
-  }, [router, lenis, setPreviousPath, setPendingActiveSlug, projects])
+  }, [router, setPreviousPath, setPendingActiveSlug, projects])
 
   /* Entry animation for the ListCTA (bottom-left archive button) */
   useEffect(() => {
@@ -910,43 +772,42 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
   /* Initialize first background image */
   useEffect(() => {
-    if (!projects[0]) return
+    const url = getImageUrl({ image: projects[0]?.coverList, breakpoint })
+    if (!url) return
+
     const img = new window.Image()
-    img.onload = () => setFirstBgReady(true)
-    img.onerror = () => setFirstBgReady(true)
-    img.src = projects[0]
-      ? getImageUrl({
-          image: projects[0].coverList,
-          breakpoint,
-        })
-      : ""
-  }, [])
+    img.onload = img.onerror = () => setFirstBgReady(true)
+    img.src = url
+
+    return () => {
+      img.onload = img.onerror = null
+    }
+  }, [projects, breakpoint])
 
   return (
     <div
       ref={wrapRef}
       className={cn(
-        "overflow-x-clip max-md:touch-pan-y",
+        "fixed inset-0 overflow-clip touch-none overscroll-none bg-black",
         "transition-opacity duration-500 ease-out",
         !show && "opacity-0",
         !show && "pointer-events-none",
       )}
     >
       {/* BACKGROUNDS */}
-      <div className="relative z-10">
+      <div className="absolute inset-0 z-10">
         {projects.map((p, i) => (
           <section
             key={p._id}
-            className={cn(
-              "relative w-full shrink-0 overflow-hidden",
-              "md:h-dvh",
-              "max-md:min-h-[calc(100dvh+env(safe-area-inset-bottom,0px)+2px)]",
-              "phone-landscape:h-auto phone-landscape:min-h-[calc(100dvh+env(safe-area-inset-bottom,0px)+2px)]",
-            )}
+            className="absolute inset-0 overflow-hidden"
             ref={(el) => {
               sectionsRefs.current[i] = el
             }}
-            style={{ zIndex: i + 10 }}
+            style={{
+              zIndex: i + 10,
+              transform: `translate3d(0, ${i * 100}%, 0)`,
+              willChange: "transform",
+            }}
             aria-labelledby={projectTitleId(p)}
           >
             <Link
@@ -969,10 +830,9 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                 )}
                 style={{
                   willChange: "background-position",
-                  backgroundImage: `url(${getImageUrl({
-                    image: p.coverList,
-                    breakpoint,
-                  })})`,
+                  backgroundImage: warm.has(i)
+                    ? `url(${getImageUrl({ image: p.coverList, breakpoint })})`
+                    : undefined,
                 }}
               />
             </Link>
@@ -982,12 +842,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
       <div
         ref={fixedLayerRef}
-        className={cn(
-          "fixed top-0 left-0 z-20 w-full pointer-events-none",
-          "md:h-dvh",
-          "max-md:min-h-[calc(100dvh+env(safe-area-inset-bottom,0px)+2px)]",
-          "phone-landscape:h-auto phone-landscape:min-h-[calc(100dvh+env(safe-area-inset-bottom,0px)+2px)]",
-        )}
+        className="fixed inset-0 z-20 pointer-events-none"
       >
         {/* THUMBS */}
         <div className="absolute inset-0 z-0 isolate pointer-events-none">
@@ -1046,16 +901,19 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                   )}
                   style={{ willChange: "transform" }}
                 >
-                  <Image
-                    image={p.coverDetail}
-                    resizeId="cover-thumb"
-                    fill
-                    fit="cover"
-                    priority={i < 2}
-                    onLoad={
-                      i === 0 ? () => setFirstThumbReady(true) : undefined
-                    }
-                  />
+                  {warm.has(i) && (
+                    <Image
+                      image={p.coverDetail}
+                      resizeId="cover-thumb"
+                      sizes={THUMB_SIZES}
+                      fill
+                      fit="cover"
+                      priority={i === 0}
+                      onLoad={
+                        i === 0 ? () => setFirstThumbReady(true) : undefined
+                      }
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -1162,7 +1020,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         ref={scrollIndicatorWrapRef}
         className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
       >
-        <ScrollIndicator />
+        <ScrollIndicator hidden={activeIndex !== 0} />
       </div>
 
       {/* VIEW TOGGLE (desktop) / ARCHIVE BUTTON (mobile) */}

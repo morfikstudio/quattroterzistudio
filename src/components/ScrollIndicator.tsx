@@ -9,11 +9,13 @@ import { cn } from "@/utils/classNames"
 type ScrollIndicatorProps = {
   delay?: number
   variant?: "light" | "dark"
+  hidden?: boolean
 }
 
 export default function ScrollIndicator({
   delay = 3000,
   variant = "light",
+  hidden = false,
 }: ScrollIndicatorProps) {
   const lenis = useLenis()
   const animationKey = useAnimationKey()
@@ -87,7 +89,7 @@ export default function ScrollIndicator({
           "overflow-hidden pointer-events-none",
           variant === "dark" ? "bg-black/20" : "bg-white/20",
           "transition-opacity duration-500 ease-out",
-          show ? "opacity-100" : "opacity-0",
+          show && !hidden ? "opacity-100" : "opacity-0",
         )}
       >
         <div

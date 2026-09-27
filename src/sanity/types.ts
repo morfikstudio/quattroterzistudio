@@ -326,7 +326,7 @@ export type AllSanitySchemaTypes =
 
 // Source: src/sanity/lib/queries.ts
 // Variable: PROJECTS_QUERY
-// Query: *[_type == "project" && defined(slug.current) && isSelected == true]|order(orderRank asc)[0...100]{    _id,    orderRank,    title,    slug,    year,    coverList,    coverDetail  }
+// Query: *[_type == "project" && defined(slug.current) && isSelected == true]|order(orderRank asc)[0...100]{    _id,    orderRank,    title,    slug,    year,    coverList{  ...,  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }},    coverDetail{  ...,  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }}  }
 export type PROJECTS_QUERY_RESULT = Array<{
   _id: string
   orderRank: string | null
@@ -334,44 +334,60 @@ export type PROJECTS_QUERY_RESULT = Array<{
   slug: Slug
   year: number
   coverList: {
-    portrait?: {
+    portrait: {
       asset?: SanityImageAssetReference
       media?: unknown
       hotspot?: SanityImageHotspot
       crop?: SanityImageCrop
       _type: "image"
-    }
-    landscape?: {
+      meta: {
+        lqip: string | null
+        width: number | null
+      } | null
+    } | null
+    landscape: {
       asset?: SanityImageAssetReference
       media?: unknown
       hotspot?: SanityImageHotspot
       crop?: SanityImageCrop
       _type: "image"
-    }
+      meta: {
+        lqip: string | null
+        width: number | null
+      } | null
+    } | null
     alt?: string
   } | null
   coverDetail: {
-    portrait?: {
+    portrait: {
       asset?: SanityImageAssetReference
       media?: unknown
       hotspot?: SanityImageHotspot
       crop?: SanityImageCrop
       _type: "image"
-    }
-    landscape?: {
+      meta: {
+        lqip: string | null
+        width: number | null
+      } | null
+    } | null
+    landscape: {
       asset?: SanityImageAssetReference
       media?: unknown
       hotspot?: SanityImageHotspot
       crop?: SanityImageCrop
       _type: "image"
-    }
+      meta: {
+        lqip: string | null
+        width: number | null
+      } | null
+    } | null
     alt?: string
   } | null
 }>
 
 // Source: src/sanity/lib/queries.ts
 // Variable: ARCHIVE_PROJECTS_QUERY
-// Query: *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...100]{    _id,    orderRank,    title,    slug,    year,    coverList,    coverDetail  }
+// Query: *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...100]{    _id,    orderRank,    title,    slug,    year,    coverList{  ...,  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }},    coverDetail{  ...,  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }}  }
 export type ARCHIVE_PROJECTS_QUERY_RESULT = Array<{
   _id: string
   orderRank: string | null
@@ -379,37 +395,53 @@ export type ARCHIVE_PROJECTS_QUERY_RESULT = Array<{
   slug: Slug
   year: number
   coverList: {
-    portrait?: {
+    portrait: {
       asset?: SanityImageAssetReference
       media?: unknown
       hotspot?: SanityImageHotspot
       crop?: SanityImageCrop
       _type: "image"
-    }
-    landscape?: {
+      meta: {
+        lqip: string | null
+        width: number | null
+      } | null
+    } | null
+    landscape: {
       asset?: SanityImageAssetReference
       media?: unknown
       hotspot?: SanityImageHotspot
       crop?: SanityImageCrop
       _type: "image"
-    }
+      meta: {
+        lqip: string | null
+        width: number | null
+      } | null
+    } | null
     alt?: string
   } | null
   coverDetail: {
-    portrait?: {
+    portrait: {
       asset?: SanityImageAssetReference
       media?: unknown
       hotspot?: SanityImageHotspot
       crop?: SanityImageCrop
       _type: "image"
-    }
-    landscape?: {
+      meta: {
+        lqip: string | null
+        width: number | null
+      } | null
+    } | null
+    landscape: {
       asset?: SanityImageAssetReference
       media?: unknown
       hotspot?: SanityImageHotspot
       crop?: SanityImageCrop
       _type: "image"
-    }
+      meta: {
+        lqip: string | null
+        width: number | null
+      } | null
+    } | null
     alt?: string
   } | null
 }>
@@ -483,7 +515,7 @@ export type PROJECT_METADATA_QUERY_RESULT = {
 
 // Source: src/sanity/lib/queries.ts
 // Variable: PROJECT_QUERY
-// Query: *[_type == "project" && slug.current == $slug][0]{    _id,    orderRank,    title,    slug,    description,    year,    client,    sector,    credits,    coverDetail,    blocks[]{      _key,      _type,      payoff,      "variant": coalesce(variant, singleVariant, doubleVariant),      useVideo,      image,      alt,      "videoAsset": video.asset->{ url, mimeType, originalFilename },      media1{        image,        alt      },      media2{        image,        alt      }    },    "nextProject": coalesce(      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year },      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year }    )  }
+// Query: *[_type == "project" && slug.current == $slug][0]{    _id,    orderRank,    title,    slug,    description,    year,    client,    sector,    credits,    coverDetail{  ...,  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }},    blocks[]{      _key,      _type,      payoff,      "variant": coalesce(variant, singleVariant, doubleVariant),      useVideo,      image{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },      alt,      "videoAsset": video.asset->{ url, mimeType, originalFilename },      media1{        image{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },        alt      },      media2{        image{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },        alt      }    },    "nextProject": coalesce(      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList{  ...,  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }}, coverDetail{  ...,  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }}, year },      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList{  ...,  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }}, coverDetail{  ...,  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }}, year }    )  }
 export type PROJECT_QUERY_RESULT = {
   _id: string
   orderRank: string | null
@@ -512,20 +544,28 @@ export type PROJECT_QUERY_RESULT = {
   sector: string | null
   credits: Array<string> | null
   coverDetail: {
-    portrait?: {
+    portrait: {
       asset?: SanityImageAssetReference
       media?: unknown
       hotspot?: SanityImageHotspot
       crop?: SanityImageCrop
       _type: "image"
-    }
-    landscape?: {
+      meta: {
+        lqip: string | null
+        width: number | null
+      } | null
+    } | null
+    landscape: {
       asset?: SanityImageAssetReference
       media?: unknown
       hotspot?: SanityImageHotspot
       crop?: SanityImageCrop
       _type: "image"
-    }
+      meta: {
+        lqip: string | null
+        width: number | null
+      } | null
+    } | null
     alt?: string
   } | null
   blocks: Array<
@@ -547,11 +587,31 @@ export type PROJECT_QUERY_RESULT = {
         alt: null
         videoAsset: null
         media1: {
-          image: Media1Image | null
+          image: {
+            asset?: SanityImageAssetReference
+            media?: unknown // Unable to locate the referenced type "image.media" in schema
+            hotspot?: SanityImageHotspot
+            crop?: SanityImageCrop
+            _type: "image"
+            meta: {
+              lqip: string | null
+              width: number | null
+            } | null
+          } | null
           alt: string | null
         } | null
         media2: {
-          image: Media2Image | null
+          image: {
+            asset?: SanityImageAssetReference
+            media?: unknown // Unable to locate the referenced type "media2.image.media" in schema
+            hotspot?: SanityImageHotspot
+            crop?: SanityImageCrop
+            _type: "image"
+            meta: {
+              lqip: string | null
+              width: number | null
+            } | null
+          } | null
           alt: string | null
         } | null
       }
@@ -588,6 +648,10 @@ export type PROJECT_QUERY_RESULT = {
           hotspot?: SanityImageHotspot
           crop?: SanityImageCrop
           _type: "image"
+          meta: {
+            lqip: string | null
+            width: number | null
+          } | null
         } | null
         alt: string | null
         videoAsset: {
@@ -605,37 +669,53 @@ export type PROJECT_QUERY_RESULT = {
         slug: Slug
         title: string | null
         coverList: {
-          portrait?: {
+          portrait: {
             asset?: SanityImageAssetReference
             media?: unknown
             hotspot?: SanityImageHotspot
             crop?: SanityImageCrop
             _type: "image"
-          }
-          landscape?: {
+            meta: {
+              lqip: string | null
+              width: number | null
+            } | null
+          } | null
+          landscape: {
             asset?: SanityImageAssetReference
             media?: unknown
             hotspot?: SanityImageHotspot
             crop?: SanityImageCrop
             _type: "image"
-          }
+            meta: {
+              lqip: string | null
+              width: number | null
+            } | null
+          } | null
           alt?: string
         } | null
         coverDetail: {
-          portrait?: {
+          portrait: {
             asset?: SanityImageAssetReference
             media?: unknown
             hotspot?: SanityImageHotspot
             crop?: SanityImageCrop
             _type: "image"
-          }
-          landscape?: {
+            meta: {
+              lqip: string | null
+              width: number | null
+            } | null
+          } | null
+          landscape: {
             asset?: SanityImageAssetReference
             media?: unknown
             hotspot?: SanityImageHotspot
             crop?: SanityImageCrop
             _type: "image"
-          }
+            meta: {
+              lqip: string | null
+              width: number | null
+            } | null
+          } | null
           alt?: string
         } | null
         year: number
@@ -645,37 +725,53 @@ export type PROJECT_QUERY_RESULT = {
         slug: Slug | null
         title: string | null
         coverList: {
-          portrait?: {
+          portrait: {
             asset?: SanityImageAssetReference
             media?: unknown
             hotspot?: SanityImageHotspot
             crop?: SanityImageCrop
             _type: "image"
-          }
-          landscape?: {
+            meta: {
+              lqip: string | null
+              width: number | null
+            } | null
+          } | null
+          landscape: {
             asset?: SanityImageAssetReference
             media?: unknown
             hotspot?: SanityImageHotspot
             crop?: SanityImageCrop
             _type: "image"
-          }
+            meta: {
+              lqip: string | null
+              width: number | null
+            } | null
+          } | null
           alt?: string
         } | null
         coverDetail: {
-          portrait?: {
+          portrait: {
             asset?: SanityImageAssetReference
             media?: unknown
             hotspot?: SanityImageHotspot
             crop?: SanityImageCrop
             _type: "image"
-          }
-          landscape?: {
+            meta: {
+              lqip: string | null
+              width: number | null
+            } | null
+          } | null
+          landscape: {
             asset?: SanityImageAssetReference
             media?: unknown
             hotspot?: SanityImageHotspot
             crop?: SanityImageCrop
             _type: "image"
-          }
+            meta: {
+              lqip: string | null
+              width: number | null
+            } | null
+          } | null
           alt?: string
         } | null
         year: number
@@ -687,10 +783,10 @@ export type PROJECT_QUERY_RESULT = {
 import "@sanity/client"
 declare module "@sanity/client" {
   interface SanityQueries {
-    '*[_type == "project" && defined(slug.current) && isSelected == true]|order(orderRank asc)[0...100]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverList,\n    coverDetail\n\n  }': PROJECTS_QUERY_RESULT
-    '*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...100]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverList,\n    coverDetail\n\n  }': ARCHIVE_PROJECTS_QUERY_RESULT
+    '*[_type == "project" && defined(slug.current) && isSelected == true]|order(orderRank asc)[0...100]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverList{\n  ...,\n  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },\n  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }\n},\n    coverDetail{\n  ...,\n  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },\n  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }\n}\n\n  }': PROJECTS_QUERY_RESULT
+    '*[_type == "project" && defined(slug.current)]|order(orderRank asc)[0...100]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    year,\n    coverList{\n  ...,\n  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },\n  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }\n},\n    coverDetail{\n  ...,\n  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },\n  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }\n}\n\n  }': ARCHIVE_PROJECTS_QUERY_RESULT
     '*[_type == "project" && defined(slug.current)]{\n    "slug": slug.current\n  }': PROJECT_SLUGS_QUERY_RESULT
     '*[_type == "project" && slug.current == $slug][0]{\n    title,\n    description,\n    slug,\n    coverDetail,\n    coverList\n  }': PROJECT_METADATA_QUERY_RESULT
-    '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    description,\n    year,\n    client,\n    sector,\n    credits,\n    coverDetail,\n    blocks[]{\n      _key,\n      _type,\n      payoff,\n      "variant": coalesce(variant, singleVariant, doubleVariant),\n      useVideo,\n      image,\n      alt,\n      "videoAsset": video.asset->{ url, mimeType, originalFilename },\n      media1{\n        image,\n        alt\n      },\n      media2{\n        image,\n        alt\n      }\n    },\n    "nextProject": coalesce(\n      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year },\n      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year }\n    )\n  }': PROJECT_QUERY_RESULT
+    '*[_type == "project" && slug.current == $slug][0]{\n    _id,\n    orderRank,\n    title,\n    slug,\n    description,\n    year,\n    client,\n    sector,\n    credits,\n    coverDetail{\n  ...,\n  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },\n  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }\n},\n    blocks[]{\n      _key,\n      _type,\n      payoff,\n      "variant": coalesce(variant, singleVariant, doubleVariant),\n      useVideo,\n      image{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },\n      alt,\n      "videoAsset": video.asset->{ url, mimeType, originalFilename },\n      media1{\n        image{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },\n        alt\n      },\n      media2{\n        image{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },\n        alt\n      }\n    },\n    "nextProject": coalesce(\n      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList{\n  ...,\n  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },\n  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }\n}, coverDetail{\n  ...,\n  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },\n  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }\n}, year },\n      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList{\n  ...,\n  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },\n  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }\n}, coverDetail{\n  ...,\n  portrait{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } },\n  landscape{ ..., "meta": asset->metadata{ lqip, "width": dimensions.width } }\n}, year }\n    )\n  }': PROJECT_QUERY_RESULT
   }
 }

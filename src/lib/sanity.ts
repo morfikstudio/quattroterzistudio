@@ -5,25 +5,26 @@ import { client } from "@/sanity/lib/client"
 
 const builder = imageUrlBuilder(client)
 
-/**
- * Builds a Sanity image URL with width and optional height.
- * When height is omitted or 0, only width is set so the image keeps its aspect ratio.
- * Uses dpr(2) for sharpness on Retina displays.
- *
- * @param image - Sanity image object (e.g. property.contents?.mainImage)
- * @param width - Width in pixels
- * @param height - Height in pixels; if 0 or undefined, only width is used (fluid height)
- * @returns Image URL or undefined if image is invalid
- */
-export function getSanityImageUrl(
+/** Sanity CDN URL; pass the whole image object so hotspot and crop apply. */
+export function buildSanityImageUrl(
   image: SanityImageSource | null | undefined,
-  width: number,
-  height?: number,
+  {
+    width,
+    ratio,
+    quality = 75,
+    maxWidth,
+  }: { width: number; ratio?: number; quality?: number; maxWidth?: number },
 ): string | undefined {
   if (!image) return undefined
-  const img = builder.image(image).width(width)
-  if (height != null && height > 0) {
-    return img.height(height).fit("crop").dpr(2).url()
-  }
-  return img.dpr(2).url()
+
+  // Capped to the original width: fit=crop upscales past it
+  const w = Math.round(maxWidth ? Math.min(width, maxWidth) : width)
+  const img = builder.image(image).width(w).auto("format").quality(quality)
+
+  return ratio
+    ? img
+        .height(Math.round(w / ratio))
+        .fit("crop")
+        .url()
+    : img.url()
 }
