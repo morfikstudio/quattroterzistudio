@@ -1,13 +1,21 @@
 import { defineQuery } from "next-sanity"
 
+const IMAGE_META = `"meta": asset->metadata{ lqip, "width": dimensions.width }`
+
+const RESPONSIVE_IMAGE = `{
+  ...,
+  portrait{ ..., ${IMAGE_META} },
+  landscape{ ..., ${IMAGE_META} }
+}`
+
 const PROJECTS_LIST_PROJECTION = `
     _id,
     orderRank,
     title,
     slug,
     year,
-    coverList,
-    coverDetail
+    coverList${RESPONSIVE_IMAGE},
+    coverDetail${RESPONSIVE_IMAGE}
 `
 
 /**
@@ -59,28 +67,28 @@ export const PROJECT_QUERY = defineQuery(
     client,
     sector,
     credits,
-    coverDetail,
+    coverDetail${RESPONSIVE_IMAGE},
     blocks[]{
       _key,
       _type,
       payoff,
       "variant": coalesce(variant, singleVariant, doubleVariant),
       useVideo,
-      image,
+      image{ ..., ${IMAGE_META} },
       alt,
       "videoAsset": video.asset->{ url, mimeType, originalFilename },
       media1{
-        image,
+        image{ ..., ${IMAGE_META} },
         alt
       },
       media2{
-        image,
+        image{ ..., ${IMAGE_META} },
         alt
       }
     },
     "nextProject": coalesce(
-      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year },
-      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList, coverDetail, year }
+      *[_type == "project" && defined(slug.current) && orderRank > ^.orderRank]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList${RESPONSIVE_IMAGE}, coverDetail${RESPONSIVE_IMAGE}, year },
+      *[_type == "project" && defined(slug.current)]|order(orderRank asc)[0]{ "id": _id, slug, title, coverList${RESPONSIVE_IMAGE}, coverDetail${RESPONSIVE_IMAGE}, year }
     )
   }`,
 )

@@ -1,27 +1,25 @@
-import type { SanityImageSource } from "@sanity/image-url/lib/types/types"
+import type { SanityImageObject } from "@sanity/image-url/lib/types/types"
 
-import { getSanityImageUrl } from "@/lib/sanity"
+import { buildSanityImageUrl } from "@/lib/sanity"
 
-import type { BreakpointName } from "@/stores/breakpointStore"
+import {
+  BREAKPOINT_THRESHOLDS,
+  type BreakpointName,
+} from "@/stores/breakpointStore"
 
-/**
- * An image asset as projected by the project queries: a Sanity image source,
- * optionally carrying the dimension metadata used for fluid-height resizes.
- */
-type ImageAsset = SanityImageSource & {
-  metadata?: { dimensions?: { width: number; height: number } }
+/** A Sanity image as projected by the queries, with `meta` from `asset->metadata`. */
+type SanityImage = Partial<SanityImageObject> & {
+  meta?: { lqip?: string | null; width?: number | null } | null
 }
 
-/**
- * Either a plain image (`asset`) or a responsive one holding a separate asset
- * per orientation, which is how `coverList` / `coverDetail` are modelled.
- */
-export type ResponsiveImage = {
-  asset?: ImageAsset
-  portrait?: { asset?: ImageAsset }
-  landscape?: { asset?: ImageAsset }
-  alt?: string
+/** A plain image (`asset`) or one image per orientation, as `coverList` / `coverDetail`. */
+export type ResponsiveImage = SanityImage & {
+  portrait?: SanityImage | null
+  landscape?: SanityImage | null
+  alt?: string | null
 }
+
+type Orientation = "portrait" | "landscape"
 
 const imageResizeMap = {
   default: {
@@ -44,84 +42,111 @@ const imageResizeMap = {
     landscape: "1080x1620", // 2:3
     portrait: "720x1080", // 2:3
   },
-} as const satisfies Record<string, Record<"landscape" | "portrait", string>>
+} as const satisfies Record<string, Record<Orientation, `${number}x${number}`>>
 
 export type ImageResizeId = keyof typeof imageResizeMap
 
+export type ImageSource = {
+  image: SanityImageObject
+  width: number
+  height: number
+  ratio: number
+  maxWidth?: number
+  lqip?: string
+}
+
+const { desktopMin, tabletTouchMax } = BREAKPOINT_THRESHOLDS
+
+// Mirrors breakpointToImageOrientation; keep in sync with `image-landscape` in styles/theme.css
+export const LANDSCAPE_MEDIA = [
+  `(min-width: ${tabletTouchMax + 1}px)`,
+  `(min-width: ${desktopMin}px) and (pointer: fine)`,
+  `(min-width: ${desktopMin}px) and (pointer: none)`,
+].join(", ")
+
+/** Rendered width of the 4:3 project thumbs (/projects, /archive, next project teaser). */
+export const THUMB_SIZES = [
+  "(orientation: landscape) and (max-height: 600px) 64vh",
+  "(min-width: 1024px) 35vw",
+  "(min-width: 768px) 50vw",
+  "70vw",
+].join(", ")
+
 function breakpointToImageOrientation(
   current: BreakpointName | null,
-): "portrait" | "landscape" {
+): Orientation {
   return !current || current === "mobile" || current === "tablet"
     ? "portrait"
     : "landscape"
 }
 
-function parseResizeValue(value: string): {
-  width: number
-  height: number
-  widthOnly: boolean
-} {
-  const parts = value.split("x").map(Number)
-  const width = parts[0] ?? 0
-  const height = parts[1] ?? 0
-  return { width, height, widthOnly: height === 0 }
+function pickImage(
+  image: ResponsiveImage,
+  orientation: Orientation,
+): SanityImage | null | undefined {
+  if (image.asset) return image
+  const other = orientation === "portrait" ? "landscape" : "portrait"
+  return image[orientation]?.asset ? image[orientation] : image[other]
 }
 
-export function isWidthOnlyResize(
-  resizeId: keyof typeof imageResizeMap,
-): boolean {
-  const entry = imageResizeMap[resizeId] ?? imageResizeMap.default
-  const landscape = parseResizeValue(entry.landscape)
-  const portrait = parseResizeValue(entry.portrait)
-  return landscape.widthOnly && portrait.widthOnly
-}
+function toSource(
+  image: ResponsiveImage,
+  resizeId: ImageResizeId,
+  orientation: Orientation,
+): ImageSource | null {
+  const picked = pickImage(image, orientation)
+  if (!picked?.asset) return null
 
-export function getImageDimensions({
-  resizeId = "default",
-  breakpoint = null,
-  image,
-}: {
-  resizeId?: keyof typeof imageResizeMap
-  breakpoint?: BreakpointName | null
-  image?: ResponsiveImage | null
-}): { width: number; height: number } {
-  const resizeName = imageResizeMap[resizeId] || imageResizeMap.default
-  const bpName = breakpointToImageOrientation(breakpoint)
-  const { width, height, widthOnly } = parseResizeValue(resizeName[bpName])
-
-  if (widthOnly && image) {
-    const asset = image.asset ?? image[bpName]?.asset
-    const dimensions = asset?.metadata?.dimensions
-    if (dimensions && dimensions.width > 0) {
-      const aspectHeight = Math.round(
-        (width * dimensions.height) / dimensions.width,
-      )
-      return { width, height: aspectHeight }
-    }
-  }
+  const [width, height] = imageResizeMap[resizeId][orientation]
+    .split("x")
+    .map(Number)
 
   return {
+    image: { asset: picked.asset, crop: picked.crop, hotspot: picked.hotspot },
     width,
-    height: height || Math.round((width * 9) / 16),
+    height,
+    ratio: width / height,
+    maxWidth: picked.meta?.width ?? undefined,
+    lqip: picked.meta?.lqip ?? undefined,
   }
 }
 
+/** Per-orientation crop, intrinsic size and metadata for an image; null when it has no asset. */
+export function getImageSources(
+  image: ResponsiveImage | null | undefined,
+  resizeId: ImageResizeId = "default",
+): Record<Orientation, ImageSource | null> | null {
+  if (!image) return null
+
+  const portrait = toSource(image, resizeId, "portrait")
+  const landscape = toSource(image, resizeId, "landscape")
+
+  return portrait || landscape ? { portrait, landscape } : null
+}
+
+/** URL for CSS backgrounds, which cannot use srcset: pick the orientation from the breakpoint. */
 export function getImageUrl({
   image,
   resizeId = "default",
   breakpoint = null,
 }: {
   image: ResponsiveImage | null | undefined
-  resizeId?: keyof typeof imageResizeMap
+  resizeId?: ImageResizeId
   breakpoint?: BreakpointName | null
 }) {
-  if (!image) return ""
   if (breakpoint === null) return ""
 
-  const resizeName = imageResizeMap[resizeId] || imageResizeMap.default
-  const bpName = breakpointToImageOrientation(breakpoint)
-  const imageAsset = image.asset || image[bpName]?.asset
-  const { width, height, widthOnly } = parseResizeValue(resizeName[bpName])
+  const source = getImageSources(image, resizeId)?.[
+    breakpointToImageOrientation(breakpoint)
+  ]
+  if (!source) return ""
 
-  return getSanityImageUrl(imageAsset, width, widthOnly ? 0 : height) ?? ""
+  return (
+    buildSanityImageUrl(source.image, {
+      // No srcset on backgrounds, so always request 2x for high-density screens
+      width: source.width * 2,
+      ratio: source.ratio,
+      maxWidth: source.maxWidth,
+    }) ?? ""
+  )
 }

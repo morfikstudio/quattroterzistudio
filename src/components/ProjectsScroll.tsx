@@ -13,10 +13,10 @@ import { useRouter } from "next/navigation"
 import gsap from "gsap"
 
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
-import { getImageUrl } from "@/utils/media"
+import { getImageSources, getImageUrl, THUMB_SIZES } from "@/utils/media"
 import { cn } from "@/utils/classNames"
 
-import { useBreakpoint } from "@/stores/breakpointStore"
+import { useBreakpointStore } from "@/stores/breakpointStore"
 import { useContactStore } from "@/stores/contactStore"
 import { useNavigationStore } from "@/stores/navigationStore"
 import { usePointerCoarse } from "@/hooks/usePointerCoarse"
@@ -39,10 +39,25 @@ function projectTitleId(project: PROJECTS_QUERY_RESULT[number]) {
   return `project-${project._id}-title`
 }
 
+// Matches the pager's maxSteps, so a multi-section jump lands on already loaded images
+const WARM_RANGE = 3
+
+function addWarmRange(warm: Set<number>, index: number, count: number) {
+  const start = Math.max(0, index - WARM_RANGE)
+  const end = Math.min(count - 1, index + WARM_RANGE)
+  let next = warm
+  for (let i = start; i <= end; i++) {
+    if (next.has(i)) continue
+    if (next === warm) next = new Set(warm)
+    next.add(i)
+  }
+  return next
+}
+
 export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const router = useRouter()
   const lenis = useLenis()
-  const { current: breakpoint } = useBreakpoint()
+  const breakpoint = useBreakpointStore((s) => s.current)
   const coarsePointer = usePointerCoarse()
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
   const setPendingActiveSlug = useNavigationStore((s) => s.setPendingActiveSlug)
@@ -52,6 +67,9 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const [firstThumbReady, setFirstThumbReady] = useState(false)
   const [isRouteTransitioning, setIsRouteTransitioning] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [warm, setWarm] = useState(() =>
+    addWarmRange(new Set(), 0, projects.length),
+  )
 
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const sectionsRefs = useRef<(HTMLElement | null)[]>([])
@@ -94,10 +112,12 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     ? { parallaxFactor: 0.2, bgScale: 1.025 }
     : { parallaxFactor: 0.5, bgScale: 1 }
 
-  const show = useMemo(
-    () => firstBgReady && firstThumbReady,
-    [firstBgReady, firstThumbReady],
+  const hasFirstBg = Boolean(getImageSources(projects[0]?.coverList))
+  const hasFirstThumb = Boolean(
+    getImageSources(projects[0]?.coverDetail, "cover-thumb"),
   )
+  const show =
+    (firstBgReady || !hasFirstBg) && (firstThumbReady || !hasFirstThumb)
 
   const renderPosition = useCallback(
     (pos: number, height: number) => {
@@ -126,6 +146,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
     onIndexChange: (index) => {
       syncIndexRef.current?.(index)
       setActiveIndex(index)
+      setWarm((prev) => addWarmRange(prev, index, projects.length))
     },
   })
 
@@ -756,17 +777,17 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
 
   /* Initialize first background image */
   useEffect(() => {
-    if (!projects[0]) return
+    const url = getImageUrl({ image: projects[0]?.coverList, breakpoint })
+    if (!url) return
+
     const img = new window.Image()
-    img.onload = () => setFirstBgReady(true)
-    img.onerror = () => setFirstBgReady(true)
-    img.src = projects[0]
-      ? getImageUrl({
-          image: projects[0].coverList,
-          breakpoint,
-        })
-      : ""
-  }, [])
+    img.onload = img.onerror = () => setFirstBgReady(true)
+    img.src = url
+
+    return () => {
+      img.onload = img.onerror = null
+    }
+  }, [projects, breakpoint])
 
   return (
     <div
@@ -814,10 +835,9 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                 )}
                 style={{
                   willChange: "background-position",
-                  backgroundImage: `url(${getImageUrl({
-                    image: p.coverList,
-                    breakpoint,
-                  })})`,
+                  backgroundImage: warm.has(i)
+                    ? `url(${getImageUrl({ image: p.coverList, breakpoint })})`
+                    : undefined,
                 }}
               />
             </Link>
@@ -886,16 +906,19 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
                   )}
                   style={{ willChange: "transform" }}
                 >
-                  <Image
-                    image={p.coverDetail}
-                    resizeId="cover-thumb"
-                    fill
-                    fit="cover"
-                    priority={i < 2}
-                    onLoad={
-                      i === 0 ? () => setFirstThumbReady(true) : undefined
-                    }
-                  />
+                  {warm.has(i) && (
+                    <Image
+                      image={p.coverDetail}
+                      resizeId="cover-thumb"
+                      sizes={THUMB_SIZES}
+                      fill
+                      fit="cover"
+                      priority={i === 0}
+                      onLoad={
+                        i === 0 ? () => setFirstThumbReady(true) : undefined
+                      }
+                    />
+                  )}
                 </div>
               </div>
             </div>

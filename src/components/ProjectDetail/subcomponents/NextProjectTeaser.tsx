@@ -6,9 +6,9 @@ import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
 import type { PROJECT_QUERY_RESULT } from "@/sanity/types"
-import { useBreakpoint } from "@/stores/breakpointStore"
+import { useBreakpointStore } from "@/stores/breakpointStore"
 import { cn } from "@/utils/classNames"
-import { getImageUrl } from "@/utils/media"
+import { getImageUrl, THUMB_SIZES } from "@/utils/media"
 
 import { useLenis, useAnimationKey } from "@/components/LenisProvider"
 import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
@@ -34,7 +34,7 @@ const killTween = (tween: gsap.core.Tween | null) => {
 export default function NextProjectTeaser({
   nextProject,
 }: NextProjectTeaserProps) {
-  const { current: breakpoint } = useBreakpoint()
+  const breakpoint = useBreakpointStore((s) => s.current)
 
   const router = useRouter()
   const lenis = useLenis()
@@ -297,6 +297,7 @@ export default function NextProjectTeaser({
           <Image
             image={nextProject?.coverDetail}
             resizeId="cover-detail"
+            sizes={THUMB_SIZES}
             fill
             fit="cover"
           />

@@ -15,8 +15,9 @@ import Image from "@/components/ui/Image"
 import { useImageScale } from "@/hooks/useImageScale"
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
+import { THUMB_SIZES } from "@/utils/media"
 import { useNavigationStore } from "@/stores/navigationStore"
-import { useBreakpoint } from "@/stores/breakpointStore"
+import { useBreakpointStore } from "@/stores/breakpointStore"
 import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
 import ViewToggle from "@/components/ViewToggle"
 
@@ -116,7 +117,7 @@ export default function ProjectsListPlain({
 
   const router = useRouter()
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
-  const { current: breakpoint } = useBreakpoint()
+  const breakpoint = useBreakpointStore((s) => s.current)
   const isDesktop = useMemo(
     () =>
       typeof window !== "undefined" &&
@@ -773,9 +774,10 @@ export default function ProjectsListPlain({
                     <Image
                       image={p.coverDetail}
                       resizeId="cover-thumb"
+                      sizes={THUMB_SIZES}
                       fill
                       fit="cover"
-                      priority
+                      priority={Math.abs(i - displayIndex) <= 2}
                     />
                   </div>
                 ))}
@@ -826,9 +828,10 @@ export default function ProjectsListPlain({
                     <Image
                       image={p.coverDetail}
                       resizeId="cover-thumb"
+                      sizes={THUMB_SIZES}
                       fill
                       fit="cover"
-                      priority
+                      priority={Math.abs(i - displayIndex) <= 2}
                     />
                   </div>
                 ))}
