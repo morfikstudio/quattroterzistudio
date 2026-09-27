@@ -15,7 +15,7 @@ import Image from "@/components/ui/Image"
 import { useImageScale } from "@/hooks/useImageScale"
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
-import { THUMB_SIZES } from "@/utils/media"
+import { preloadHeroImage, THUMB_SIZES } from "@/utils/media"
 import { useNavigationStore } from "@/stores/navigationStore"
 import { useBreakpointStore } from "@/stores/breakpointStore"
 import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
@@ -117,6 +117,7 @@ export default function ProjectsListPlain({
 
   const router = useRouter()
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
+  const setHeroPlaceholder = useNavigationStore((s) => s.setHeroPlaceholder)
   const breakpoint = useBreakpointStore((s) => s.current)
   const isDesktop = useMemo(
     () =>
@@ -224,7 +225,12 @@ export default function ProjectsListPlain({
         counterSpanRef.current?.parentElement,
       ].filter(Boolean) as HTMLElement[]
 
+      const img = imgEl?.querySelector<HTMLImageElement>(
+        '[data-active="true"] img',
+      )
+
       const startExpand = () => {
+        if (img) preloadHeroImage(img)
         const rect = wrapEl.getBoundingClientRect()
 
         wrapEl.style.animation = "none"
@@ -245,7 +251,10 @@ export default function ProjectsListPlain({
           width: "100%",
           duration: 1.5,
           ease: "power3.out",
-          onComplete: () => router.push(url),
+          onComplete: () => {
+            setHeroPlaceholder(img?.currentSrc || null)
+            router.push(url)
+          },
         })
       }
 
@@ -262,7 +271,7 @@ export default function ProjectsListPlain({
         startExpand()
       }
     },
-    [router, setPreviousPath, isDesktop],
+    [router, setPreviousPath, setHeroPlaceholder, isDesktop],
   )
 
   useEffect(() => {

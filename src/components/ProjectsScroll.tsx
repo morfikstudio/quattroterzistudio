@@ -13,7 +13,12 @@ import { useRouter } from "next/navigation"
 import gsap from "gsap"
 
 import type { PROJECTS_QUERY_RESULT } from "@/sanity/types"
-import { getImageSources, getImageUrl, THUMB_SIZES } from "@/utils/media"
+import {
+  preloadHeroImage,
+  getImageSources,
+  getImageUrl,
+  THUMB_SIZES,
+} from "@/utils/media"
 import { cn } from "@/utils/classNames"
 
 import { useBreakpointStore } from "@/stores/breakpointStore"
@@ -60,6 +65,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
   const breakpoint = useBreakpointStore((s) => s.current)
   const coarsePointer = usePointerCoarse()
   const setPreviousPath = useNavigationStore((s) => s.setPreviousPath)
+  const setHeroPlaceholder = useNavigationStore((s) => s.setHeroPlaceholder)
   const setPendingActiveSlug = useNavigationStore((s) => s.setPendingActiveSlug)
   const isContactOpen = useContactStore((s) => s.isOpen)
 
@@ -213,6 +219,9 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
           gsap.set(innerEl, { scale: 1, overwrite: true })
           innerEl.getBoundingClientRect()
 
+          const img = innerEl.querySelector("img")
+          if (img) preloadHeroImage(img)
+
           const rect = el.getBoundingClientRect()
 
           el.style.setProperty("--tw-translate-x", "0px")
@@ -287,6 +296,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
             if (!signal.aborted) {
               didNavigate = true
               setPreviousPath(window.location.pathname)
+              setHeroPlaceholder(img?.currentSrc || null)
               router.push(url)
             }
           } finally {
@@ -309,7 +319,7 @@ export default function ProjectsScroll({ projects }: ProjectsScrollProps) {
         doTransition()
       }
     },
-    [router, isDesktop, setPreviousPath, pager],
+    [router, isDesktop, setPreviousPath, setHeroPlaceholder, pager],
   )
 
   /* Clip-path entrance when coming from /archive — hide before first paint */

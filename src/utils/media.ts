@@ -72,6 +72,20 @@ export const THUMB_SIZES = [
   "70vw",
 ].join(", ")
 
+export const HERO_SIZES = "100vw"
+
+// Off-DOM on purpose: swapping the visible thumb's source flashes blank while the new one decodes
+export function preloadHeroImage(thumb: HTMLImageElement) {
+  const source = Array.from(
+    thumb.parentElement?.querySelectorAll("source") ?? [],
+  ).find((s) => window.matchMedia(s.media).matches)
+
+  const preload = new window.Image()
+  preload.sizes = HERO_SIZES
+  preload.srcset = source?.srcset ?? thumb.srcset
+  preload.decode().catch(() => {})
+}
+
 function breakpointToImageOrientation(
   current: BreakpointName | null,
 ): Orientation {

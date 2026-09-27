@@ -1,10 +1,11 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import gsap from "gsap"
 
 import type { PROJECT_QUERY_RESULT } from "@/sanity/types"
 import { cn } from "@/utils/classNames"
+import { HERO_SIZES } from "@/utils/media"
 import { useNavigationStore } from "@/stores/navigationStore"
 
 import Image from "@/components/ui/Image"
@@ -37,6 +38,14 @@ export default function Hero({ cover, title, year }: HeroProps) {
     typeof window !== "undefined" &&
       cameFromListing(useNavigationStore.getState().previousPath),
   )
+
+  const [placeholder] = useState(
+    () => useNavigationStore.getState().heroPlaceholder ?? undefined,
+  )
+
+  useEffect(() => {
+    useNavigationStore.getState().setHeroPlaceholder(null)
+  }, [])
 
   useEffect(() => {
     if (!shouldAnimate.current) return
@@ -90,9 +99,10 @@ export default function Hero({ cover, title, year }: HeroProps) {
         <Image
           image={cover}
           resizeId="cover-detail"
-          sizes="100vw"
+          sizes={HERO_SIZES}
           className="w-full"
           priority
+          placeholder={placeholder}
         />
 
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none">

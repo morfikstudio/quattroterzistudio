@@ -8,7 +8,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger"
 import type { PROJECT_QUERY_RESULT } from "@/sanity/types"
 import { useBreakpointStore } from "@/stores/breakpointStore"
 import { cn } from "@/utils/classNames"
-import { getImageUrl, THUMB_SIZES } from "@/utils/media"
+import { preloadHeroImage, getImageUrl, THUMB_SIZES } from "@/utils/media"
+import { useNavigationStore } from "@/stores/navigationStore"
 
 import { useLenis, useAnimationKey } from "@/components/LenisProvider"
 import { dispatchCurtainNavigate } from "@/components/CurtainTransition"
@@ -37,6 +38,7 @@ export default function NextProjectTeaser({
   const breakpoint = useBreakpointStore((s) => s.current)
 
   const router = useRouter()
+  const setHeroPlaceholder = useNavigationStore((s) => s.setHeroPlaceholder)
   const lenis = useLenis()
   const animationKey = useAnimationKey()
 
@@ -93,6 +95,8 @@ export default function NextProjectTeaser({
     }
 
     const el = thumbRef.current!
+    const img = el.querySelector("img")
+    if (img) preloadHeroImage(img)
     const parentEl = el.parentElement
     const rect = el.getBoundingClientRect()
     const parentRect = parentEl?.getBoundingClientRect() ?? {
@@ -125,9 +129,10 @@ export default function NextProjectTeaser({
 
     /* Navigate to the next project */
     if (!signal.aborted) {
+      setHeroPlaceholder(img?.currentSrc || null)
       router.push(`/projects/${nextProject?.slug?.current ?? ""}`)
     }
-  }, [nextProject, router, lenis, isDesktop])
+  }, [nextProject, router, lenis, isDesktop, setHeroPlaceholder])
 
   const scrollTransition = useCallback(() => {
     if (!lenis || !wrapRef.current) return

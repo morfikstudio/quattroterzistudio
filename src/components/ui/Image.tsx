@@ -23,6 +23,8 @@ interface ImageProps {
   position?: string
   className?: string
   priority?: boolean
+  /** Image URL shown until this one loads, in place of the LQIP. */
+  placeholder?: string
   onLoad?: (img: HTMLImageElement) => void
 }
 
@@ -68,6 +70,7 @@ export default function Image({
   position = "center center",
   className = "",
   priority = false,
+  placeholder,
   onLoad,
 }: ImageProps) {
   const handleLoad = useCallback(
@@ -104,8 +107,8 @@ export default function Image({
   const landscapeProps = getSourceProps(landscape, options)
   const hasLandscapeSource = landscapeProps.srcSet !== imgProps.srcSet
 
-  const lqipPortrait = fallback.lqip
-  const lqipLandscape = landscape.lqip ?? lqipPortrait
+  const lqipPortrait = placeholder ?? fallback.lqip
+  const lqipLandscape = placeholder ?? landscape.lqip ?? lqipPortrait
   const lqipStyle = lqipPortrait
     ? ({
         "--lqip-portrait": `url("${lqipPortrait}")`,

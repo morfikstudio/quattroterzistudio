@@ -15,6 +15,9 @@ type NavigationStore = {
   setPreviousPath: (path: string | null) => void
   pendingActiveSlug: string | null
   setPendingActiveSlug: (slug: string | null) => void
+  /** `currentSrc` of the thumb expanded into the next Hero, shown until the Hero image loads. */
+  heroPlaceholder: string | null
+  setHeroPlaceholder: (src: string | null) => void
 }
 
 export const useNavigationStore = create<NavigationStore>((set) => ({
@@ -22,4 +25,6 @@ export const useNavigationStore = create<NavigationStore>((set) => ({
   setPreviousPath: (path) => set({ previousPath: path }),
   pendingActiveSlug: null,
   setPendingActiveSlug: (slug) => set({ pendingActiveSlug: slug }),
+  heroPlaceholder: null,
+  setHeroPlaceholder: (src) => set({ heroPlaceholder: src }),
 }))
